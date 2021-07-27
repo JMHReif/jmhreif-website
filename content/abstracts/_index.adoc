@@ -1,0 +1,8 @@
+---
+title: "Abstracts"
+description: "Current projects and abstracts for sessions."
+featured_image: "/img/neo4j-london-2018.jpg"
+draft: true
+---
+
+The full list of session abstracts is available on https://github.com/JMHReif/session-abstracts[Github^].

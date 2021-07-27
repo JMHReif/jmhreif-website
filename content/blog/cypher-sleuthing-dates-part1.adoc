@@ -1,0 +1,256 @@
+---
+date: 2021-04-09T12:00:00-06:00
+featured_image: "/img/date-part-1/laptop_spyglass.jpeg"
+tags: ["cypher","query language","dates","temporal","programming"]
+title: "Cypher Sleuthing: Dealing with Dates, Part 1"
+draft: true
+---
+
+No matter what database, programming language, or webpage you might be using, dates always seem to cause headaches. Different date formats require calculations between application date pickers in user-friendly formats and system dates in backend devices and data sources. Then, programming languages each have their own libraries and structures for dealing with dates, too.
+
+This concept in the Neo4j ecosystem isn’t any less complex with https://neo4j.com/developer/cypher/[Cypher^] (a graph query language) date formats, the https://neo4j.com/labs/apoc/[APOC library^] date functions/procedures, and countless possible integration tools/APIs for data import and export. I feel like I’m always looking at documentation and dealing with lots of trial and error in order to format the date just right. You may have heard about “https://www.oreilly.com/library/view/spring-boot-up/9781492076971/ch01.html[dependency whack-a-mole^]”, but dates are another aspect of programming that seems to use whack-a-mole, too.
+
+In this post, I will do my best to provide you with the tools for less random whacking and more accurate decision making when it comes to formatting dates with Cypher. Let’s dive in!
+
+== Time conundrum
+
+The general concept of time is rather confusing, and one that I did not realize was quite so complex. There have been quite a number of humorous and eye-opening content around time being the programmer’s nightmare. Why is that?
+
+First, standard measures of time aren’t always true. The number of hours in a day can vary depending on daylight savings time (and geographies changing at different points during the year), days in a month can vary by month and due to leap years, and weeks in a year can vary depending on the day of the week Jan 1st falls on. Time zones are another matter entirely. Countries change time zones somewhat frequently and different eras in the past had entirely different calendars and time zone structures.
+
+There is a humorous and sobering comprehensive list of https://gist.github.com/timvisee/fcda9bbdff88d45cc9061606b4b923ca[one programmer’s experiences^] of time variance, as well as an entertaining video on https://www.youtube.com/watch?v=-5wpm-gesOY[time zones from a programmer’s point of view^]. It was very valuable and educational for me to see how much time can morph, making it exceptionally complicated to calculate and present a consistently accurate measure of time. Also, thank you to my colleagues https://twitter.com/rotnroll666[@rotnroll666^] and https://twitter.com/mdavidallen[@mdavidallen^] for those links. :)
+
+== Cypher dates
+
+Let’s start at the base with Cypher date formats. For this, we can go to the https://neo4j.com/docs/cypher-manual/current/[official Cypher manual^] and take a look at the two different sections that cover dates. The first section is for the https://neo4j.com/docs/cypher-manual/current/syntax/temporal/[date and temporal data types^] themselves. The second section is for https://neo4j.com/docs/cypher-manual/current/functions/temporal/[instant^] and https://neo4j.com/docs/cypher-manual/current/functions/temporal/duration/[duration^] calculations using functions. We’ll stick with just the instants today and worry about durations and date truncations in another post.
+
+The date and temporal data types in Cypher are based on the https://en.wikipedia.org/wiki/ISO_8601[ISO 8601^] date format. It supports 3 different categories of time - date, time, and timezone. Within those 3 categories are the instant types `Date`, `Time`, `Datetime`, `LocalTime`, and `LocalDatetime`. There are also 3 ways to specify timezone - 1) with the number of hours offset from UTC (e.g. -06:00), 2) with a https://en.wikipedia.org/wiki/List_of_tz_database_time_zones[named timezone^] (e.g. `[America/Chicago]`), 3) with the offset and name (e.g. `-0600[America/Chicago]`).
+
+For this blog post, we won’t explore the `LocalTime` and `LocalDatetime` types. These types are the exception to most rules and are very rarely required because they leave valuable timezone information out of the temporal value.
+
+Alright, let’s stop discussing concepts and see Cypher temporal types in action. We will create a few different dates using the instant types, then handle some timezone examples.
+
+Example 1: Setting a node property to current datetime
+[source,cypher]
+```
+MERGE (b:BlogPost)
+  SET b.publishedDatetime = datetime()
+RETURN b.publishedDatetime;
+```
+
+image::/img/date-part-1/sleuth_date_part1_1.png[]
+
+_NOTE: You might notice that there is a literal `‘T’` between the date and time values. This vital little connector is easily forgotten and something we’ll need to keep in mind when we start doing translations and conversions with other formats!_
+
+Example 2: Setting a relationship property where date value equals a specific string
+[source,cypher]
+```
+MERGE (e:Employee)-[rel:ASSIGNED]->(p:Project)
+  SET rel.startDate = date(‘2021-02-15’)
+RETURN rel.startDate;
+```
+
+image::/img/date-part-1/sleuth_date_part1_2.png[]
+
+Example 3: Setting a node property to time with time zone
+[source,cypher]
+```
+MERGE (s:Speaker {username: 'jmhreif'})-[rel:PRESENTS]->(p:Presentation)
+  SET p.time = time('09:30:00-06:00')
+RETURN p.time;
+```
+
+image::/img/date-part-1/sleuth_date_part1_3.png[]
+
+Example 4: Setting a node property to full date time (with time zone)
+[source,cypher]
+```
+MERGE (c:Conference)
+  SET c.startDatetime = datetime(‘2021-03-01T08:00:00-05:00’)
+RETURN c.startDatetime;
+```
+
+image::/img/date-part-1/sleuth_date_part1_4.png[]
+
+To round out our instant types section, you can specify the date as parameters to the instant, and you can also access individual pieces of the instant. I haven’t run across cases where the parameter-like definition of the date is required, but it is available nonetheless.
+
+Here are a couple of examples.
+
+Example 5: Setting date property using parameter-style format
+[source,cypher]
+```
+MERGE (p:Project)
+  SET p.expectedEndDate = date({year: 2021, month: 9, day: 30})
+RETURN p.expectedEndDate;
+```
+
+image::/img/date-part-1/sleuth_date_part1_5.png[]
+
+Example 6: Setting date using date component
+[source,cypher]
+```
+MERGE (c:Conference)
+  SET c.year = date().year
+RETURN c.year
+```
+
+image::/img/date-part-1/sleuth_date_part1_6.png[]
+
+Example 7: Find blog posts published in March
+[source,cypher]
+```
+MATCH (b:BlogPost)
+WHERE b.publishedDatetime.month = 3
+RETURN b.publishedDatetime;
+```
+
+image::/img/date-part-1/sleuth_date_part1_7.png[]
+
+Example 8: Return date component (dayOfWeek) of created node
+[source,cypher]
+```
+MERGE (b:BlogPost)
+  SET b.publishedDatetime = datetime()
+RETURN b.publishedDatetime.dayOfWeek;
+```
+
+image::/img/date-part-1/sleuth_date_part1_8.png[]
+
+_NOTE: `dayOfWeek` has Monday as the start of the week. Since I’m writing this on Tuesday, these results are accurate. :)_
+
+== Getting to Neo4j-supported date formats
+
+Now, these are great if you have a date/time value that is already formatted for ISO 8601. But what happens when you don’t? How do you translate a date into something Cypher will understand and Neo4j will store?
+
+In this post, we will stick to what is probably the common temporal measurements - i.e. using year, month, day, hour, minute, second. For weeks, quarters, milliseconds, and so on, check out the https://neo4j.com/docs/cypher-manual/current/syntax/temporal/#cypher-temporal-specify-date[docs^]. Also, recall that a literal `T` character is required between date and time in a combined value, so we’ll have to keep that in mind.
+
+We will look at the following scenarios to get the dates converted to values Neo4j and Cypher can read:
+
+1. Epoch time (value formatted as seconds or milliseconds)
+2. Other date string formats (`yyyy-mm-dd hh:mm:ss` and similar)
+3. Multi-conversions (to string, then to Neo4j date in one line)
+
+=== Epoch time
+
+The website https://www.epochconverter.com/[epochconverter.com^] defines epoch time as follows:
+
+[quote]
+--
+_“the Unix epoch (or Unix time or POSIX time or Unix timestamp) is the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT), not counting leap seconds (in ISO 8601: 1970-01-01T00:00:00Z)”._
+--
+
+This website is really easy to use, and I visit it quite frequently for adhoc conversions or example dates to use.
+
+As an example of epoch time and other date formats, here is the same date in three formats.
+
+* Human-readable: `Monday, March 1, 2021 12:00:00 AM`
+* ISO 8601: `2021-03-01T00:00:00Z`
+* Epoch time (seconds): `1614556800`
+
+Cypher does have the capability to convert epoch values for certain cases, though the syntax is a bit different than the conventions we’ve seen thus far. For other types of formats, we will go to the https://neo4j.com/labs/apoc/[APOC library^], which is a very popular extension for Neo4j containing procedures and functions for many different utilities.
+
+Ok, let’s see some examples of how to programmatically convert epoch time. We will use our example epoch time from above (`1614556800`, which is `March 1, 2021 12:00:00 AM`), just to keep things simple and consistent. We will show the results of the converted value, as well as the final converted Neo4j temporal value next to it.
+
+Example 1: Epoch to datetime using Cypher
+[source,cypher]
+```
+WITH 1614556800 as epochTime
+RETURN datetime({epochSeconds: epochTime});
+```
+
+image::/img/date-part-1/sleuth_date_part1_9.png[]
+
+Example 2: Epoch to date string using apoc.date.format()
+[source,cypher]
+```
+WITH apoc.date.format(1614556800, "s", "yyyy-MM-dd") as converted
+RETURN converted, date(converted);
+```
+
+image::/img/date-part-1/sleuth_date_part1_10.png[]
+
+Now, because epoch time is a date and time in a seconds format (time-based), we are unable to convert straight from epoch time to a date. However, we could either store as a datetime and return date portions for queries….or we could use APOC to get our date!
+
+Note, also, that we have included a literal `T` between the date and time values for the third parameter in the query above. To put the single quotes in the middle of that string for the `T`, we have to use double quotes around the entire format string (`“yyyy-MM-dd'T'HH:mm:ss”`).
+
+Example 3: Epoch to ISO 8601 format using apoc.date.toISO8601()
+[source,cypher]
+```
+WITH apoc.date.toISO8601(1614556800,'s') as converted
+RETURN converted, datetime(converted);
+```
+
+image:/img/date-part-1/sleuth_date_part1_11.png[]
+
+=== Other date string formats
+
+Now we know how to convert Unix-based epoch time, but what about strings in all different kinds of formats? How do we translate them to something Cypher will read? Cypher does accept strings and can convert strings in the ISO 8601 format to a temporal value, so we just need to convert a variety of string values to an `ISO 8601` string format. We can do that using `apoc.date.convertFormat()`.
+
+All of the possible formats in the procedure’s third parameter below are listed https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html[here^].
+
+Example 4: Similar date format to ISO 8601 string
+[source,cypher]
+```
+WITH apoc.date.convertFormat('2021-03-01 00:00:00', 'yyyy-MM-dd HH:mm:ss', 'iso_date_time') as converted
+RETURN converted, datetime(converted);
+```
+
+image::/img/date-part-1/sleuth_date_part1_12.png[]
+
+Example 5: American date format to ISO 8601 string
+[source,cypher]
+```
+WITH apoc.date.convertFormat('03/01/2021', 'MM/dd/yyyy', 'iso_date') as converted
+RETURN converted, date(converted);
+```
+
+image::/img/date-part-1/sleuth_date_part1_13.png[]
+
+Finally, there are a few APOC procedures that deal directly with temporal values. Only one goes to a Neo4j date format, though, and it transforms a string to a temporal.
+
+Example 6: Datetime string to Neo4j datetime
+[source,cypher]
+```
+WITH apoc.temporal.toZonedTemporal('2021-03-01 00:00:00', 'yyyy-MM-dd HH:mm:ss') as converted
+RETURN converted, datetime(converted);
+```
+
+image::/img/date-part-1/sleuth_date_part1_14.png[]
+
+Notice that both the results are the same, showing that the `apoc.temporal.toZonedTemporal` function transforms to the same value as using a Cypher `datetime()` function.
+
+=== Multi-conversions
+
+Ok, so we have done several conversions that translate strings or epoch times to strings, but that doesn’t always get us to the Neo4j date. In order to do that, we can wrap our converted value in another conversion function. This isn’t really different from what we’ve seen before, but they can get convoluted and you might think “you can do that?”. Yes, yes, you can. :)
+
+Let’s take a look!
+
+Example 7 (from Example 1 above): Convert epoch time to string and then to datetime
+[source,cypher]
+```
+RETURN datetime(apoc.date.format(1614556800, "s", "yyyy-MM-dd'T'HH:mm:ss"));
+```
+
+image::/img/date-part-1/sleuth_date_part1_15.png[]
+ 
+Example 8: Convert date from Twitter API to Neo4j datetime
+[source,cypher]
+```
+RETURN datetime(apoc.date.convertFormat('Mon Mar 01 00:00:00 -0000 2021', 'EEE LLL dd HH:mm:ss Z yyyy', 'iso_date_time'));
+```
+
+image::/img/date-part-1/sleuth_date_part1_16.png[]
+
+For a reference to the letters in that date format, the documentation is https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html[here^] (under Patterns for formatting and parsing).
+
+== Wrapping up
+
+In this post, we covered most of the Neo4j-supported temporal instant types - `date()`, `datetime()`, `time()` - for creating the values either from a current instant or from an ISO8601-formatted string. We then saw how to use the utility functions in the APOC library to transform epoch Unix time values and strings in non-ISO8601 formats into strings or temporal values Cypher can work with.
+
+There is so much more to explore on the topic of Neo4j dates. Next time, we will discuss Cypher durations for calculating the time between two instants or for adding/subtracting dates and amounts from temporal values.
+
+Until then, happy coding!
+
+== Resources
+Cypher manual: https://neo4j.com/docs/cypher-manual/current/syntax/temporal/[Temporal instants^]
+APOC documentation: https://neo4j.com/labs/apoc/4.2/temporal/datetime-conversions/[Datetime conversions^]

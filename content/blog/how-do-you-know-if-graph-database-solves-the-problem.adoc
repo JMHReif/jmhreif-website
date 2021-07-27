@@ -1,0 +1,113 @@
+---
+title: How Do You Know If a Graph Database Solves the Problem?
+date: 2018-08-08T11:00:00-06:00
+tags: ["graph database","tech","developer"]
+draft: true
+featured_image: "/img/problem_solution_success.jpg"
+---
+
+One of the greatest questions to consistently badger a developer is “what technology should I use?”. The analysis from days of thought and input determines which option(s) (from an increasingly growing number) best suits the need, manages volume and demand, plans for long-term strategy, simplifies/reduces support, and gets approved by colleagues and management.
+
+This may sound even simpler than it sometimes can be in real life. The decision’s complexity is often compounded by how much buy-in is needed, and the current constraints of existing technology and developer knowledge. For instance, investing in an unknown or newer solution means understanding that there will be learning costs that will need to be allocated.
+
+If you are researching graph databases, you may have been awed by the complex analysis it can handle or the simplicity that it allows you to interact with your data. Perhaps you were star-struck by pretty visualizations or the possibilities of lightning-fast queries. Then again, maybe you are desperate to learn something new and want to experiment with this graph database stuff.
+
+But how do you know for sure that graph is the right solution for your business or technical need? What kind of investigation do you need to be certain of its value? What makes a graph database special over another solution for your project?
+
+In this post, I want to highlight some of the scenarios that can guide you towards or away from using a graph database. These are not strict guidelines, but rather some opportunities to evaluate whether graphs fit your use case before exploring it in-depth as a solution.
+
+== Self-Evaluation: Are You Desperate to Use a Graph Database on Anything?
+
+I think we as developers (or <insert position title here>) want so strongly to use or learn something new that we choose the solution and apply it to the next “victim” project that comes up. Most of us probably know that we should not do this, but in reality, we may not step back to think about our actions until it is too late to change solutions.
+
+To alter this mindset, we need to put each problem through analysis first before evaluating various solutions. What is the motivation for using this technology? What will it provide that others cannot? Asking these and other questions will help you understand the reasons why you should or should not use the technology. Possible solutions should be drawn out and well-researched to see what the advantages and disadvantages of each are.
+
+From there, a few different individuals should review to catch any missing thoughts or remove any options that do not meet enough requirements.
+
+== When Are Graph Databases NOT a Good Fit?
+
+As most companies are, Neo4j is biased towards its products and their usefulness. We all wish our products could be used for everything, but there will never be anything in this world that is one-size-fits-all. There are too many individual and unique ideas, people, problems, and technologies for that to exist (and that’s a good thing!). Most of what you will learn about any company’s product is likely from the company itself, which usually focuses on the positive aspects and everything that you can do with it.
+
+....But what about knowing what you cannot or should not use it to do?
+
+If your use case passes all of the following scenarios, this should help solidify that graph is an excellent option. If your use case fits any of these scenarios, though, hopefully this will dissuade you and provide reasons against using graph and potentially ending up with the wrong tool for the wrong job. There may be additional cases that do not work well for graphs that I am not aware of, but this list is of those that I know thus far.
+
+=== Where data is disconnected and relationships do not matter.
+
+If you have transactional data and do not care how it relates or connects to other transactions, people, etc, then graph is probably not the solution. There are some cases where a technology simply stores data, and analysis of the connections and meanings among it is not important.
+
+Requirements for write-only transactions and for simple queries that do not have SQL join statements are good indicators that your use case may not be suited to a graph database. You might have queries that rely on sequentially-indexed data (next record stored next to previous one in storage), rather than relationship-indexed data (record is stored nearest those it is related to).
+
+Searching for individual pieces of data or even a list of items also points to other solutions, as it is not interested in the context of that data. Overall, graph solutions will focus and provide the most value from data that is highly connected and analysis that is looking for possible connections (if there aren’t already ones existing). If this doesn’t fit your use case, another kind of technology may suit it better.
+
+=== Where optimizing for writing and storing data and do not need to read or query it.
+
+Though this was mentioned in the point above, I want to focus on it separately. If the use case is only looking to write data to the store and not expecting to analyze or query results, then graph may not solve the problem. Graph databases are designed to traverse stored data very quickly and retrieve results in milliseconds. If the use case is not expected to utilize this advantage, then you probably want to find another solution.
+
+=== Where core data objects or data model stay consistent and data structure is fixed and tabular.
+
+If you have constant, unchanging types of data that you are collecting, then graph may not be the most appropriate solution. Graphs are well-suited to storing any or all elements and can easily adapt to changing business and data capture needs.
+
+Take, for instance, a scenario in which you need to track the number of people who call your business. You only need to store an ID, name, and phone number in your Customer table for this. You do not need to retain more information than this from the customer, so the columns on the table will not change and everyone calling your business can be assigned an ID, name, and phone number. This is a good example for a relational database.
+
+If the requirements are expected to grow where this system is used as the main customer system and other types of analysis will be needed, the table will change to possibly include email address, company name, order numbers, etc. At this point, some of those fields may or may not be filled (not all customers have made orders or work for a company). The business may also need to start storing other types of entities for orders and such, or the meaning of a customer may change where employees can also be customers.
+
+Long story short, if the requirements are narrow in scope for a specific need and not expected to expand or morph over time, then graph may not be the best fit.
+
+=== Where queries execute bulk data scans or do not start from a known data point.
+
+If your queries are doing table scans to find a match or searching for data that fits a general category, then a graph solution is not best-suited to the task. A graph database is built and optimized for traversing relationships from a starting data point or set. It is not optimized for searching the entire graph without a specific starting point or set in mind.
+
+Queries such as the one below will end up traversing a potentially-massive graph that has a variety of different types of information for a single result (is Jennifer an order or item or customer or employee or something else?). However, the next query starts from a particular user and looks at who that person knows.
+
+[source,cypher]
+```
+MATCH (n)
+WHERE n.name = ‘Jennifer’
+RETURN n;
+
+MATCH (n:Person {name: ‘Jennifer’})-[r:KNOWS]->(p:Person)
+RETURN p;
+```
+
+When the majority of your queries look like the first one and performance of those queries is highly important, you need to consider non-graph solutions. While graph can still handle those queries, the technology is not optimized for maximum performance on bulk scans or unknown starting points.
+
+=== Where you will use it as a key-value store (like a cache).
+
+If you are only interested in a lookup operation, then a graph database is not the solution for you. As we have discussed above, graph analysis benefits from relationships among data. A lookup result from a known key does not maximize the function of what graph databases were created to do.
+
+As an example, someone might use a database as a cache to store session data for an application. You might store the session ID in cache, but then write the session details to the database. When you need to retrieve session details or run analysis on those, you would send the session id (as the key) to return the value (probably properties stored on a single node).
+
+This method does not utilize any relationships because it is using a known key to return a single node or detail data on that node. When reviewing your use case, ensure that you understand the storage and retrieval mechanisms of each technology. Doing a lookup might fit a key-value store or even relational database more appropriately, providing better performance on functionality in which they were built to excel.
+
+=== Where large amounts of text or BLOBS need to be stored as properties.
+
+If you are storing and retrieving entity properties that contain extremely large values (such as BLOBs, CLOBs, text paragraphs/articles, etc), then another technology solution might be a better choice. Graph databases are very good at traversing relationships between small data entities, and not as performant when you store a lot of properties on a single node or large values in those properties. The reason for this is because the query can hop from entity to entity, but then also needs extra processing to pull out the details of each entity it finds along a path.
+
+Now, sometimes, this can be corrected by re-organizing the data model. For instance, if you stored all information about an employee on a single graph node (address, job info, orders, benefit elections, salary info, etc), that would create a very cumbersome node with a lot of properties with potentially large values. You could re-model this where there would be separate entities for company, address, position details, etc. This would simplify the model and trim down performance on queries looking for an employee’s address, for instance.
+
+However, you may have some cases where you need those large values stored in a single property, and the queries are not graph-specific. For this type of use case, a graph database is not recommended.
+
+Of course, no single item listed above will always appear alone. The delineation between some of the scenarios often blur and cross boundaries, so you may have one or more of these in your case, as well. There may be aspects of your project that are reasons against using a graph database, as well as reasons in support of using one. While that may complicate the decision, it is ultimately left to the evaluation of the positives/negatives of each technology to determine the best fit.
+
+== When are Graph Databases a Good Fit?
+
+I will not spend too much time here, as I briefly mentioned some of graph technology’s key strengths and you can learn more from company resources, employee discussions, and customer feedback, but I want to close with some positives and provide an overview. :)
+
+Business or technical needs where users want to understand relationships in their data (hidden and obvious) will thrive with a graph database. If you want to know what customers are interested in to gear messages in their topic areas or understand how a network map is laid out and the impacts of each component, a graph database is perfectly suited to these types of use cases and queries. Graphs can allow businesses to create well-rounded, diverse customer profiles and scrutinize bank transactions to find outliers that could be signs of fraud.
+
+They also exceed performance expectations when traversing relationships among data for data science and analytics purposes. Graph algorithms are expanding the value of running more complex analysis on connected data to highlight patterns for decision-making.
+
+Graph technology is used in all types of industries for business-critical use cases and backbone processes. Anything where data looks like the image below is an indicator that graph can maximize value.
+
+== Conclusion
+
+I have only scratched the surface of each point for what a graph database can and cannot do. There are much finer, and minute details that go into a decision to use one technology or another. With this post, I simply want to give you a few of the tools to help in that decision. Whether you choose a graph database or not, the goal is to find the best tool to meet (and hopefully exceed) the requirements.
+
+Best wishes on your next project and happy evaluating! :)
+
+== Resources
+* https://neo4j.com/product/[Neo4j Graph Database^]
+* https://neo4j.com/business-edge/reasons-for-using-graph-technology/[Reasons to Use Graph Technology^]
+* https://neo4j.com/why-graph-databases/[Why Choose Graph Databases?^]
+* https://neo4j.com/use-cases/[Graph Database Use Cases^]

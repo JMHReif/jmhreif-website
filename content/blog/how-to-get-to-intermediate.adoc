@@ -1,0 +1,57 @@
+---
+date: 2018-10-18T12:00:00-06:00
+featured_image: "/img/level_up.jpeg"
+tags: ["career","story","inspirational"]
+title: "Getting Past Beginner Stage: How to Get to Intermediate"
+draft: true
+---
+
+When you start a new technology or learn anything new, it might be easy to get started. There is often a lot of starter material, tutorials, guides, exercises, and entry-level project examples. Plus, you might even find blog posts, StackOverflow questions, and other types of materials to help you.
+
+The on-boarding process for new technologies continues to get simpler and easier. But what happens when you understand and can tackle all the beginner-level materials? How do you take the next step to being able to tackle average, everyday problems or capabilities? What gets you to the intermediate level?
+
+You know how they always say that getting started is the hardest part? I actually find getting past the beginner stage and starting the quest for the treacherous mountain of excellence ahead is more difficult in ability, as well as motivation.
+
+If you’re struggling in this stage, know that you are not alone. I am facing it, too. I’m still relatively new to my position here at Neo4j, and I’m grasping at opportunities to understand the technology and capabilities at a deeper level. I know most things at a basic level and can navigate my way around, but I’m simply not satisfied to know just a little. I want to be the expert…..but how do I get there?
+
+This post is for me and all of you other developers out there trying to take the next step. In the next few paragraphs, I’ll discuss some ideas for getting over the intimidation of tackling the road ahead and the steps I am working on to increase my skills and understand the technology on a deeper level.
+
+== A different approach
+
+Everyone says to get involved in a project or contribute just a small bit of code and that will grow over time into a great resume. However, I’ve always struggled with this one. There are SO many projects, and I don’t know where to begin or if I’ll understand the code even once I find one.
+
+The nice thing about working with a data store as my learning technology is that I can actually take a different approach. I can start with a dataset that interests me.
+
+I think this perspective can be applied to other technologies you want to learn, too, though. Have a latest tv show fandom? Or love movies or sports or video games? Well, there’s probably someone out there who has taken the time to collect a bunch of data in those realms and publish it somewhere. Whether it’s CSV flat files or access to an API, you can now get access to all of this data!
+
+== How does this help you?
+
+First, you have to figure out how and where you want to put the data. What kinds of things do you want to do with it or know about?
+
+For me, I recently pulled in data for the Game of Thrones books and the Lord of the Rings movies and wanted to know what I could find. I ran some basic queries to see what the data looked like (as Neo4j is different from tabular or other stores) and then found things that stood out to me in the data and followed up with more detailed queries.
+
+Getting the data into Neo4j ended up being more difficult than what I thought. Every time I look at a new API or set of flat files, I learn a ton about Cypher syntax and workarounds. Each data set is organized a bit differently and also depends on whoever organized the data in the first place. These types of obstacles have helped me write better code and provided better answers to user questions, as well.
+
+As I started to dig in on my sample data sets, I wondered if I could use graph algorithms to predict certain behavior in Game of Thrones or how many characters in the Lord of the Rings movies actually played multiple parts. I even found where some non-actors or extras made cameo appearances in the LOTR films!
+
+Start with just getting the data somewhere and just looking at it. Tell yourself that’s all you have to do. Pretty soon, I think curiosity will take over and you will start to ask some questions and trying to find answers to those questions!
+
+Do you want to analyze connections and patterns in data? Or do you want to build a mobile app where you can track movies you have and haven’t seen? That gives you a good idea where to put the data and how to start reviewing it.
+
+== Getting in over your head
+
+You may run into a situation where the question you want to answer is above your skill level. That’s ok. Back up and try just a piece of it.
+
+For instance, say that you want to build a multi-level fancy application that does a ton of functionality or you want to connect multiple points of data into something that will help you make decisions or predict outcomes. Both of these tasks are huge undertakings and ones that can’t be accomplished immediately. However, break this massive project into small, possible chunks.
+
+For the fancy application, start with a screen that shows you results (whether movies, accounts, etc). Once you have that, you’ll find yourself saying something like, “this is cool, but I would really like to do _x_.” Then you can add functionality to enter new information or search existing info, if you have a lot of results.
+
+For the decision-analysis project, you can start by looking at the data you have and the information that gives you. Maybe you can see that you tend to always go see movies in a certain genre or that you don’t go out on Sunday nights. You can then write functionality to rank events by day of the week and put a lower score on outing offers for Sunday night for movies in genres you don’t seem to prefer. Pretty soon, you might decide you enjoy dinner in the city on Friday nights and give restaurants that run Friday night promotions a higher ranking.
+
+You will not learn to play an instrument by trying to play a flashy showpiece performed by a world-renowned concert violinist or learn how to cook by attempting a 7-course meal with Beef Wellington and a perfect soufflé.
+
+Instead, try to learn a simple tune that you know really well and attempt to make an easy casserole and cake. Pretty soon, you will want to try another similar song that has one tough chord or see if you can add your own twist to the cake icing or include your own spices in the casserole.
+
+At some point, you will realize how much you have accomplished in a month or year. Tasks that seem trivial help you build your skills and stack up to large leaps of capability! No matter your level, start small and don’t forget to occasionally review how far you have come. Know that there is always a large mountain to tackle ahead, but realize the mountains you have tackled that are now behind you.
+
+In the words of Dori from Finding Nemo, “keep on swimming” and happy adventures on your next learning project!

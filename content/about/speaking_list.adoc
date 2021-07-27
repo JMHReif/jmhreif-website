@@ -1,0 +1,44 @@
+---
+title: "Speaker Resume"
+date: 2021-07-26T12:00:00-06:00
+featured_image: "/img/neo4j-london-2018.jpg"
+draft: true
+---
+
+[cols="2,2,1",options="header",stripes=even]
+|===
+3+|*Conferences:*
+|*Name*                   |*Location*               |*Years*
+
+|JavaOne/Oracle CodeOne   |San Francisco, CA, USA   |2016-2019
+|GOTO Chicago             |Chicago, IL, USA         |2017
+|GraphConnect             |New York City, NY, USA   |2018
+|DevUp                    |St. Louis, MO, USA       |2018
+|VoxxedDays Banff         |Banff, AB, Canada        |2018-2019
+|NODES                    |Online                   |2019,2021
+|JFokus                   |Stockholm, Sweden        |2019
+|DevoxxUK                 |London, England, UK      |2019
+|ConFoo                   |Montreal, QC, Canada     |2019-2020
+|GraphTour                |various cities, USA      |2018-2019
+|Devnexus                 |Atlanta, GA, USA         |2019
+|Big Data/AI Toronto      |Toronto, ON, Canada      |2019
+|KCDC                     |Kansas City, MO, USA     |2019
+|ODSC                     |San Francisco, CA, USA   |2019
+|===
+
+
+[cols="2,2,1",options="header"]
+|===
+3+|*Meetups:*
+|*Name*                      |*Location*             |*Years*
+
+|Women WhoCode               |London, England, UK    |2018
+|Women in ML/Data Science    |San Francisco, CA, USA |2018
+|WindyCity GraphDB           |Chicago, IL, USA       |2018
+|Seattle Data/Analytic/ML    |Seattle, WA, USA       |2018
+|KCJUG                       |Kansas City, KS, USA   |2019
+|Data Science KC             |Kansas City, KS, USA   |2019
+|Detroit JUG                 |Detroit, MI, USA       |2019
+|Women in Data (Stl chapter) |online                 |2021
+|STLJUG                      |online                 |2021
+|===

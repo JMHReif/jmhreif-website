@@ -1,0 +1,236 @@
+---
+date: 2021-04-26T12:00:00-06:00
+featured_image: "/img/date-part-2/fingerprint_spyglass.jpeg"
+tags: ["cypher","query language","dates","temporal","programming"]
+title: "Cypher Sleuthing: Dealing with Dates, Part 2"
+draft: true
+---
+
+My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part-1/[part 1 post^] on this topic introduced Cypher dates and translated a few other date formats to the Cypher-supported ISO 8601 format. If you read that, then this post is the next step with Cypher dates that covers durations and more. If you haven’t seen part 1, feel free to catch up - though this part 2 doesn’t necessarily require reading part 1. :)
+
+We will continue a bit of the last post by showing how to truncate dates and times. Then we will look at the next area of built-in Cypher date functionality - time distance measurements and difference calculations between dates with durations. We will discuss and see examples of how durations in Cypher work - calculating durations from single dates, adding or subtracting durations from dates, and calculating the distance between 2 dates or times. Time to dive in!
+
+== Date truncation
+
+If you read the Cypher documentation on https://neo4j.com/docs/cypher-manual/current/functions/temporal/#functions-temporal-truncate-overview[truncating dates^], the wording is accurate but kinda makes my head spin. So let me try to translate it.
+
+*Cypher manual text:*
+A temporal instant value can be created by truncating another temporal instant value at the nearest preceding point in time at a specified component boundary (namely, a truncation unit). A temporal instant value created in this way will have all components which are less significant than the specified truncation unit set to their default values.
+
+*My version:*
+You can trim (truncate) a temporal value at a specific point, which sets any smaller units to default values. For instance, truncating the date `2021-04-21` to the year means the year value will be preserved, and the month and day values will be defaulted to `01`, returning a result of `2021-01-01`.
+
+This can be helpful if you want to default a search to generalize all dates by year or month. Note that if you want to completely shorten the date to the desired component (e.g. `2021-04-21` to just `2021`), you can do that by accessing the component of the value. This will be covered more in-depth in another post. Let’s look at a few examples of truncating dates.
+
+Each of the Neo4j temporal instants (Date, Time, Datetime, LocalDatetime, LocalTime) can use the `.truncate()` at the end. Just as with the last post, we will stick with the more common Date, Time, and Datetime values. While LocalDatetime and LocalTime are valid and supported, there are very few cases that truly require the use of local, and it is more complex to work with.
+
+Example 1: Truncating a datetime at the year
+[source,cypher]
+```
+WITH datetime.truncate('year',datetime()) as truncatedDatetime
+MATCH (b:BlogPost)
+WHERE b.publishedDatetime >= truncatedDatetime
+RETURN b.publishedDatetime, truncatedDatetime;
+```
+
+image::/img/date-part-2/sleuth_date_part2_1.png[]
+
+The above example looks for all blog posts published in 2021 (on or after 2021-01-01).
+
+Example 2: Truncating a date at the month
+[source,cypher]
+```
+WITH date.truncate('month',date()) as truncatedDate
+MATCH (p:Project)
+WHERE p.expectedEndDate > truncatedDate
+RETURN p.expectedEndDate, truncatedDate;
+```
+
+image::/img/date-part-2/sleuth_date_part2_2.png[]
+
+Our example above is searching for projects that are not yet completed - have an expected end date after April 1, 2021.
+
+Example 3: Truncating a date at the hour
+[source,cypher]
+```
+WITH time.truncate('hour',time('09:30:52-06:00')) as truncatedTime
+MATCH (p:Presentation)
+WHERE time.truncate('hour',p.time) = truncatedTime
+RETURN time.truncate('hour',p.time), truncatedTime;
+```
+
+image::/img/date-part-2/sleuth_date_part2_3.png[]
+
+Example 3 above queries for any presentations that are going on during the `9am` hour. This could be useful during a conference when you want to see which sessions are going on during a particular hour.
+
+We have seen how we can trim dates to create generic dates for use cases like starting points in searches. Now we will transition over to working with lengths of time using durations.
+
+== Cypher Duration
+
+A duration in Cypher is the amount of time between two temporal instants. Whether we are using the duration itself to capture a length of time or calculating distance between points in time, these values are incredibly useful for time measurements. There are 2 different ways to state durations, listed as follows:
+
+* Unit-based amounts (literal `'P'` and/or `'T'` + numeric value + component id) - e.g. `P1Y3M10D` or `{hours: 24}`.
+* Date and Time instants (literal `'P'` and/or `'T'` + date and/or time value) - e.g. `P20210419` or `PT090000`.
+
+Let’s look at some examples.
+
+Example 1: Getting a duration value (using unit-based amount)
+[source,cypher]
+```
+MERGE (p:Person)-[r:BOOKED]->(v:Vacation)
+SET v.length = duration('P5D')
+RETURN v.length as vacationDuration;
+```
+
+image::/img/date-part-2/sleuth_date_part2_4.png[]
+
+Setting the length for a person’s vacation. We could use this query for lodging planning, out-of-office emails, vacation activity scheduling, or other use cases.
+
+Example 2: Set duration as frequency for medicine dosage
+[source,cypher]
+```
+MERGE (d:Dose)-[r:PRESCRIBED_AMOUNT]->(m:Medicine)
+SET d.frequency = duration('PT4H')
+RETURN d.frequency;
+```
+
+image::/img/date-part-2/sleuth_date_part2_5.png[]
+
+The example above uses this to calculate how often someone can take a prescribed medication. Now, you might say “wait, why did it calculate as seconds instead of hours and minutes”? We will explain this in further detail after a couple more examples. For now, know that hour and minute durations are converted to seconds.
+
+Example 3: Calculate a specific date as a duration
+[source,cypher]
+```
+MATCH (:Employee)-[rel:ASSIGNED]-(:Project)
+RETURN rel.startDate as date, duration('P'+ rel.startDate) as duration;
+```
+
+image::/img/date-part-2/sleuth_date_part2_6.png[]
+
+_NOTE: Date format cannot include timezone value. A helpful memory key is that a length of time isn’t based on geographic location - only the distance between 2 dates or times. Also, date must be preceded by a literal ‘P’ and time must be preceded by a literal `'T'`._
+
+If we divide the resulting 24,254 months by 12 (to find the number of years), we get `2021.16667`. This tells us the number of months from year 0 that the date `2021-02-15` is. While this probably isn’t super useful for this use case, it might be more helpful in science fields to precisely date artifacts or geography.
+
+Example 3: Calculate specific time as a duration
+[source,cypher]
+```
+MERGE (p:Person)-[r:TAKES]->(d:Dose)
+SET d.dose1Time = duration('PT093000')
+RETURN d.dose1Time;
+```
+
+image::/img/date-part-2/sleuth_date_part2_7.png[]
+
+The example above tells us exactly how long after midnight a person took a medication. This could be incredibly critical for determining how close together doses are, as well as for tracking a strict schedule. Again, we see that our duration has been converted to seconds. Before we get too much further, let’s talk a bit about the conversion of hours and minutes into seconds. This has to do with precision in calculations, as explained in the next paragraph.
+
+== Duration precision
+
+One thing to note is that there are very specific rules that duration follows for calculations. Durations are stored as months, days, seconds, nanoseconds. This is because some components of time can vary - hours in a day (due to daylight savings time), days in a month (28, 29, 30, 31), etc. This is the reason you might notice hour and minute calculations diverting to the more precise and consistent second values.
+
+This is why our earlier queries (listed below for memory) were converted to seconds. In the first query for medicine dose frequency, `4 hours` is converted to seconds because larger time values cannot be assumed as 100% consistent at all times. This could actually be a life-and-death situation if dose frequency was not calculated properly.
+
+The same scenario exists for the second query. If we took the dose at `9:30AM` on a regular day or on a day that changed to/from Daylight Savings Time, this time could be off. It is more precise to calculate the seconds from midnight (34,200 seconds / 60 seconds in minute / 60 minutes in hour = 9.5 hours from midnight). This ensures no incorrect storage values and that users can calculate the time based on their circumstances.
+
+```
+MERGE (d:Dose)-[r:PRESCRIBED_AMOUNT]->(m:Medicine)
+SET d.frequency = duration('PT4H')
+RETURN d.frequency;
+
+MERGE (p:Person)-[r:TAKES]->(d:Dose)
+SET d.dose1Time = duration('PT093000')
+RETURN d.dose1Time;
+```
+
+We will see how to convert these small, precise values into more meaningful amounts (like hours) in the next post. For now, we will simply deal with the math of turning durations into precise amounts and finding the difference between 2 date values.
+
+== Calculations with dates and durations
+
+There are a few ways to go about using durations besides for the plain amounts we saw in the last section - for instance, adding or subtracting temporal amounts and calculating the difference between 2 dates. I would guess that these are probably the most common usages for durations. We will get some examples below of each, starting with adding or subtracting durations from dates.
+
+Example 1: Subtract 2.5 months from end date to calculate start date
+[source,cypher]
+```
+MATCH (p:Project)
+SET p.expectedStartDate = p.expectedEndDate - duration('P2.5M')
+RETURN p.expectedEndDate, p.expectedStartDate;
+```
+
+image::/img/date-part-2/sleuth_date_part2_8.png[]
+
+In the example above, we are using a scheduled end date and an estimated duration of the project to calculate the project start date. I find that adding and subtracting lengths of time can be used for many different uses.
+
+Example 2: Add 30 hours to start datetime to calculate end datetime
+[source,cypher]
+```
+MATCH (c:Conference)
+SET c.endDatetime = c.startDatetime + duration({hours: 30})
+RETURN c.startDatetime, c.endDatetime;
+```
+
+image::/img/date-part-2/sleuth_date_part2_9.png[]
+
+Above, we are using duration addition to calculate the end date/time for our conference. If we know what time the event plans to start and know the length of content we have, then this tells us what time the event can end.
+
+Example 3: Calculate when to take the next medicine dose
+[source,cypher]
+```
+MATCH (d:Dose)
+ SET d.dose2Time = d.dose1Time + d.frequency
+RETURN d.dose2Time;
+```
+
+image::/img/date-part-2/sleuth_date_part2_10.png[]
+
+_NOTE: we could do a quick manual calculation (48,600 / 60 seconds in minute / 60 minutes in hour = 13.5 hours after midnight), which would be around 1:30PM on a standard day. We’ll see how to do this with Cypher in another post, though._
+
+Based on the dose taken in a previous query and the frequency we can take the medication, the above query calculates the time (in seconds) of our next dosage.
+
+== Calculate difference between 2 dates with duration.between
+
+Now let’s calculate the difference between 2 dates. We will need to use `duration.between` to compare two dates and find the difference.
+
+Example 1: Calculate duration between project start and end dates
+[source,cypher]
+```
+MATCH (:Employee)-[rel:ASSIGNED]-(p:Project)
+RETURN rel.startDate as assigned, p.expectedEndDate as expectedCompletion, duration.between(rel.startDate, p.expectedEndDate) as lengthAssigned;
+```
+
+image::/img/date-part-2/sleuth_date_part2_11.png[]
+
+Our query above tells us how long an employee has been assigned to a project. This could be useful for determining resource usage or the number of hours someone has worked on something.
+
+Example 2: Calculate amount of time currently spent on project
+[source,cypher]
+```
+MATCH (:Employee)-[rel:ASSIGNED]-(p:Project)
+RETURN rel.startDate as assigned, duration.between(rel.startDate, date()) as timeSpent;
+```
+
+image::/img/date-part-2/sleuth_date_part2_12.png[]
+
+Using the query above, we can know how long our project has been going on. This tells us how much time has passed, and as with the previous query, can help us understand how many resources have been used on a project at a point in time. We will do that calculation in the next post! :)
+
+Example 3: Calculate duration between differing datetime values
+[source,cypher]
+```
+MATCH (b:BlogPost)
+RETURN date('2021-03-22') as started, b.publishedDatetime as published, duration.between(date('2021-03-22'), b.publishedDatetime) as amountOfTimeSpent;
+```
+
+image::/img/date-part-2/sleuth_date_part2_13.png[]
+
+In our above query, we can find out how long it took to write a blog post. Again, this could be used to determine average time consumption for a person or for planning time needed on future posts. Because the time and timezone exist on the publishedDatetime and not on the start date we set, the duration second and millisecond values are a little odd-looking, but we’ll see how to format that better in the next post!
+
+== Wrapping up!
+
+We saw how to use Cypher’s duration to measure distance in time - whether starting from a length like `2 days`, adding or subtracting an amount from a date or time, or finding the difference between 2 dates/times. While some of the amounts returned converted to more precise (and maybe less meaningful) values, we found that this occurs on purpose to ensure consistent amounts that can be relied upon no matter the time of year, geographic location, or the time changes observed.
+
+In the next post, we will cover formatting and date components. We will see how to transform these precise values into more meaningful values, as well as how to access components of full date/time values and translate other temporal amounts into different units (i.e. `120 seconds` into `2 minutes`, or `72 hours` into `3 days`). Tune in next time and happy coding!
+
+== Resources
+
+* Cypher manual: https://neo4j.com/docs/cypher-manual/current/syntax/temporal/#cypher-temporal-durations[Durations^]
+* Cypher manual: Create durations from https://neo4j.com/docs/cypher-manual/current/functions/temporal/duration/#functions-duration-create-components[units^] or from https://neo4j.com/docs/cypher-manual/current/functions/temporal/duration/#functions-duration-create-string[dates and times^]
+* Cypher manual: https://neo4j.com/docs/cypher-manual/current/functions/temporal/duration/#functions-duration-computing[Compute duration from 2 temporal instants^]
+* Blog post: https://jmhreif.com/blog/cypher-sleuthing-dates-part-1[Part 1 of Cypher Sleuthing with Dates^]

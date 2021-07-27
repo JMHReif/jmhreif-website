@@ -1,0 +1,146 @@
+---
+date: 2018-08-31T12:00:00-06:00
+featured_image: "/img/GirlHandsCoder.jpeg"
+tags: ["career","story","inspirational"]
+title: "How to Build a Career: Telling Your Story"
+draft: true
+---
+
+Oftentimes, we tend to sell ourselves short when we are talking to interviewers, professionals, or other career authorities.
+
+We don’t want to seem arrogant and inflate our capabilities, right? What if they don’t see the value of our journey that we see from our path, decisions, experiences, etc? There is a very fine balance between being humble and arrogant, and it is a tough one to achieve.
+
+We all have different backgrounds, achievements, struggles, and experiences. That is what makes us wonderfully unique and allows each person to contribute so amazingly in one aspect or another.
+
+It’s all in how you tell your story and how that story has shaped you.
+
+== 100% Successful Recipe to Winning at Life? NOT!
+
+There is no one-size-fits-all approach to life or task list to make you 100% successful. This post is just my point of view and the experiences that may have shaped it along the way. Check with me again in 5 or 10 years. Life experiences over time will probably continue to change and shape my perspective, and that’s a good thing. ;)
+
+What I can give are some steps to find the positives and growth in your journey and help phrase this to future employers, friends, colleagues, and to yourself. We are often our worst critic, and if you can’t see how your experiences have strengthened, improved, or shaped you, then chances are that no one else will see it either.
+
+== Recipe
+
+Your recipe may have entirely different ingredients or may not even be the same course or meal, but your version is still just as good. :) Each ingredient plays a part in building the final product — you and your career.
+
+Without further ado, here are the ingredients in my career recipe.
+
+1. Childhood experiences
+2. Young adult decisions and opportunities
+3. Present capabilities and evaluation
+4. Destination goals and plans to achieve them
+
+We will talk about each of these in the next paragraphs.
+
+=== Childhood Experiences
+
+Each of our childhoods were mostly shaped by the environment around us — where we lived, who our families/friends were, and what decisions were made for us.
+
+As a child, we were subject to the patterns and lifestyles of our elders. You might have been able to choose what you would wear that day or what you wanted to eat for a snack, but most of the life-altering decisions were made by parents or guardians.
+
+We are easily impressionable as kids, so many of our experiences and activities shape our thoughts and habits of later year. To give you a little background on mine, you need a little history about me.
+
+==== My Story
+
+When I was young, my parents got me involved with various activities to see what I enjoyed and excelled in. One of the activities was music lessons. I could pick any instrument I wanted but had to stick with it for at least one year. I chose violin.
+
+Throughout my school years, I was very academic, loved to read, and focused on practicing my instrument. I performed for various audiences and taught music lessons to all ages.
+
+==== How Does It Affect Me Today?
+
+These experiences developed so many integral parts of my being that I probably could not name them all. But, here is an attempt, all the same. :)
+
+* Output Evaluation: I listened to the sounds I was playing and corrected fine details and imperfections.
+* Focus and Time-Management: I had to practice consistently and rigorously in order to improve, and I had to prioritize what I wanted. Had a big concert and wanted to achieve that difficult passage? Then I must say no to going out with friends or watching tv.
+* Individuality and Creativity: music developed my perspective on individuality and learning styles. Seeing how each musician performs a piece of music differently showed me that individuals can express themselves and present their own style. Teaching music to people of all ages showed me how each person is unique and how to tailor material to different learning styles.
+
+These may seem trivial, but when you look at how those can affect future employment, you can find several transferable qualities.
+
+* Output Evaluation: being able to pay attention to details and evaluate your own work is applicable in any job for any industry. The more in-tune you are to your common mistakes, the easier it is to prevent or catch them.
+* Focus and Time-Management: no matter your future occupation, you must be able to concentrate and manage your time. Delivering tasks on time by eliminating or ignoring distractions is vital to accomplishing work and being a good employee.
+* Individuality and Creativity: employers typically want newer employees to provide fresh perspectives and new ideas. You may not need to overturn the boat, but being able to think outside the box or look for a better/easier way to accomplish something is often a desired skill.
+
+==== Apply this for Yourself
+
+Though you won’t have the same experiences or background as me, you can still review the things that you did as a kid and that defined you today.
+
+Maybe you played sports, and it taught you that working together as a team can accomplish team goals or that communication impacts team dynamics and actions. Or maybe you were not involved much in school, but you enjoyed reading in your room or helping someone, defining your ability to learn on your own and willingness to teach or help others.
+
+Certain experiences may have taught you perseverance through hardship, how to be positive when life presents obstacles, or how to seek happiness when you cannot change something.
+
+No matter your journey, review how your memories, activities, and experiences as a child have built skills and abilities in your current self. While they will not always be positive, you can find a way to see how they can be turned into strengths. After all, we cannot change the past, so we might as well make it an advantage. :)
+
+=== Young Adult Experiences and Decisions
+
+As we progressed into our teenage years and through college, we had a bit more input on our decisions and choices than when we were kids. Now we could choose which educational institutes we might want to attend, what we wanted to spend extra money on, and what we wanted our future to look like.
+
+Based on the choices we made, we learned lessons for our future selves and actually began our journey into making dreams a reality. Wanted to move to a big city or own a business? We could now actually take steps and set ourselves up to get there.
+
+As an example, here is another short blurb about how this stage affected me.
+
+==== My Story
+
+I was a musician and very academic as a kid and remained that way through teenage years and college, too (and still that way today). I carried my violin lessons, performing, and teaching through college. Yes, I majored in music performance.
+
+However, I had grown up in a computer-loving household, too. Both parents were programming majors, and my sisters and I learned how to properly type, write book reports, and play games on the computer from a very early age.
+
+I knew business and computer skills were exceedingly important to succeed in any industry, so I took business classes and received a business minor alongside the music major.
+
+During my last two years of my undergraduate, I was convinced that I wanted to explore software development. I decided to finish my Bachelor’s in music with the business minor, but then apply for a Master’s in computer management and information systems.
+
+While a music degree was a stepping stone to where I would later end up, the learning experiences and connections made were invaluable to my current state.
+
+==== How Does It Affect Me Today?
+
+Just as with childhood experiences, the decisions I made helped me accomplish the goals I wanted, even if those goals changed. Let me try to show how.
+
+* Structure and Creativity: in deciding to change my major, I realized that programming and music had several things in common. Both combined a logical and scientific structure with creative expression. Within certain bounds (making the program operate correctly and consistently), programming offered people the chance to write something unique, elegant, and simple. Music also allowed for creative interpretation and self-expression through a structure of musical form and music theory.
+* Transition Opportunities: I found a way to combine both my interests and gain a bit of experience, as well. I was the university orchestra’s assistant at the time, and the orchestra was in desperate need to catalog and track all of the musical parts in the library. I took it upon myself to create a local database catalog, as well as a rudimentary tracking system of music loans and missing parts within the department.
+* Non-school Activities: I taught music lessons and played violin for weddings and other events throughout college. I organized music, communicated with event coordinators and fellow musicians, and planned details.
+
+These activities may not seem like they could bridge the two degrees, but they did (surprisingly well).
+
+* Structure and Creativity: I was able to find the overlap between the two interests apply the skills I learned in music to development. The same thing I loved in one could be adjusted to help me in the next.
+* Transition Opportunities: there was a way for me to gain experience with the new skill before trying to get a job in it. I was able to complete the music library project before graduation and add an experience in my new career.
+* Non-school Activities: planning and performing for events gave me leadership, coordination, professional communication, and so many other skills. I also gained confidence through performing and leading the group.
+
+==== Apply this for Yourself
+
+Your experiences will differ, but you can still find elements that help you with any pursuit. You might need to get creative, but you can probably find how college social groups, leadership opportunities, working a local job, living in a dorm, or other activities helped build skills and attitudes.
+
+=== Present Capabilities and Evaluation
+
+So far, we have scanned back through our pasts to find the sources of skill sets, decisions, attitudes, and interests. Hopefully, you have found some interesting and helpful details you may not have realized.
+
+Now is the time to review the daily activities and decisions you are making right now and evaluate if those are putting you on a path to where you want to be.
+
+What kind of story do your habits and lifestyle tell and does it match what you want? Are you looking to change positions, but not investing any time in reading current industry news, learning something new, or connecting with people for the desired position type? Or do you want to take on a new project at work, but are not learning the skills you need on your own before someone else tells you you can?
+
+If this is you, know that we all have our moments in life where we coast and let life occur happen to us, rather than exerting effort to change something. If you are happy exactly where you are, that’s ok, too. We should all take moments to enjoy where we are and appreciate what we achieved to reach it.
+
+However, if you want something to change (whether job, career, relationship, location, etc), then you must take action in the present. No one else has the driver’s seat to your life, which is good news!
+
+Your daily habits affect where you end up, and the decisions you make create the pivot points for future directions. So really evaluate how your present self is writing your story through daily life.
+
+=== Destination Goals and Plans to Achieve Them
+
+What do you want in your future? Whether you are still a student, a new professional, a seasoned employee, or retired, you still can make changes to set your future up differently. As we discussed in the last section, taking steps in the present will put you on a path, but where does that path end up?
+
+This is when you decide which destinations and results you want to achieve and adjust your daily habits and past experiences to fill the skills needed.
+
+If you want to work remotely, then become good at self-motivation and learning on your own. This will show that you can manage yourself and accomplish work without supervision.
+
+If you want to change jobs, then learn the skills you need and look for opportunities that use those new skills. You will gain experience for the job you want and showing people that you go after what you want to achieve (even if present circumstances might limit you).
+
+It doesn’t matter so much what you want to achieve, but what you are doing to achieve it. What do you want your future story to look like?
+
+== What’s in Your Recipe?
+
+All you may see is scattered and random events throughout your life, but take another look and see how those experiences connect together. Each of these events provides an ingredient that changes the flavor of the final outcome.
+
+Once you have evaluated for yourself, you can tell your story to others. Whether potential employers hire you or not, you can feel confident that you are portraying yourself honestly and completely. If the opportunity doesn’t work out, maybe it couldn’t handle everything you offer. If it does, then use it to shape and define your career recipe.
+
+One decision leads to and influences another. The joy of being you is deciding what you want in your recipe and what you want to make out of it.
+
+Enjoy the journey!

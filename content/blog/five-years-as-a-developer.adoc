@@ -1,0 +1,108 @@
+---
+date: 2018-05-23T12:00:00-06:00
+featured_image: "/img/Root_Finch_computer.jpg"
+tags: ["career","developer","learn"]
+title: "What I've Learned in 5 Years as a Developer"
+draft: true
+---
+
+As I approach my 5-year anniversary in my career as a developer, I wanted to reflect on what I have learned up to this point. While I still have much to learn (one constant in life), there are some things I have found in my experiences thus far.
+
+Everyone treks a different path filled with vastly different experiences, so you may relate to some of these or simply add to the list of possibilities you may or may not encounter along the road.
+
+== 1. Do not be afraid to ask a ton of questions
+
+When starting out in any position, I always feel a bit of sympathy for those who are my mentors. I ask a ton of questions until I really learn something well. Even then, I still may rely upon their counsel and support on certain things. Hey, it’s good to get others’ opinions to make better decisions, right? :)
+
+While the beginning may be painful, the goal is that you won’t have to ask those questions at some point. Occasionally, I need to walk through the process a couple of times before I fully process it and can repeat it. But, I ensure that my mentor knows that I made strides and an effort at each repetition.
+
+First, you need to figure out what kind of mentor(s) you need. Some people are great at walking you through each step, some just give you enough help to get you started, and some are not much help at all.
+From the other side, each mentee has a different preference or need based on skill-level, confidence, and other factors. You may be completely bored and impatient with someone who shows you each step, or feel frustrated that he/she didn’t help you enough, or relish the challenge of trial-and-error.
+
+Ultimately, you should determine what kind of help you want/need and hopefully find someone who can give you that.
+
+== 2. Try, try, and try again
+
+Next, as your mentors are probably experts, they will have other projects/tasks they are allocated to complete. Each time you ask a question, try to take notes or have them demo it (or however it will stick with you most), then try to execute it yourself.
+
+If you must ask to have the steps repeated or need some reminders, that’s ok, but show what you have learned. Try to recall something about the process to show progress (i.e. “I took notes, but I think I missed a step” or “I don’t quite remember how to get started, but I know once I get to x, I go to y”, etc.).
+
+Most people understand that you are drinking from the firehose for the first several months (or more) and cannot retain it all, but I believe it is still important to show you are making the effort, that you listened to what they said, and that you are learning, no matter the pace.
+
+Another difficult temptation to avoid is going to the expert for help as soon as you hit a roadblock. It is easy to get stuck and immediately ask a question — after all, they can probably answer in seconds, compared to the minutes or hours it might take you. However, it is crucial for your learning process to attempt as much as you can on your own.
+
+If you figure it out, the pride and excitement you will feel for solving the issue without help builds knowledge and confidence. It also improves your skills for attacking other problems down the road! Of course, if you get really stuck, don’t waste too much valuable time, but try to show your mentos that you are making a valiant effort.
+
+== 3. How to attack something new (i.e. problem-solve)
+
+This one goes hand-in-hand with the last one. You will find what type of learning best suits your style and the types of problems you excel with or struggle to solve.
+
+Some individuals immediately see solutions that are outside the box, some are adept at seeing patterns to arrive at conclusions, some look for standard solutions, and others are a blend of problem-solvers. At least for me, it is a blend of all the above. :)
+
+Each person’s learning process is different. While Google and StackOverflow are my first go-to resources, more visual guides such as YouTube may better fit some things, structured courses suit others, and still others need an SME to talk it out or walk through it. As you learn and test your skills, you will find which method suits the problem best.
+
+== 4. How to manage time more effectively
+
+Just as we have discussed balance in previous points, time management is also a balancing act. This takes experience and trial-and-error to find out what works for you, but it is important to assess each situation and determine how best to tackle it.
+
+I thought that I had excellent time-management skills from college, but the workforce environment is a different animal. Try to remove as many distractions as possible. Yes, you must go to some meetings, help others with problems, be a good teammate, and balance multiple tasks with various deadlines on your plate, but what can you eliminate? Make a list of priorities, taking into account deadlines, importance, etc.
+
+Find out the peak times in your day when you are focused and have the most energy, and then block your calendar during those times for your critical tasks. If my boss told me I didn’t have to attend a meeting, I took advantage of it. I even would occasionally miss a work event to meet a deadline. This may not always be possible depending on company culture, but if you can eliminate disruptions without jeopardizing your job, do it.
+
+== 5. How to say no and be honest about limitations
+
+Going along with time management, there are limits to how much you can accomplish within a certain bound of time and the amount of time/effort you are willing to put into it. Chances are, if you’ve worked in any job for a few months and done well, you will run into situations frequently where you cannot complete all your tasks (or take on more) in the time allotted or requested.
+
+This is where you have to say the dreaded “no” or have that difficult conversation about expectation and/or timeline changes. I always return to the triple constraints from project management class. Time, scope, cost — if one changes, one or both of the others must also change.
+
+It may take a few failed attempts to find your boundaries and determine what you are willing to commit. Maybe you are willing to work overtime in order to complete on time. Maybe you think you can complete everything, but then your leadership delegates a “top priority” task to you last minute that causes all of your other work to be pushed to a back burner.
+
+Though you cannot prepare for everything or see every outcome, strive to estimate properly, and when you realize you could miss the mark, present your limitations to those impacted. It will save you a lot of stress/frustration and others the disappointment of not getting what was promised.
+
+== 6. Languages and Integrations and Tools — Oh, My!
+
+Everything talks to everything in the world today. Various tools fill certain functionalities, and those tools must be able to interact with other tools for other parts of the process. Each company varies in their tool selection and the process pipeline. No matter how much of an expert you are at one company, you may feel like somewhat of an amateur somewhere else.
+
+That is the exciting and difficult part of the technology industry — keeping up with it all. If you’re struggling with something, find a class, conference, online content, books, etc. Though there is so much to learn, that also means that there is an abundance of materials of all varieties. Pick the one that suits you and go for it!
+
+Realize that you will never know it all, but also take advantage of any opportunity for growth. Projects or tasks working with unfamiliar technologies or even business processes will give you more breadth or depth of understanding, whether you plan to stay in your current position or seek out other opportunities.
+
+If opportunities do not come your way, then seek them out. No one else can care as deeply about your future and your learning as you do or know what you want or need. What you learn, how you learn it — it is entirely up to you!
+
+== 7. Best way to learn is to dive in
+
+In my newest position, I have been much braver and willing to dive head first into things (within reason). I know my limitations (see number 5), but I am also not afraid to reach just beyond my current scope of knowledge. Part of my bravery is because I know that the best way to learn something is through immersion.
+
+However, just like in learning a language through immersion, you probably would not move to another country without first learning at least a few basic phrases and conversation foundations in the new language. Similarly, you should understand basic concepts of whatever you are taking on. “Within reason” is not taking on any opportunity that you are not convinced you can handle or learn.
+
+My second week on the job, I presented for a half-day training session….where I was assisting a colleague on the presentation and led everything I felt comfortable presenting. I studied hard to come up to speed on that material, and then our SME covered the deeper and more complex content. By jumping in to teach others, I learned far more myself and reinforced material I had studied. With an expert presenting with me, I couldn’t really fail, which also reduced any nerves. Win-win.
+
+I began another project recently for an upcoming presentation where I felt pretty comfortable with what I needed to do, but I did not know actually know what I lacked until I started the work itself. Researching can give you a solid foundation, but it cannot replace occasionally holding your breath, closing your eyes, and jumping in the deep end.
+
+Know your boundaries, then stretch just outside of them. Be willing to take some risks and trust that you can accomplish them, especially if you have a support structure behind you, cheering you on.
+
+== 8. Learning is not always structured
+
+As you may have learned already, you do not always have to attend a course or take a formal training to learn something. Sometimes they can be helpful, but they may not be able to meet your needs (timeline, content, etc).
+
+Other types of resources like online tutorials, reading material (books, documentation, guides, etc), YouTube presentations or live code samples, and lunch-and-learn or brown bag sessions are learning, as well. I also consider shoulder-surfing or informal desk meetings as types of training.
+
+Some of the best ways I have learned was to watch my colleague work on some of his tasks. I would pay attention who he contacted for questions, how he worked through problems, what his design decisions were, and the actual code and syntax used.
+
+No matter your preferred learning style, there are all kinds of resources for conventional and unconventional learning. Even sitting at someone’s desk can be part of the process and could be the best resource to show you exactly how an SME in your company handles daily work.
+
+== 9. You don’t have to be the expert — just willing to learn
+
+There is a common saying that “where there’s a will, there’s a way”. This rings true for any job or task you undertake. If you have the determination to figure something out, chances are that you will get there, one way or another.
+
+You may need assistance or it may take a lot of time, but you can succeed. Be confident in your abilities, but also realize that others can teach you something. Try to evaluate, then apply genuine feedback. You can even learn something from those who tear you down (just pull the positive from it and discard the rest). :) Be open, be confident, and above all, be willing to learn all the world has to offer!
+
+== 10. It’s not the job that defines you, but how you execute it
+
+You can excel and go above and beyond in whatever position you find yourself in. Whether you have your dream job or a stepping stone position, strive for your best performance. Any future opportunities will look favorably upon hard work and an eagerness to learn.
+
+Give each task your all. Someone out there will see it and reward you for it. Potential employers may look past the fact that you do not have the requested years of experience or the right degree or worked with the specific technologies listed simply because you are a quick learner, hard worker, or determined individual. Even if they do not look past their “perfect employee” criteria, putting your best foot forward places you strides above many contenders and increases your chances of promotions, flexibility, and other options in a current position.
+
+Effort is always worth giving — whether you receive external rewards for it or find internal rewards through confidence, sense of accomplishment, and attainment of your goals.
+
+Through all that a career offers or throws at you, just keep swimming. :)
