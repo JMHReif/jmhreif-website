@@ -3,7 +3,7 @@ date: 2019-07-24T12:00:00-06:00
 featured_image: "/img/eager/Detective-Work.jpg"
 tags: ["cypher","query language","eager operator","problem solving","coding","programming languages"]
 title: "Cypher Sleuthing: the EAGER operator"
-draft: true
+draft: false
 ---
 
 Why is it that some query syntax seems to run faster than another when there is very little difference between the statements? Sometimes, queries will invoke what is called the `eager operator` in order to maintain consistent operations and avoid conflicting data changes.

@@ -2,7 +2,7 @@
 title: How Do You Know If a Graph Database Solves the Problem?
 date: 2018-08-08T11:00:00-06:00
 tags: ["graph database","tech","developer"]
-draft: true
+draft: false
 featured_image: "/img/problem_solution_success.jpg"
 ---
 

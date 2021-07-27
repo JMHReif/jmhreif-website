@@ -2,7 +2,7 @@
 title: "About"
 description: "A little bit about the author of this site."
 featured_image: "/img/neo4j-london-2018.jpg"
-draft: true
+draft: false
 ---
 {{<figure src="/img/profile.jpg" title="Jennifer Reif" >}}
 

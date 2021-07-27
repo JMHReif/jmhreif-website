@@ -2,6 +2,6 @@
 title: "Code, Career, and Content"
 featured_image: '/img/neo4j-london-2018.jpg'
 description: "Snippets from a Developer"
-draft: true
+draft: false
 ---
 Welcome to my blog with some of my work in progress. I've been working on this book idea. You can read some of the chapters below.

@@ -9,6 +9,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-20.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -18,15 +20,23 @@ jobs:
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with:
-          hugo-version: 'latest'
-          # extended: true
+          hugo-version: '0.85.0'
+          extended: true
 
-      - name: Build
-        run: hugo --minify
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.7
+
+      - run: gem install asciidoctor
+
+      - name: Run Hugo
+        run: |
+          alias asciidoctor="asciidoctor --attribute=experimental=true --attribute=icons=font"
+          hugo --minify
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
-        if: github.ref == 'refs/heads/main'
+        if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.JMHREIF_COM_TOKEN }}
-          publish_dir: ./public
