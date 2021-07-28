@@ -7,13 +7,13 @@ draft: false
 omit_header_text: true
 ---
 
-My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part-1/[part 1^] and https://jmhreif.com/blog/cypher-sleuthing-dates-part-2/[part 2^] posts on this topic introduced Cypher dates, translated formats to the Cypher-supported ISO 8601 format, calculated durations, and measured lengths of time. If you read those, then this post is the next step with Cypher dates on date components, component translations, and duration conversions. If you haven’t read parts 1 or 2, feel free to catch up - though this post doesn’t require the previous ones. :)
+My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[part 1^] and https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[part 2^] posts on this topic introduced Cypher dates, translated formats to the Cypher-supported ISO 8601 format, calculated durations, and measured lengths of time. If you read those, then this post is the next step with Cypher dates on date components, component translations, and duration conversions. If you haven’t read parts 1 or 2, feel free to catch up - though this post doesn’t require the previous ones. :)
 
 We will take a brief detour back to components of temporal instants to see some additional use cases. Then, for the bulk of this post, we will cover translating duration values into specific measurements (converting months to weeks and more).
 
 == Accessing Date and Time Components
 
-We briefly mentioned temporal components in https://jmhreif.com/blog/cypher-sleuthing-dates-part-1/[Part 1 of this series^] (Examples 6, 7, and 8), but I wanted to come back and add a couple more use cases that came to mind.
+We briefly mentioned temporal components in https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[Part 1 of this series^] (Examples 6, 7, and 8), but I wanted to come back and add a couple more use cases that came to mind.
 
 In the Part 1 post examples, we used date components as a way to set a property to a specific piece of a date (year of current date stamp), do a general search (blog posts for month of March), and return a specific piece of a longer date (day of the week). Accessing parts of a full date or time could also be helpful for searches that aren’t a good fit for date ranges or extracting part of a value for UIs. We can see some examples below.
 
@@ -86,7 +86,7 @@ Now that we have seen some extra examples of how we could use component values o
 
 == Translating Duration Values to Different Precisions
 
-In the https://jmhreif.com/blog/cypher-sleuthing-dates-part-2/[previous blog post in this series^], we saw how to specify and calculate a variety of durations with Cypher. One particular example of this was for dosing medicine and determining how long before a person could take another dose. The duration returned from that example wasn’t very meaningful (48,600 seconds after midnight), and I promised to return in another post to show how to translate this value into something more readable.
+In the https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[previous blog post in this series^], we saw how to specify and calculate a variety of durations with Cypher. One particular example of this was for dosing medicine and determining how long before a person could take another dose. The duration returned from that example wasn’t very meaningful (48,600 seconds after midnight), and I promised to return in another post to show how to translate this value into something more readable.
 
 Before we jump into examples, however, there are a couple of steps we need to take in order to get there. First, we can calculate durations with the default process (largest unit and cascade remainders into smaller units), or we can specify a certain unit to convert the value. Here are the options we can have Cypher use:
 
@@ -253,5 +253,5 @@ To wrap up our series on Cypher dates and times, we would be remiss not to menti
 * Cypher manual: https://neo4j.com/docs/cypher-manual/current/functions/temporal/#functions-temporal-truncate-overview[Truncating Temporal Values^]
 * Cypher manual: https://neo4j.com/docs/cypher-manual/current/functions/temporal/duration/#functions-duration-computing[Duration Functions^]
 * Cypher manual: https://neo4j.com/docs/cypher-manual/current/syntax/temporal/#cypher-temporal-accessing-components-durations[Duration Components^]
-* Blog post: https://jmhreif.com/blog/cypher-sleuthing-dates-part-1[Part 1 of Cypher Sleuthing with Dates^]
-* Blog post: https://jmhreif.com/blog/cypher-sleuthing-dates-part-2[Part 2 of Cypher Sleuthing with Dates^]
+* Blog post: https://jmhreif.com/blog/cypher-sleuthing-dates-part1[Part 1 of Cypher Sleuthing with Dates^]
+* Blog post: https://jmhreif.com/blog/cypher-sleuthing-dates-part2[Part 2 of Cypher Sleuthing with Dates^]
