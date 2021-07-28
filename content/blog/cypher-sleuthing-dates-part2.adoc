@@ -4,6 +4,7 @@ featured_image: "/img/date-part-2/fingerprint_spyglass.jpeg"
 tags: ["cypher","query language","dates","temporal","programming"]
 title: "Cypher Sleuthing: Dealing with Dates, Part 2"
 draft: false
+omit_header_text: true
 ---
 
 My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part-1/[part 1 post^] on this topic introduced Cypher dates and translated a few other date formats to the Cypher-supported ISO 8601 format. If you read that, then this post is the next step with Cypher dates that covers durations and more. If you haven’t seen part 1, feel free to catch up - though this part 2 doesn’t necessarily require reading part 1. :)

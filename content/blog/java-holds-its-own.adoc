@@ -4,6 +4,7 @@ featured_image: "/img/programmingLanguages_popular.jpeg"
 tags: ["java","programming","97 things","programming languages","learning"]
 title: "In the Language Wars, Java Holds Its Own"
 draft: false
+omit_header_text: true
 ---
 
 We all pick our favorites and downplay other options (colors, cars, sports team, etc.). Programming language choice is not exempt. Whether it’s the one we are most comfortable with or the one that got us a job, we cling to that choice.

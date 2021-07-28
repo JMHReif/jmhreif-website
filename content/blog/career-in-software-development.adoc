@@ -4,6 +4,7 @@ featured_image: "/img/code-dream-reality-unsplash-crop.jpeg"
 tags: ["career","software development","programmer"]
 title: "What is so exciting about a career in software development?"
 draft: false
+omit_header_text: true
 ---
 
 _Photo by https://unsplash.com/@tpptech?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText[Hung Do] on https://unsplash.com/s/photos/software-development?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText[Unsplash]_

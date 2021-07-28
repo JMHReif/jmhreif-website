@@ -4,6 +4,7 @@ featured_image: "/img/date-part-1/laptop_spyglass.jpeg"
 tags: ["cypher","query language","dates","temporal","programming"]
 title: "Cypher Sleuthing: Dealing with Dates, Part 1"
 draft: false
+omit_header_text: true
 ---
 
 No matter what database, programming language, or webpage you might be using, dates always seem to cause headaches. Different date formats require calculations between application date pickers in user-friendly formats and system dates in backend devices and data sources. Then, programming languages each have their own libraries and structures for dealing with dates, too.

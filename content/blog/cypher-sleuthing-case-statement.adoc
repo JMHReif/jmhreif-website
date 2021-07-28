@@ -4,6 +4,7 @@ featured_image: "/img/sleuthing_digital_holmes.jpg"
 tags: ["cypher","query language","case statement","problem solving","coding","programming languages"]
 title: "Cypher Sleuthing: the CASE statement"
 draft: false
+omit_header_text: true
 ---
 
 I was recently working on one of our developer guides (the https://neo4j.com/developer/guide-import-csv/[CSV import guide^]) and came across some https://neo4j.com/developer/cypher-query-language/[Cypher^] I needed to fine-tune in the `CASE` statement on that page. I had some trouble finding the correct syntax, so I reached out to some Cypher experts to get some help.

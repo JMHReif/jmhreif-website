@@ -4,6 +4,7 @@ date: 2018-08-08T11:00:00-06:00
 tags: ["graph database","tech","developer"]
 draft: false
 featured_image: "/img/problem_solution_success.jpg"
+omit_header_text: true
 ---
 
 One of the greatest questions to consistently badger a developer is “what technology should I use?”. The analysis from days of thought and input determines which option(s) (from an increasingly growing number) best suits the need, manages volume and demand, plans for long-term strategy, simplifies/reduces support, and gets approved by colleagues and management.

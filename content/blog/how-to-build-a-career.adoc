@@ -4,6 +4,7 @@ featured_image: "/img/GirlHandsCoder.jpeg"
 tags: ["career","story","inspirational"]
 title: "How to Build a Career: Telling Your Story"
 draft: false
+omit_header_text: true
 ---
 
 Oftentimes, we tend to sell ourselves short when we are talking to interviewers, professionals, or other career authorities.

@@ -4,6 +4,7 @@ featured_image: "/img/date-part-3/investigating_spyglass.jpeg"
 tags: ["cypher","query language","dates","temporal","programming"]
 title: "Cypher Sleuthing: Dealing with Dates, Part 3"
 draft: false
+omit_header_text: true
 ---
 
 My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part-1/[part 1^] and https://jmhreif.com/blog/cypher-sleuthing-dates-part-2/[part 2^] posts on this topic introduced Cypher dates, translated formats to the Cypher-supported ISO 8601 format, calculated durations, and measured lengths of time. If you read those, then this post is the next step with Cypher dates on date components, component translations, and duration conversions. If you haven’t read parts 1 or 2, feel free to catch up - though this post doesn’t require the previous ones. :)

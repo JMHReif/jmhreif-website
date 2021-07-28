@@ -4,6 +4,7 @@ featured_image: "/img/level_up.jpeg"
 tags: ["career","story","inspirational"]
 title: "Getting Past Beginner Stage: How to Get to Intermediate"
 draft: false
+omit_header_text: true
 ---
 
 When you start a new technology or learn anything new, it might be easy to get started. There is often a lot of starter material, tutorials, guides, exercises, and entry-level project examples. Plus, you might even find blog posts, StackOverflow questions, and other types of materials to help you.
