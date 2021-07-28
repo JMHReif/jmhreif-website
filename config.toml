@@ -24,18 +24,18 @@ show_reading_time = true
 
   [[menu.main]]
   name = "About"
-  weight = 300
+  weight = 200
   identifier = "about"
   url = "/about/"
 
   [[menu.main]]
   name = "Blog"
-  weight = 200
+  weight = 300
   identifier = "blog"
   url = "/blog/"
 
   [[menu.main]]
   name = "Abstracts"
   identifier = "abstracts"
-  weight = 100
+  weight = 400
   url = "/abstracts/"
