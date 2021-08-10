@@ -26,7 +26,7 @@ As a reminder: the column on the right is the key — values in one column c
 1. You can only convert among units in a component grouping, not across groups.
 2. There must be whole values to convert to larger units. Components do not mix whole and fraction values (i.e. `36 hours` -> `1.5 days`). There are specific components that handle whole values of the unit, and there are separate components that handle only fractions of the unit.
 
-image::/img/date-part-4/sleuth_date_part5_clocks.jpeg[]
+image::/img/date-part-4/sleuth_date_part4_clocks.jpeg[]
 
 _Photo by https://medium.com/r/?url=https%3A%2F%2Funsplash.com%2F%40jontyson%3Futm_source%3Dmedium%26utm_medium%3Dreferral[Jon Tyson] on https://unsplash.com/s/photos/clocks?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText[Unsplash]_
 
