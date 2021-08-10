@@ -26,6 +26,10 @@ As a reminder: the column on the right is the key — values in one column c
 1. You can only convert among units in a component grouping, not across groups.
 2. There must be whole values to convert to larger units. Components do not mix whole and fraction values (i.e. `36 hours` -> `1.5 days`). There are specific components that handle whole values of the unit, and there are separate components that handle only fractions of the unit.
 
+image::/img/date-part-4/sleuth_date_part5_clocks.jpeg[]
+
+_Photo by https://medium.com/r/?url=https%3A%2F%2Funsplash.com%2F%40jontyson%3Futm_source%3Dmedium%26utm_medium%3Dreferral[Jon Tyson] on https://unsplash.com/s/photos/clocks?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText[Unsplash]_
+
 Now, per our rules, we are limited in expressing certain durations as numbers that aren’t easy to understand or read. For instance, saying that my flight leaves in `28 hours` (while precise) probably triggers a mental calculation to `1 day 4 hours`. Because our brains are used to allocating resources into the largest buckets first, then remainders into smaller categories, our perception of time and planning seems to operate better in these formats.
 
 As another example, most things operate on a 12-hour clock (3:00pm), except for where precision matters. In those cases, you will see a 24-hour clock (15:00). But telling a random person on the street that the time is `fifteen hundred` will most likely return confused looks. Think smaller numbers, larger units (1 day vs 24 hours, 2 months vs 60 days, etc).
@@ -35,6 +39,8 @@ Ok, so how can we translate some of these larger-number-smaller-unit values into
 == Combining Duration functions and components
 
 Using durations functions with components means we can convert our duration values from one component category into another, and then translate among the components within that group.
+
+image::/img/date-part-4/sleuth_date_part4_groups.png[]
 
 Note that precision may not always be 100% accurate, as days in a month or hours in a day are not consistent throughout the year. However, the conversions use general standards (30 days in a month, 24 hours in a day).
 
@@ -215,9 +221,9 @@ Until next time, happy coding!
 
 == Resources
 
-* Cypher Sleuthing: https://neo4j.com/developer-blog/cypher-sleuthing-dealing-with-dates-part-1/[Part 1^]
-* Cypher Sleuthing: https://neo4j.com/developer-blog/cypher-sleuthing-dealing-with-dates-part-2/[Part 2^]
-* Cypher Sleuthing: https://neo4j.com/developer-blog/cypher-sleuthing-dealing-with-dates-part-3/[Part 3^]
+* Cypher Sleuthing: https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[Part 1^]
+* Cypher Sleuthing: https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[Part 2^]
+* Cypher Sleuthing: https://jmhreif.com/blog/cypher-sleuthing-dates-part3/[Part 3^]
 * Cypher Manual: https://neo4j.com/docs/cypher-manual/current/functions/temporal/duration/#functions-duration-computing[Duration functions^]
 * Cypher Manual: https://neo4j.com/docs/cypher-manual/current/syntax/temporal/#cypher-temporal-accessing-components-durations[Duration Components^]
 * Cypher Manual: https://neo4j.com/docs/cypher-manual/current/functions/list/#functions-reduce[Reduce function^]

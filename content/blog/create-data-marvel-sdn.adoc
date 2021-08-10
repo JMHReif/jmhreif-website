@@ -47,14 +47,14 @@ Now on to the project code!
 
 == Github projects
 
-The https://start.spring.io/[Spring Initializr^] was the tool used to generate the scaffolding for both projects. Dependencies chosen were the [bg-moon-gray]#Spring Data Neo4j# project and some sort of web support for the REST API ([bg-moon-gray]#Spring Web# for the sdn-marvel-basic, [bg-moon-gray]#Spring Reactive Web# for the sdnrx-marvel-basic).
+The https://start.spring.io/[Spring Initializr^] was the tool used to generate the scaffolding for both projects. Dependencies chosen were the `Spring Data Neo4j` project and some sort of web support for the REST API (`Spring Web` for the sdn-marvel-basic, `Spring Reactive Web` for the sdnrx-marvel-basic).
 
-This assembles our [bg-moon-gray]#pom.xml# file, as well as the [bg-moon-gray]#main()# application method. Connecting to our existing Neo4j instance requires opening the [bg-moon-gray]#application.properties# file (in src -> main -> resources) and adding your instance's URI, username, password, and database values.
+This assembles our `pom.xml` file, as well as the `main()` application method. Connecting to our existing Neo4j instance requires opening the `application.properties` file (in src -> main -> resources) and adding your instance's URI, username, password, and database values.
 
 _Note: If using a local instance (like local Docker or Neo4j Desktop) with no customized configuration, the password should be the only one that needs to be modified. If using a remote instance (Sandbox, Aura, or remote Docker), then the URI should be different, as well.
 Database value is only different if you have specifically used Neo4j's multi-database feature to create a separate database._
 
-From there, I created the domain classes ([bg-moon-gray]#Character# and [bg-moon-gray]#ComicIssue#) and the repository and controller classes for each. This gives us two endpoints to call for each domain object.
+From there, I created the domain classes (`Character` and `ComicIssue`) and the repository and controller classes for each. This gives us two endpoints to call for each domain object.
 
 == Differences between imperative and reactive
 
@@ -66,9 +66,9 @@ For our demo purposes, imperative or reactive does not make a difference in effi
 
 Within the projects, differences between the sdn-marvel-basic and sdnrx-marvel-basic code boil down to the following changes for the reactive version:
 
-1. Repository interfaces - return types for methods are either [bg-moon-gray]#Mono<># or [bg-moon-gray]#Flux<>#.
-2. Controller classes - return types for methods are either [bg-moon-gray]#Mono<># or [bg-moon-gray]#Flux<>#, media type for [bg-moon-gray]#/characters# endpoint results in [bg-moon-gray]#TEXT_EVENT_STREAM_VALUE# and a delay of 1 second between returned elements is added.
-3. Application class (SdnrxMarvelBasicApplication) - an additional bean with the [bg-moon-gray]#ReactiveNeo4jTransactionManager#.
+1. Repository interfaces - return types for methods are either `Mono<>` or `Flux<>`.
+2. Controller classes - return types for methods are either `Mono<>` or `Flux<>`, media type for `/characters` endpoint results in `TEXT_EVENT_STREAM_VALUE` and a delay of 1 second between returned elements is added.
+3. Application class (SdnrxMarvelBasicApplication) - an additional bean with the `ReactiveNeo4jTransactionManager`.
 
 Outside of those, the code between the two versions operates the same. Nothing changes in the domain classes. Only the way results are gathered and returned between the database and application is adjusted.
 

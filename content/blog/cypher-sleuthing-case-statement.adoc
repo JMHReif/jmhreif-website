@@ -29,7 +29,6 @@ RETURN p.name,
 
 In this option, we are looking at an organization hierarchy to determine how to contact someone for help or comments. We first look for people in our graph and retrieve their managers and departments. Then, we evaluate the person’s role. When it’s a `management` role, we can use the department phone number to reach them. When the individual has a `business` role, we can call the person’s business phone. If they’re a `technical` person, email is the best way to reach them. If the person does not fall into any of these categories, then we simply return the department email address as the best resource.
 
-
 [source,cypher]
 ```
 //Option 2

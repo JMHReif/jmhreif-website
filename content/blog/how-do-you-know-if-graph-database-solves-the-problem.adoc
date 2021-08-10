@@ -64,10 +64,10 @@ Queries such as the one below will end up traversing a potentially-massive graph
 [source,cypher]
 ```
 MATCH (n)
-WHERE n.name = ‘Jennifer’
+WHERE n.name = 'Jennifer'
 RETURN n;
 
-MATCH (n:Person {name: ‘Jennifer’})-[r:KNOWS]->(p:Person)
+MATCH (n:Person {name: 'Jennifer'})-[r:KNOWS]->(p:Person)
 RETURN p;
 ```
 
