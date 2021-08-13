@@ -1,6 +1,7 @@
 ---
 date: 2021-07-27T12:00:00-06:00
 featured_image: "/img/date-part-4/spyglass-blue.jpeg"
+image_credit: https://unsplash.com/photos/mo4UZiHy_KU?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
 tags: ["cypher","query language","dates","temporal","programming"]
 title: "Cypher Sleuthing: Dealing with Dates, Part 4"
 draft: false
@@ -28,7 +29,7 @@ As a reminder: the column on the right is the key — values in one column c
 
 image::/img/date-part-4/sleuth_date_part4_clocks.jpeg[]
 
-_Photo by https://medium.com/r/?url=https%3A%2F%2Funsplash.com%2F%40jontyson%3Futm_source%3Dmedium%26utm_medium%3Dreferral[Jon Tyson] on https://unsplash.com/s/photos/clocks?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText[Unsplash]_
+{{< image-credit >}}
 
 Now, per our rules, we are limited in expressing certain durations as numbers that aren’t easy to understand or read. For instance, saying that my flight leaves in `28 hours` (while precise) probably triggers a mental calculation to `1 day 4 hours`. Because our brains are used to allocating resources into the largest buckets first, then remainders into smaller categories, our perception of time and planning seems to operate better in these formats.
 

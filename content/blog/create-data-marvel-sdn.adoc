@@ -1,13 +1,14 @@
 ---
 date: 2021-08-02T12:00:00-06:00
 featured_image: "/img/refresh-athlete.jpeg"
+image_credit: https://unsplash.com/photos/mo4UZiHy_KU?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
 tags: ["spring","neo4j","applications","development","programming"]
 title: "Create a Data Marvel with Spring Data Neo4j"
 draft: false
 omit_header_text: true
 ---
 
-_Photo by https://unsplash.com/@genessapana[Genessa Panainte^] on https://unsplash.com/s/photos/refresh[Unsplash^]_
+{{< image-credit >}}
 
 I have had a couple of Github projects demonstrating bits of functionality for Spring Data Neo4j, but they had last been updated in 2020 when the new https://github.com/spring-projects/spring-data-neo4j[Spring Data Neo4j 6^] was still a beta version known as https://neo4j.com/blog/spring-data-neo4j-rx-1-0-now-available/[SDN/RX^]. Since there have been several changes since then, I thought I would give the projects a refresh and make them current.
 

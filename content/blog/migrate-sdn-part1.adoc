@@ -1,0 +1,67 @@
+---
+date: 2021-08-12T09:00:00-06:00
+featured_image: "/img/sdn-migration/migrating-birds.jpeg"
+image_credit: https://unsplash.com/photos/d2uHXWTkGn4?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["spring","neo4j","applications","development","migration"]
+title: "Winter to Spring: Migrating from Spring Data Neo4j 5 to 6, Part 1"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+A major upgrade to Spring Data Neo4j was released at the end of last year as part of the Spring Data release train. If you were involved in Spring Data and Neo4j news before that, you may have seen hints of this coming with the https://medium.com/neo4j/welcome-sdn-%EF%B8%8Frx-22c8fe6cd955[SDN/RX^] library entering the scene in late 2019. The library brought with it a lighter footprint, as well as a more straightforward implementation of features to reduce confusion and errors (therefore also improving efficiency) in development and production. SDN/RX naturally became a candidate to replace the heavier SDN-OGM (Spring Data Neo4j + Object Graph Mapper libraries) solution and became the https://medium.com/neo4j/goodbye-sdn-%EF%B8%8Frx-eccee8e18d00[decided replacement in summer of 2020^]. The new https://neo4j.com/blog/announcing-spring-data-neo4j-6-0/[SDN 6^] became the standard last fall with the official Spring release train.
+
+Those familiar with or still running applications on the previous SDN 5 might wonder what the changelog will look like for their applications or whether they truly want to embark on a major version upgrade. This blog post will start a series outlining the differences between Spring Data Neo4j 5 and Spring Data Neo4j 6 and what migration looks like for many applications. Project code and examples will accompany each step, covering as many common scenarios as possible. If you have questions along the way, don't hesitate to contact https://jmhreif.com/about/[me^] or the https://community.neo4j.com/c/drivers-stacks/spring-data-neo4j-ogm/30[SDN engineers^]. :)
+
+== SDN 5 to 6: Two key differences
+
+There are several feature changes and improvements (which we will cover in upcoming sections and posts), but if someone asked me to categorize everything into memorable key points, I would list the following:
+
+1. *Remove/transfer functionality of OGM* - this contributes to a lighter footprint, plus removing overhead that often caused confusion and inefficiency. It also takes advantage of some built-in capabilities of Spring commons and Spring Data, transferring certain functionality from a separate library to something out-of-the-box.
+2. *Add reactive support and features* - with Spring supporting and weighing in heavily on reactive development and Neo4j drivers providing reactive operations from the server side, it felt natural to extend these features to the Spring Data Neo4j library. This gives users the ability to fine tune the size and volume of the data pipe from the bottom to the top of the stack with reactive development methods.
+
+Our migration path actually mirrors these two overarching changes with two steps to get from an application in SDN 5 to one in SDN 6. Let's see our migration steps.
+
+1. *SDN5/OGM -> SDN6 imperative application:* we will start from an existing application built with SDN 5 and OGM, showing what it looks like and the features it provides, then migrate to SDN 6, retaining the imperative code (non-reactive). Since SDN 5 only supported imperative methods, this allows us to focus on only the changes between SDN 5 and 6, and not worry about changes to data structures.
+2. *SDN6 imperative -> SDN6 reactive:* we will start where we left off in the last step (with an SDN6 imperative application) and migrate it to utilize the reactive capabilities provided. We will see how to use reactive methodologies and how this functionality can help our applications.
+
+No matter where your application currently is in this process and where you want to end up, this migration process should allow anyone to jump in and complete steps needed to get from a current place to the goal.
+
+== Background
+
+I won't spend too long here, as there is plenty of material on the history of Spring Data Neo4j, but the integration between Spring and Neo4j has been around since the early years of Neo4j itself.
+
+Since then, both Spring and Neo4j have grown in popularity and usage, and the integration project between them has, as well. When I joined Neo4j as an employee in early 2018, Spring Data Neo4j 5 had https://neo4j.com/blog/spring-data-neo4j-5-0-release/[recently been released^]. 
+
+The components of the Spring Data Neo4j 5 plus the object graph mapping libraries combined caused many headaches - both for engineers, as well as customers. This is where the idea for SDN/RX formed with the goal of more lightweight, simpler, and reactive-capable.
+
+With that brief background in mind, let's take a look at the architectures between the two versions of SDN.
+
+== Architecture
+
+.Spring Data Neo4j 5 + OGM
+image:/img/sdn-migration/sdn5-architecture.png[]
+
+.Spring Data Neo4j 6
+image:/img/sdn-migration/sdn6-architecture.png[]
+
+As you might notice, the OGM layer in the SDN5 architecture disappears on the SDN6 rendition. In the newer SDN, you also get the Spring transactions out of the box and don't have a separate Neo4j transaction manager.
+
+SDN6 is also built with components that can be assembled to a developer's preferences. One could use the Java driver, the Java driver with Spring Boot, or the full SDN. A developer can mix and match components to preference or needs.
+
+Next, let's explain the structure of our project code.
+
+== Github project
+
+Our code for this migration exists in a https://github.com/neo4j-examples/sdn-migration[Github repository^] with three branches. The default branch (`step3_sdn_reactive`) is our final goal application with SDN6 and reactive capabilites. Depending on your needs, you can stop at any step. Our 2-step migration process makes incremental changes within those steps, so we don't have big blocks of bundled changes to wade through. It should hopefully allow you to follow along and skip or stop when you need to.
+
+The `step1_sdn-ogm_imperative` branch is where we will begin, with an application using Spring Data Neo4j 5 that includes OGM. From there, we will begin migrating pieces of the project to get to the `step2_sdn_imperative` branch. Once we arrive there, we will again modify a few more pieces of our code to end up at the `step3_sdn_reactive` branch.
+
+Hopefully, this sets the stage and gets us ready to embark on our migration trip. With all the setup complete, we can hit the ground running with code migration in the next blog post!
+
+== Resources
+
+* Developer guide: https://neo4j.com/developer/spring-data-neo4j/[Spring Data Neo4j^]
+* Documentation: https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#reference[Spring Data Neo4j^]
+* Spring Data Neo4j docs: https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#Migrating[migration faq section^]
