@@ -19,6 +19,6 @@
 
 * Production: push to Github repository where Github Action automatically publishes
 
-`git add .
-git commit -am "<commit message>"
-git push`
+`git add .` +
+`git commit -am "<commit message>"` +
+`git push`
