@@ -1,0 +1,373 @@
+---
+date: 2021-09-09T09:00:00-06:00
+featured_image: "/img/sdn-migration/migrate-geese-farm.jpeg"
+image_credit: https://unsplash.com/photos/C8wSdXjiLMc?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["spring","neo4j","applications","development","migration"]
+title: "Winter to Spring: Migrating from Spring Data Neo4j 5 to 6, Part 2"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+Our previous post (https://jmhreif.com/blog/migrate-sdn-part1/[Part 1^]) on this topic introduced us to Spring Data Neo4j and showed the architectural differences between version 5 and the latest version 6. This post begins the migration process by taking a Spring Data Neo4j 5 application with OGM and upgrades to the dependencies and syntax changes of Spring Data Neo4j 6.
+
+Without further ado, let's dive in!
+
+== Current application overview
+
+The code for today's migration is a https://github.com/neo4j-examples/sdn-migration/tree/step1_sdn-ogm_imperative[specific branch in the migration Github repository^]. We start at the `step1` branch with SDN5/OGM and will be making changes to make the code match the `step2` branch. 
+
+In other words, `step2` code is our goal. This also means if you get lost along the way, you can check out the completed code to compare or start the next migration step.
+
+== Dependencies and pom.xml
+
+I usually like to start with the dependencies in a project first to get the updated versions and syntax of any library (plus, then my IDE will catch things, too). In our project, that means the `pom.xml` file.
+
+Let's start by updating the Spring Boot version to the current latest (`2.5.4`). This should start a Maven sync (or else you can start one manually in your IDE or at the command line), pulling in the compatible versions of any libraries in your dependency tree.
+
+[source,xml]
+```
+<!-- FROM -->
+<parent>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-parent</artifactId>
+	<version>2.3.7.RELEASE</version>
+	<relativePath/> <!-- lookup parent from repository -->
+</parent>
+
+<!-- TO -->
+<parent>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-parent</artifactId>
+	<version>2.5.4</version>
+	<relativePath/> <!-- lookup parent from repository -->
+</parent>
+```
+
+Next, I want to also set the standard Java version to Java `11`. While this isn't a requirement, and projects still support Java 8, the default tends to be 11.
+
+[source,xml]
+```
+<!-- FROM -->
+<properties>
+	<java.version>1.8</java.version>
+</properties>
+
+<!-- TO -->
+<properties>
+	<java.version>11</java.version>
+</properties>
+```
+
+*NOTE:* Syntax of Java version also changed from a `1.x` format to whole numbers, like `11`.
+
+If you didn't run a Maven sync yet, now might be a good time for that. If you already did, another one might be in order with the Java version change. Thankfully, none of our other dependencies need upgraded. The versions are either pulled from our properties or are pulled from Maven directly.
+
+== application.properties
+
+Next up are the connection details to connect to the database! After all, we can't test any of our changes unless we can test against the database itself.
+
+For Spring Data Neo4j 6, the property naming structures added some more specific identifiers in the dot-notation path and removed the `.data` identifier from the auth properties.
+
+[source,text]
+```
+//FROM
+spring.data.neo4j.uri=bolt://localhost:7687
+spring.data.neo4j.username=neo4j
+spring.data.neo4j.password=secret
+logging.level.org.neo4j.ogm=debug
+
+//TO
+spring.neo4j.uri=bolt://localhost:7687
+spring.neo4j.authentication.username=neo4j
+spring.neo4j.authentication.password=secret
+spring.data.neo4j.database=neo4j
+```
+
+We also added a database property. This is because Neo4j supports multi-database features starting in version 4.0, so we need to tell the application which database in Neo4j to use to find the data. The default database is named `neo4j`, so we are just staying with that.
+
+== Domain classes
+
+Now we are ready to dive into our data classes and map the data domain in our application. There isn't much altered in each class, so we will step through each change. Note, however, that many of the annotations need to be updated, as the package paths have changed (e.g. `@Id` and `@GeneratedValue`).
+
+We will start with the `MovieEntity` class in `src/main/java/org/neo4j/sdnlegacy/movie` and work our way through that folder, then probably hop between the `movie` and `person` folders to logically move by adding layers of functionality versus class-by-class. 
+
+First, the annotation for the domain class has changed. Instead of `@NodeEntity`, the SDN6 annotation is `@Node`. This aligns more with other Spring Data project terminology (i.e. `@Entity` for Spring Data JPA and `@Document` for Spring Data MongoDB).
+
+[source,java]
+```
+//FROM
+@NodeEntity("Movie")
+public class MovieEntity {
+}
+
+//TO
+@Node("Movie")
+public class MovieEntity {
+}
+```
+
+We also can remove the annotation for the custom converter class. Instead, we will adjust the converter class code (next) and create a bean in the application class (shown later).
+
+[source,java]
+```
+//REMOVE
+@Convert(Tagline.TaglineConverter.class)
+```
+
+Next, we will go ahead and update the converter domain class for `Tagline`. As a quick explanation, there are various https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#conversions[out-of-the-box conversions^] for different data types, so that you can convert a value of one type in the database to a value of another type in the application, and vice versa. However, for types that are outside the standard data types (like our Tagline type), we need to create a https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#custom.conversions[custom conversion^]. This tells the application that this type doesn't exist in the database, so we need to convert it from the app's `Tagline` type to a `String` property in the database.
+
+[source,java]
+```
+//FROM
+public static class TaglineConverter implements AttributeConverter<Tagline, String> {
+	@Override public String toGraphProperty(Tagline value) {
+		return value.getTagline();
+	}
+
+	@Override public Tagline toEntityAttribute(String value) {
+		return new Tagline(value);
+	}
+}
+
+//TO
+public static class TaglineConverter implements GenericConverter {
+    @Override
+    public Set<ConvertiblePair> getConvertibleTypes() {
+        Set<ConvertiblePair> convertibleTypes = new HashSet<>();
+        convertibleTypes.add(new ConvertiblePair(Value.class, Tagline.class));
+        convertibleTypes.add(new ConvertiblePair(Tagline.class, Value.class));
+        return convertibleTypes;
+    }
+
+    @Override
+    public Object convert(Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
+        if (Value.class.isAssignableFrom(sourceType.getType())) {
+            return Tagline.of(((Value) source).asString());
+        } else {
+            return Values.value(((Tagline) source).getTagline());
+        }
+    }
+}
+```
+
+What has mostly changed in the code above is the lower half of the `Tagline` class where we are actually converting the values. 
+
+In the SDN5 version, we pass our data types into the `AttributeConverter<Tagline, String>`, then add two methods - one to convert from `Tagline` to `String` and one to do the reverse conversion.
+
+In the SDN6 version, we are using a `GenericConverter` that allows us to be more flexible with the data types. Then, we also have two methods defined within it - one to list the conversion pairs we need to convert between (in this case, `Tagline` to `String` and vice versa) and one to handle the physical conversion.
+
+Now let us look at the `Person` class (`src/main/java/org/neo4j/sdnlegacy/person`).
+
+[source,java]
+```
+//FROM
+@NodeEntity
+public class Person {
+}
+
+//TO
+@Node(primaryLabel = "Person")
+public class Person {
+}
+```
+
+In the above code, adding the `primaryLabel` to our annotation tells us that there can be multiple labels on these nodes, but the primary one we want to use is the `Person` label.
+
+For our next class, let us tackle the relationship between person and movie entities - mapped in our `ReviewRelationship` class.
+
+[source,java]
+```
+//FROM
+@RelationshipEntity("REVIEWED")
+public class ReviewRelationship {
+}
+
+//TO
+@RelationshipProperties
+public class ReviewRelationship {
+}
+```
+
+Even though the annotation name only has a slight alteration in the above block, there is actually a larger architectural change behind this. The relationship entity has been moved to a pass-through entity, focusing on the properties that connect two entities, rather than being a separate entity itself. 
+
+This more aligns with development practices in other Spring Data projects and also promotes good data access practices in Neo4j. While relationships are separate entities and stored physically in the database, a relationship cannot exist without the entities it connects (nodes).
+
+This logical difference extends further into the relationship class where we substitute the start node and end node annotations for a target node annotation. This supports the idea of a pass-through where one node points to the relationship class, and the relationship class points to the next node. By contrast, the prior start and end node annotations implied a separate entity that pointed to nodes on either side.
+
+[source,java]
+```
+//FROM
+@StartNode
+private Person personNode;
+@EndNode
+private MovieEntity movieNode;
+
+//TO
+@TargetNode
+private MovieEntity movie;
+```
+
+== Projection classes
+
+We now upgraded our main domain classes, but there are a couple of other classes we haven't looked at yet - `Actor` and `ActedInMovieProjection`. These are two classes that we will look at next after a brief intro to projections.
+
+I think of projections kind of like a view (i.e. table view) where we can customize which portions or how a domain class is returned. For instance, we can remove fields or add other relevant entities to our projected view of an entity.
+
+The two classes mentioned above present two different types of projections offered in Spring Data Neo4j - https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#projections.interfaces[interface-based projections^] and https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#projections.dtos[class-based projections (DTOs)^]. Let's dive in!
+
+First, we will start with the interface-based projection - `ActedInMovieProjection`.
+
+[source,java]
+```
+//FROM
+@QueryResult
+public class ActedInMovieProjection {
+    //also includes override methods for equals(), hashcode(), and toString() methods
+}
+
+//TO
+public interface ActedInMovieProjection {
+}
+```
+
+The starting version of the code above uses the `@QueryResult`, which is actually a https://docs.spring.io/spring-data/neo4j/docs/5.3.8.RELEASE/reference/html/#reference_programming-model_mapresult[map-to-entity converter^], rather than a true projection. It takes the returning data and maps it, as long as the type matches in some fashion. In contrast, SDN6 drops the map converter and uses https://docs.spring.io/spring-data/neo4j/docs/5.3.8.RELEASE/reference/html/#reference_programming-projections[projections^] instead that restrict mapping to data that matches the underlying model. For our updated code, we migrate the `@QueryResult` class to an interface-based projection, which provides accessor methods for the fields.
+
+Let's look at the `Actor` class now.
+
+[source,java]
+```
+//FROM
+public class Actor {
+	private final String name;
+
+	//constructor and getter method
+}
+
+//TO
+public class Actor {
+	private final String name;
+
+    //constructor and getter method
+
+	public static class ActorConverter implements GenericConverter {
+		@Override
+		public Set<ConvertiblePair> getConvertibleTypes() {
+			return Collections.singleton(new ConvertiblePair(Actor.class, Value.class));
+		}
+
+		@Override
+		public Object convert(Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
+			return Values.value(((Actor) source).getName());
+		}
+	}
+}
+```
+
+We have seen the converter code before - from our `Tagline` class above. With the `Actor` converter, we are translating to and from the `Value` type, as well. In both cases, these are not known types to the Neo4j driver (or database), so we need to have the conversion methods to translate from our application types (`Tagline` or `Actor`) to Neo4j-understandable types (`Value`).
+
+However, it is different from our `Tagline` class because `Actor` is not a field in a domain class. Instead, it is a parameter for a method and query (in https://github.com/neo4j-examples/sdn-migration/blob/step2_sdn_imperative/src/main/java/org/neo4j/sdnlegacy/movie/MovieRepository.java#L30[`MovieRepository`^]). 
+
+You might notice that we have the conversion methods in the SDN6 code, but not in the SDN5/OGM code. Why is this? The OGM tests actually all run successfully without any additional conversion code (I checked again, just to be sure). :) So why, then, do we need the extra code to explicitly convert in SDN6? The reason is that SDN5 would translate objects to JSON (for Jackson), which allows OGM to map objects and values using dot-notation strings. While this seems like a nice, "black magic" feature, it is extremely error-prone. These mappings cannot really retain data types and can make for inaccurate mappings. So, though the SDN6 adds a few more lines of code, it ensures type-safe data mapping and accurate return results.
+
+The last components for our migration are the two repository interfaces - `MovieRepository` and `PersonRepository`. Let's work through those!
+
+== Repositories
+
+We will start with the `PersonRepository` because there are fewer methods. Our code diff is actually very small. The only difference is the first custom query (`@Query`). We can look at the difference more closely below.
+
+[source,java]
+----
+//FROM
+@Query("MATCH (:Movie {title: $title})<-[:ACTED_IN]-(p:Person) RETURN p.name AS name, p.born AS born ORDER BY p.name")
+List<ActedInMovieProjection> findByActedInMovieTitle(String title);
+
+//TO
+@Query("MATCH (m:Movie {title: $title})-[r:ACTED_IN]-(p:Person) RETURN m, r, p ORDER BY p.name")
+List<ActedInMovieProjection> findByActedInMovieTitle(String title);
+----
+
+So, the true difference is in the `RETURN` statement. In the SDN5 version, we return individual properties and assign them to variables. In the SDN6 code, we return the entire objects (nodes and relationships) of `m`, `r`, and `p`. The reason for this difference is because of the data structures in SDN6, which has two aspects.
+
+First, the projection in SDN5 is actually a query result where it converts data in a map to an entity. The SDN6 version of the code uses a regular projection instead (covered earlier in this article). Second, the SDN6 data structures returned from queries are different. We can see this by comparing the code in the test (https://github.com/neo4j-examples/sdn-migration/blob/step1_sdn-ogm_imperative/src/test/java/org/neo4j/sdnlegacy/SdnLegacyApplicationTests.java#L146[SDN5^] and https://github.com/neo4j-examples/sdn-migration/blob/step2_sdn_imperative/src/test/java/org/neo4j/sdnlegacy/SdnLegacyApplicationTests.java#L154[SDN6^]). SDN6 is bringing back full objects that we need to use methods to inspect and retrieve properties. This means a cleaner and more accurate mapping because we know we are returning data results that map directly to our application entities.
+
+Now, even though the above custom query is the only visible change in code, there is one other difference in the format of return results in the `tomHanksCareer()` method. Code is below.
+
+[source,java]
+----
+@Query("MATCH (p:Person{name:'Tom Hanks'})-[r:ACTED_IN]->(m:Movie) return p,r,m")
+List<Person> tomHanksCareer();
+----
+
+The query is finding the `Person` node for `Tom Hanks`, then pulling all of his movies to get a look at his acting career. Both the SDN5 and SDN6 versions of the above code are the same; however, the comments in the SDN6 code (alongside the tests) shed a bit more light on what we can expect in the return results. The comment sends us to the test to understand semantic changes and says we can get the same return results by changing the SDN6 return statement to `RETURN p, collect(r), collect(m)`.
+
+Let's look at the test for more info. 
+
+[source,java]
+----
+//FROM
+@Test
+void tomHanksCareer() {
+	assertThat(personRepository.tomHanksCareer())
+		.overridingErrorMessage("Expected Spring Data Neo4j/OGM to resolve the returned subgraph to a single node entity")
+		.hasSize(1)
+		.extracting(Person::getName)
+		.containsOnly("Tom Hanks");
+}
+
+//TO
+@Test
+void tomHanksCareer() {
+	List<Person> results = personRepository.tomHanksCareer();
+	assertThat(results)
+		.overridingErrorMessage("Expected Spring Data Neo4j 6 to return as many rows as distinct patterns")
+		.hasSize(12)
+		.extracting(Person::getName)
+		.containsOnly("Tom Hanks");
+	Set<Integer> hashCodes = collectIdentityHashCodes(results);
+	assertThat(hashCodes)
+		.overridingErrorMessage("Expected Spring Data Neo4j 6.0.2+ to deduplicate instances")
+		.hasSize(1)
+		.containsOnly(hashCodes.iterator().next());
+}
+----
+
+We see that the SDN5 rendition should produce a single person entity coming back (`Tom Hanks`), tied to several movies. For the SDN6 version, we see that we have a collection of persons returned (12!), and if we extract the `name` property from each one, we find that they are all `Tom Hanks`. We know we don't have duplicate nodes for `Tom Hanks` in our database (verified using the `hashCodes` block), so what happened?
+
+SDN6 is returning a list of [.underline]#unique patterns# for the query, which will manifest into the results below.
+
+[source,text]
+----
+PersonA | Movie1
+PersonA | Movie2
+PersonA | Movie3
+....
+----
+
+By contrast, SDN5 aggregates by starting entity (`Person`), putting results into something like the following:
+
+[source,text]
+----
+PersonA | Movie1, Movie2, Movie3, ....
+----
+
+The SDN6 version actually works more similarly to Cypher functionality. If you run the custom query in the browser alone and select the `table` view in the result pane, you will see a list of the same person tied to different movies.
+
+Now that we have covered everything for queries with `Person`, let's look at the `MovieRepository`!
+
+Even though, the `MovieRepository` has a lot more methods, there are actually no differences in the code or the result sets. All of the code should look the same, as well as return the same things.
+
+== Wrapping up!
+
+We have covered a lot of ground in this post, going from SDN5 with OGM to SDN6 (imperative style). From the pom.xml to domain entities and repositories, we inspected each of the differences and adjustments a developer would need to make to existing applications to upgrade the functionality. We even translated some custom functionality through converters, projections, and queries with minimal effort.
+
+In the next post, we will go one step further and migrate our SDN6 application from imperative style code to reactive functionality, covering both the conceptual and code changes.
+
+Happy coding!
+
+== Resources
+
+* Developer guide: https://neo4j.com/developer/spring-data-neo4j/[Spring Data Neo4j^]
+* Documentation: https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#reference[Spring Data Neo4j^]
+* SDN docs: https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#Migrating[Migration FAQ section^]
