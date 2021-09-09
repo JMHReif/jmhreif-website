@@ -1,0 +1,24 @@
+= Professional website for Jennifer Reif
+
+* Website: https://jmhreif.com[https://jmhreif.com^]
+
+== Tools used
+
+* Domain site: purchased for low cost on https://www.namecheap.com/[Namecheap^]
+* https://gohugo.io/[Hugo^] static site builder
+* Hugo theme: https://themes.gohugo.io/themes/gohugo-theme-ananke/[ananke^] with a few customizations
+* Content (blog posts): written in https://docs.asciidoctor.org/asciidoc/latest/syntax-quick-reference/[Asciidoc^]
+* Photos: mostly https://unsplash.com/[Unsplash^] with some https://www.google.com/imghp?hl=en&authuser=0&ogbl[Google images^] (all Unsplash images include credit to authors)
+* Github Actions: build and publish content
+
+== Notes to build
+
+* Testing: run below command to host on local test server
+
+`hugo server -D`
+
+* Production: push to Github repository where Github Action automatically publishes
+
+`git add .
+git commit -am "<commit message>"
+git push`
