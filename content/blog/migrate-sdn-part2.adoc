@@ -358,6 +358,29 @@ Now that we have covered everything for queries with `Person`, let's look at the
 
 Even though, the `MovieRepository` has a lot more methods, there are actually no differences in the code or the result sets. All of the code should look the same, as well as return the same things.
 
+Last, but not least, is the bean we need in the application class for the type conversions (`Tagline` and `Actor`).
+
+== Application class
+
+Moving over to the `SDNLegacyApplication.java`, we will need to add a few lines of code that creates a bean for the converters to and from `Actor` and `Tagline` types in our application.
+
+[source,java]
+----
+//TO
+@Bean
+public Neo4jConversions neo4jConversions() {
+	List<GenericConverter> converters = new ArrayList<>();
+	converters.add(new Tagline.TaglineConverter());
+	converters.add(new Actor.ActorConverter());
+
+	return new Neo4jConversions(converters);
+}
+----
+
+This registers the converter with SDN, notifying the framework to use this custom conversion, rather than a default, internal converter. This is detailed a bit more in the https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#custom.conversions[documentation on custom conversions^], as well.
+
+The code creates a list for the converters, then add each converter - one for `Tagline`, one for `Actor` - to the list. It registers both converters, so that when the application comes across one of the custom types, it knows exactly how to map them.
+
 == Wrapping up!
 
 We have covered a lot of ground in this post, going from SDN5 with OGM to SDN6 (imperative style). From the pom.xml to domain entities and repositories, we inspected each of the differences and adjustments a developer would need to make to existing applications to upgrade the functionality. We even translated some custom functionality through converters, projections, and queries with minimal effort.
