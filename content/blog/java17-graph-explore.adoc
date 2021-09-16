@@ -1,0 +1,137 @@
+---
+date: 2021-09-14T09:00:00-06:00
+featured_image: "/img/java17/unsplash-java-laptop.jpeg"
+image_credit: https://unsplash.com/photos/It0DCaCBr40?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["java","neo4j","analysis","cypher","queries"]
+title: "Java 17: Explore the newly-released Java version in a graph database!"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+I've recently been playing around with a JDK data set that details the historical library changes of the versions of Java, and with the release of Java 17 today (September 14!), I thought it would be a good time to explore this data set a bit more with others. I invite you to join me and to continue with additional exploration and projects!
+
+The data set is pulled from a https://github.com/marchof/java-almanac[Marc Hofman's Github repository for the Java Almanac^] that also feeds a web browser version for the https://javaalmanac.io/[javaalmanac.io^] website. All of the https://github.com/marchof/java-almanac/tree/master/site/data/jdk/versions[JDK data^] is organized into JSON files for each Java version, then folders for each version contain diff files of the changes between that version and any previous version(s). The information is quite extensive and heavily nested, forming a sort of hierarchy or tree when drawn out or visualized.
+
+Trying to put this data into various storage formats could certainly be very complex and likely result in complicated queries (i.e. lots and lots of joins). However, putting this into a graph seemed like a cleaner fit, especially for some of our use cases (detailed in just a minute) and made for some nice visualizations, as well as a fun experiment with a Spring Data Neo4j (SDN) application.
+
+*Note:* There were some modeling decisions I had to test and tweak. Hopefully, I can detail that in another post. :)
+
+All of the code for today's post is available and able to be replicated from https://github.com/JMHReif/graph-demo-datasets/tree/main/java-versions[one of my Github repositories^]. You can replicate, follow along, tweak, if you wish. Without further ado, let's take a look at some of the questions I wanted to solve with this data set in a graph!
+
+== Use case
+
+There are a variety of problems we might want to solve using our data set, but I came up with a few initial ones. Feel free to think of your own or adjust mine! Some questions that we might want to ask of this data set are as follows:
+
+* What are the changes between any Java version (e.g. 8, 11, or 16) to 17?
+* What has changed in the java.time package between version 16 and 17?
+* What has been added/removed/etc in Java version 17?
+
+We will take a look at some of these using queries…but first, let's look at the data model as a graph and walkthrough the import.
+
+== Data model and import
+
+When I started exploring this data set in the Github repository and on the website, I thought of a few different ways to model it as a graph. I could probably spend an entire post on that separately, but I'll focus on what ended up being the current model.
+
+To start, I went to the whiteboard and drew the Java version entities with diffs, and then basically created a tree of the different types of changes beneath that. As an example, I looked at a page like https://javaalmanac.io/jdk/17/apidiff/16/[the one showing the delta between Java 16 and 17^] to see how many nesting levels I might need and the types of differences we might see. Honestly, though, I didn't look at every possible change type - I let Cypher (Neo4j's query language) do some of the work here. I ended up with something along the lines of the image shown below.
+
+image::/img/java17/java-version-data-model.jpg[]
+
+I toyed quite awhile with the relationship names between the `JavaVersion` and `Diff` entities, and I'm still not super confident about the final versions (shown later). But, this was a good starting point to build my import statements.
+
+I ended up just using Cypher for the import because it can be applied with any instance of Neo4j, and is accessible for a wide audience to replicate. You can copy/paste all of the contents of the https://github.com/JMHReif/graph-demo-datasets/blob/main/java-versions/java-version-import.cypher[java-version-import.cypher^] file directly to a Neo4j Browser UI and import everything exactly as I have it. 
+
+*Note:* for Neo4j instances outside of https://sandbox.neo4j.com/[Sandbox^] or https://console.neo4j.io/[Aura^], you will need to add the https://neo4j.com/labs/apoc/[APOC plugin^] for the import to succeed.
+
+Once those Cypher statements complete, you can run `CALL apoc.meta.graph()` in the Neo4j Browser to see the data model. It should look like the one shown below.
+
+image::/img/java17/java-version-browser-model.png[]
+
+Now that we have our data model, we can run some queries and explore Java 17! Yay!
+
+== Querying
+
+We can take our 3 questions from earlier and write queries to answer those. Let's take a look!
+
+=== What are the changes between any Java version (e.g. 8, 11, or 16) to 17?
+
+We could write some pretty specific queries to return the changes to annotations or methods or something else entirely, but I've put together a general query that simply returns all the diffs between Java 16 and Java 17.
+
+[source,cypher]
+----
+//Find changes from version 16 to 17
+MATCH (j:JavaVersion {version: "17"})-[r:FROM_NEWER]->(d:VersionDiff)<-[r2:FROM_OLDER]-(j2:JavaVersion {version: "16"})
+MATCH (d)-[r3:HAS_DELTA*1..4]->(delta)
+RETURN d, r3, delta;
+----
+
+.Results:
+image:/img/java17/java16to17-changes-labels.png[]
+image:/img/java17/java16to17-changes-results.png[]
+
+Now, my browser only limited the results to 300 nodes (for performance of rendering in d3 javascript), so we could actually change our browser settings to return more or view these another way. But, our map of entity types above the image shows that most of the changes are to *methods* in the JDK. We could drill into these a bit more to see exactly what changed, but this gives us a good start. According to our visualization, it shows only a handful of other types of changes are included.
+
+*Note:* a recent update to the Neo4j Bloom visualization tool allows you to see hierarchies in a tree-like depiction. I haven't tried it yet, but this would be an interesting query to try with that!
+
+Ok, this gives us a good overview of what’s involved between Java 16 and 17, but let's focus on one particular package in the next query.
+
+=== What has changed in the java.time package between version 16 and 17?
+
+We could pick a variety of packages, but the package for temporal values is probably used a lot, so I'm expecting several projects and businesses might be interested in changes to `java.time`. We could write a query like the one below to find out.
+
+[source,cypher]
+----
+//Find the changes in java.time package between 16 and 17
+MATCH (j:JavaVersion {version: "17"})-[:FROM_NEWER]->(d:VersionDiff)<-[:FROM_OLDER]-(j2:JavaVersion {version: "16"})
+MATCH (d)-[:HAS_DELTA*1..2]->(p:Package {name: 'java.time'})-[r:HAS_DELTA*1..2]->(delta)
+RETURN *;
+----
+
+.Results:
+image:/img/java17/java16to17-timepackage-results.png[]
+
+Our results show that a few classes and several methods make up the bulk of the changes for the `java.time` package between versions 16 and 17. However, there is a field and an interface scattered in there, as well.
+
+This could help us better understand which applications would need updated and allow us to write inspection queries to see which of our projects need updated with the latest methods or other types.
+
+Let's wrap up our analysis with finding out what has been added, or removed, or something else in Java 17.
+
+=== What has been added/removed/etc in Java version 17?
+
+We can look at new features and functionality by seeing what has been added in the latest JDK. Here is our query:
+
+[source,cypher]
+----
+//Find changes in Java 17
+MATCH (j:JavaVersion {version: "17"})-[:FROM_NEWER]->(d:VersionDiff)<-[:FROM_OLDER]-(j2:JavaVersion {version: "16"})
+MATCH (d)-[r:HAS_DELTA*1..4]->(delta)
+WITH delta.status as status, collect(DISTINCT labels(delta)) as type, count(delta) as count
+RETURN status, type, count
+ORDER BY count DESC;
+----
+
+.Results:
+image:/img/java17/java17-changes-type.png[]
+
+According to the table results above, we have quite a bit of added functionality, followed by some things that are marked `notmodified`. I'm not sure what that means, so it could be interesting to dig a bit more to understand that status.
+
+== Next steps
+
+There is quite a bit of info that we could analyze with this data set, such as trends throughout the years of 17 Java versions. I also did not import the tags from the https://github.com/marchof/java-almanac[javaalmanac^] data set, so we could add that and investigate what has been deprecated or marked for removal in future versions.
+
+Modeling could also be another topic to discover different ways to model this information in a graph. Would you have modeled it differently from the one we used today?
+
+I have also written a Spring Data Neo4j application that is https://github.com/JMHReif/sdn-aura-java-versions[published on Github^], so we could dive in-depth on the process for modeling and building that application.
+
+== Wrapping up!
+
+I hope you enjoyed this quick analysis of the new Java 17 version in a Neo4j graph database! I would love to hear your thoughts or see your ideas and content around this data set in Neo4j, too.
+
+Happy coding!
+ 
+== Resources
+
+* Graph data: https://github.com/JMHReif/graph-demo-datasets/tree/main/java-versions[Java version graph data repository^]
+* Data source: https://github.com/marchof/java-almanac[Javaalmanac Github repository^]
+* Application: https://github.com/JMHReif/sdn-aura-java-versions[Spring Data Neo4j with Java data and Neo4j Aura^]
