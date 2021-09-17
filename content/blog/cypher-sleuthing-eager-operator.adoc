@@ -120,7 +120,7 @@ image:/img/eager/create-customer-employee-example.png[]
 
 Now, if we run this query with the `PROFILE` keyword in front of it, we see that Cypher isn’t invoking eager here.
 
-image::profile-customer-employee-example.png[]
+image::/img/eager/profile-customer-employee-example.png[]
 
 Why is that? Doesn’t the relationship depend on the creation of the nodes? Actually, no, it does not. This is because these writes don’t actually conflict with one another. We are not trying to write and then read the same data again. We are writing 3 separate operations — write `Customer` node, write `Employee` node, write `Customer/Employee` relationship.
 
