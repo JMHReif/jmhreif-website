@@ -1,0 +1,212 @@
+---
+date: 2021-09-22T09:00:00-06:00
+featured_image: "/img/sdn-migration/migrate-golden-gate-bridge.jpeg"
+image_credit: https://unsplash.com/photos/_dwwHrYRWcM?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["spring","neo4j","applications","development","migration"]
+title: "Winter to Spring: Migrating from Spring Data Neo4j 5 to 6, Part 3"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+You may have heard quite a bit of buzz around reactive programming or reactive principles in recent months or years. Some people say it is the future, while others prefer their existing monoliths. So what is all the fuss actually about? What is reactive? Is it beneficial?
+
+As with all things in life, it depends. :) Remember, that technical decisions are often large investments of time - resources to create it and/or maintain for lengths of time. We should evaluate whether a technology or methodology fits the business need and existing resource (time, people, budget) constraints. Would you be the only one supporting or willing to learn the new technology? Then, probably not a wise decision (for you or the company).
+
+Ok, let's talk a bit more about what reactive is and how it can help.
+
+== Reactive principles
+
+Reactive programming was built upon the principles outlined in the https://www.reactivemanifesto.org/[reactive manifesto^]. There are several implementations of the reactive manifesto, but one of the more popular ones is https://projectreactor.io/[Project Reactor^], which is used in https://spring.io/reactive[Spring^].
+
+The principles of the manifesto attempt to solve problems in the data pipe by allowing participants in a system (such as clients and servers) the ability to reduce or expand capacity of the data flow based on each component's needs. Reactive development can prevent overload for a particular device that causes failures or collapses, maintaining better availability and reliability of systems.
+
+Note the word [.underline]#can# from that last sentence. As with all things, there is no "one-size-fits-all", and it doesn't cure underlying issues. However, in situations where issues exist or there are unstable environments, reactive might provide the stability needed for a better-performing system.
+
+== Current application overview
+
+As with our previous posts on this topic, the code for today's migration is a https://github.com/neo4j-examples/sdn-migration/blob/step2_sdn_imperative/pom.xml[specific branch in the migration Github repository^]. Today, we can begin in the `step2` branch with SDN6 imperative and will be updating the code to make it match the `step3` branch. So, `step3` is our goal! You are welcome to check out the `step2` code and follow along - or, if you joined me in the last post, you can use your completed code from the first part of the migration.
+
+Let's get started!
+
+== Dependencies and pom.xml
+
+Just as we did before, we will start with the `pom.xml` file to see any dependency changes.
+
+[source,xml]
+```
+<!-- ADD -->
+<dependency>
+	<groupId>io.projectreactor</groupId>
+	<artifactId>reactor-core</artifactId>
+</dependency>
+<dependency>
+	<groupId>io.projectreactor</groupId>
+	<artifactId>reactor-test</artifactId>
+	<scope>test</scope>
+</dependency>
+```
+
+In our code block above, we have only added two dependencies - both for reactive support. One dependency provides reactive functionality for application code, and one handles testing support. We don't need to change our `spring-boot-starter-data-neo4j` dependency because the Neo4j driver in that package supports both imperative and reactive communications.
+
+There aren't any changes required in the `application.properties` file for connecting to the database (since SDN6 supports both imperative and reactive to/from the database). We also do not need to change anything in our domain classes (`MovieEntity`, `Tagline`, `Person`, `Actor`, `ActedInMovieProjection`, `ReviewRelationship`). This is because we're not altering how the data is stored or how it is mapped between the database and application. Reactive programming is all about data _flow_, so we only need to adjust the capacity of the pipe....which means making changes to our repositories for this project.
+
+== Repositories
+
+This round, let us start with the `MovieRepository` interface before moving to the `PersonRepository` interface. There are not very many changes in either case, but let's take a look at each of the updates individually.
+
+[source,java]
+----
+//FROM
+public interface MovieRepository extends Neo4jRepository<MovieEntity, String> {
+}
+
+//TO
+public interface MovieRepository extends ReactiveNeo4jRepository<MovieEntity, String> {
+}
+----
+
+The difference here is in the extended class. The imperative version of the code uses the standard `Neo4jRepository<>`, where the reactive rendition of the code uses the `ReactiveNeo4jRepository<>`. The reactive repository gives us access to reactive methods, which include the capability to control and limit the amount of passing data for intervals of time.
+
+Our next changes in the repository are to the return types on the methods.
+
+[source,java]
+----
+//FROM
+MovieEntity findByTitle(String movieTitle);
+
+//TO
+Mono<MovieEntity> findByTitle(String movieTitle);
+----
+
+[source,java]
+----
+//FROM
+@Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = $actorName RETURN m")
+List<MovieEntity> findMoviesByActorNameWithCypherPlaceholder(String actorName);
+
+//TO
+@Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = $actorName RETURN m")
+Flux<MovieEntity> findMoviesByActorNameWithCypherPlaceholder(String actorName);
+----
+
+[source,java]
+----
+//FROM
+@Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = ?#{[0]} RETURN m")
+List<MovieEntity> findMoviesByActorNameWithSpElIndexPlaceholder(String actorName);
+
+//TO
+@Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = ?#{[0]} RETURN m")
+Flux<MovieEntity> findMoviesByActorNameWithSpElIndexPlaceholder(String actorName);
+----
+
+[source,java]
+----
+//FROM
+@Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = :#{[0]} RETURN m")
+List<MovieEntity> findMoviesByActorNameWithSpElIndexColonPlaceholder(String actorName);
+
+//TO
+@Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = :#{[0]} RETURN m")
+Flux<MovieEntity> findMoviesByActorNameWithSpElIndexColonPlaceholder(String actorName);
+----
+
+[source,java]
+----
+//FROM
+@Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = :#{#actorName} RETURN m")
+List<MovieEntity> findMoviesByActorNameWithSpElNamedPlaceholder(@Param("actorName") String actorName);
+
+//TO
+@Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = :#{#actorName} RETURN m")
+Flux<MovieEntity> findMoviesByActorNameWithSpElNamedPlaceholder(@Param("actorName") String actorName);
+----
+
+[source,java]
+----
+//FROM
+@Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = :#{#actor.name} RETURN m")
+List<MovieEntity> findMoviesByActorNameWithSpElSearchObjectPlaceholder(@Param("actor") Actor actor);
+
+//TO
+@Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = :#{#actor.name} RETURN m")
+Flux<MovieEntity> findMoviesByActorNameWithSpElSearchObjectPlaceholder(@Param("actor") Actor actor);
+----
+
+In each of the cases, we have a one-word change for the return type. The reactive code either returns a `Mono<>` or a `Flux<>` type. The `Mono<>` says we are only expecting 0 or 1 values to return, where the `Flux<>` tells us we can expect 0 to n values to return.
+
+For instance, if we query for a very popular actor, we could get quite a few titles back. If our bandwidth is low or busy, then the return results could easily overwhelm the pipeline and cause failures. Knowing this, we could add some guidelines to that specific method to apply https://www.reactivemanifesto.org/glossary#Back-Pressure[back pressure^] (combined with a rate of speed) in order to specify how much of the return results to feed at intervals. As an example, we may want to return four movies every two seconds, or we could tell the system to give us five movies every second. We can control how much data is fed back and how often.
+
+The data feed stops when all of the results have been returned. So, no matter how many queries are sent to the system, if back pressure is in place, we ensure the receiving end does not reach a point of overwhelm and failure. It may take time to receive everything, but we will not have a crash, causing things to get further behind.
+
+The same changes are going to exist for our `PersonRepository` interface, and just like before, we will separate them to make alterations easier to spot.
+
+[source,java]
+----
+//FROM
+public interface PersonRepository extends Neo4jRepository<Person, Long> {
+}
+
+//TO
+public interface PersonRepository extends ReactiveNeo4jRepository<Person, Long> {
+}
+----
+
+Just as before, we need access to the reactive methods to be able to manipulate data flow.
+
+[source,java]
+----
+//FROM
+List<Person> findByReviewedMoviesMovieTitle(String reviewedMovieTitle);
+
+//TO
+Flux<Person> findByReviewedMoviesMovieEntityTitle(String reviewedMovieTitle);
+----
+
+[source,java]
+----
+//FROM
+List<Person> findByDirectedMoviesTitle(String directedMovieTitle);
+
+//TO
+Flux<Person> findByDirectedMoviesTitle(String directedMovieTitle);
+----
+
+[source,java]
+----
+//FROM
+@Query("MATCH (m:Movie {title: $title})-[r:ACTED_IN]-(p:Person) RETURN m, r, p ORDER BY p.name")
+List<ActedInMovieProjection> findByActedInMovieTitle(String title);
+
+//TO
+@Query("MATCH (m:Movie {title: $title})-[r:ACTED_IN]-(p:Person) RETURN m, r, p ORDER BY p.name")
+Flux<ActedInMovieProjection> findByActedInMovieTitle(String title);
+----
+
+We see the same as we saw in our `MovieRepository` where our return type for each method has changed to either `Mono<>` or `Flux<>` in order to be able to handle data flow rates, if necessary. You might also note that the `tomHanksCareer()` method is not listed in the SDN6 reactive version. There isn't any specific reason for this, as we can include it in reactive and update the return type, just as we did with the other methods.
+
+== Quick note: Changes to test class
+
+There aren't any other changes that need to be made to our project code. However, if you take a look at the https://github.com/neo4j-examples/sdn-migration/blob/step3_sdn_reactive/src/test/java/org/neo4j/sdnlegacy/SdnLegacyApplicationTests.java[test class^], you will notice a few more.
+
+They are mostly out-of-scope for this post, but there is a different template being used (`ReactiveNeo4jTemplate`), and the results of each test are checked using `StepVerifier`, rather than `assert` statements.
+
+== Wrapping up!
+
+As we review this post's migration, reactive might provide gains in stability and consistency in technology systems, but it may also decrease performance in some cases. Thorough evaluation of the costs and benefits will help stakeholders decide whether the value fits the business need and outweighs any costs.
+
+This post might have seemed lighter on the changes, but we altered quite a bit of our functionality through reactive method access. There were minor additions to the `pom.xml` file for reactive dependencies, then we skipped right over to the repositories to extend the `ReactiveNeo4jRepository<>` and modify the return type of the methods to either `Mono<>` or `Flux<>`. Finally, we breezed through a couple of the switches in logic from the test class for how we handle tests in an imperative versus reactive environment.
+
+This completes our migration from Spring Data Neo4j 5 and OGM to Spring Data Neo4j 6! If your application is still using SDN5/OGM, now you have a couple of options for migration - to SDN6 imperative, or on up to SDN6 reactive. Our migration path made this process simpler by handling changes in a 2-step process (SDN5 -> SDN6 imperative -> SDN6 reactive). In my mind, at least, taking the whole migration at once would be a lot trickier and more error-prone. This way, it also allows you to choose where you want to land, whether that's still with the imperative model or to the reactive model. Thanks for following along, and feel free to reach out via https://stackoverflow.com/questions/tagged/spring-data-neo4j[StackOverflow^], the https://community.neo4j.com/[Neo4j forum^], or on the https://github.com/spring-projects/spring-data-neo4j[Github project^] itself if you have any questions!
+
+Happy coding!
+
+== Resources
+
+* Github project: https://github.com/neo4j-examples/sdn-migration[SDN5 to SDN6 migration^]
+* Developer guide: https://neo4j.com/developer/spring-data-neo4j/[Spring Data Neo4j^]
+* Documentation: https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#reference[Spring Data Neo4j^]
+* SDN docs: https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#Migrating[Migration FAQ section^]
+* Github project: https://github.com/spring-projects/spring-data-neo4j[Spring Data Neo4j^]
