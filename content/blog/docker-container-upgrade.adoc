@@ -1,0 +1,161 @@
+---
+date: 2021-10-15T09:00:00-06:00
+featured_image: "/img/containers/unsplash-containers.jpeg"
+image_credit: https://unsplash.com/photos/tjX_sniNzgQ?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["docker","neo4j","mongodb","mariadb","upgrade","container"]
+title: "Container Upgrade - Experiences Updating Three Databases"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+I created a demo project a couple of years ago that included a lot of technical setup - containers, data import, queries, and such. I presented it for a conference or two, and while it was one of my favorite projects, it was a lot of preparation for the live demo. 
+
+I recently rediscovered the project, and submitted it to a couple of conferences. It got accepted, so I needed to upgrade the versions of all the software. With so much setup in the project, I thought it would certainly be a giant undertaking. However, I was pleasantly surprised on several things, even though a few things tripped me up. This blog post will document things I learned along the way, so that hopefully, you don't run into the same road blocks I did…or at least, I might help you solve them faster. With that, let's jump in!
+
+== Project background
+
+First, a bit of background on what all is involved and what I was trying to accomplish with the project.
+
+I wanted to showcase https://spring.io/projects/spring-data[Spring Data^] and the many integrations it offers. I chose integrations with key players in their respective database spaces - MariaDB (relational, open source MySQL), MongoDB (document, NoSQL), and Neo4j (graph, NoSQL). I would later import data and create applications for this, but that is outside the scope of this post.
+
+Of course, live coding is a really powerful way to demonstrate any technology, which meant I needed something manageable (i.e. similar and repeatable) to spin up each environment and data. For this, I chose Docker containers. Each of the databases in question provided a container image on Docker Hub that I could use.
+
+Now to the technical details.
+
+== Upgrading the containers
+
+One common change across all of my containers was that the syntax for defining an author in the Dockerfile had changed from a `MAINTAINER` wording to a `LABEL` term. You can see this in my commit from the https://github.com/JMHReif/docker-maria/commit/f430112ac974c351cd28656c52353c0aee95f1d5#diff-f34da55ca08f1a30591d8b0b3e885bcc678537b2a9a4aadea4f190806b374ddcR7[docker-maria^] Github repository, and in similar commits for the https://github.com/JMHReif/docker-mongo/commit/16d3e80b4c7830116541e3cefeaa2c8e0f4eab68#diff-f34da55ca08f1a30591d8b0b3e885bcc678537b2a9a4aadea4f190806b374ddcR7[docker-mongo^] and https://github.com/JMHReif/docker-neo4j/commit/2f895e55d70f501d683dc87f46a8521616c30615#diff-f34da55ca08f1a30591d8b0b3e885bcc678537b2a9a4aadea4f190806b374ddcR7[docker-neo4j^] repositories. While I don't think this syntax feels as logical and clear to me, the old maintainer syntax is no longer supported by Docker, so this change was required.
+
+Another difference to note is that my previous versions of these containers operated on the x86-64 architecture (my MacOS laptop, Intel chip); however, that laptop recently was replaced with one that has arm64 architecture (MacOS laptop, Apple silicon chip). Some containers support both architectures in the same image, but others do not - I'm looking at you, Neo4j. 😅 I'll talk more about this with each image.
+
+=== MariaDB
+
+Outside of that change (plus adding a README to the repository), I needed to rebuild the container locally, which pulled the latest version of the https://github.com/JMHReif/docker-maria/blob/master/docker/Dockerfile#L3[MariaDB base image^]. I didn't need to do anything different for my Apple silicon chip, as the same base image supports both architectures. We can see this in the https://hub.docker.com/_/mariadb[mariadb image^] tags, as shown below. Both `x86-64` and `ARM 64` are there.
+
+image::/img/containers/dockerhub-maria.png[]
+
+Once I pulled the latest version of the container and tested it, I pushed the updated image to my https://hub.docker.com/u/jmreif[personal Docker Hub^] repositories. The commands used to do all of these steps are listed below.
+
+[source,shell]
+----
+docker build . -t jmreif/mariadb
+
+docker run --name mymaria -p3306:3306 \
+    -d -v $HOME/Projects/docker/data/maria:/var/lib/mysql \
+    -v $HOME/Projects/docker/logs/maria:/var/log/mysql \
+    -e MYSQL_ROOT_PASSWORD=Testing123 \
+    jmreif/mariadb
+
+docker push jmreif/mariadb
+----
+
+The second command in the code block above is a bit long due to all of the options. I also included the same command in the run script from the Github repository, so if you clone the whole repository, you can run the script in place of the `docker run` command above.
+
+First, I use the `--name` option to give my container instance a name. This allows me to reference the container by name in commands, instead of using the container id (complicated alphanumeric value). I then bind the container port to a host port using https://docs.docker.com/engine/reference/commandline/run/#publish-or-expose-port--p---expose[`-p`^] (syntax is hostPort:containerPort). Since MariaDB's default port is 3306, I stick with that, so we bind my machine's 3306 port to the container's 3306 port.
+
+The `-d` option that follows is to run the container in detach mode. This means it runs in the background, making it easier to see the container and gain access to it. The next two options use the https://docs.docker.com/engine/reference/commandline/run/#mount-volume--v---read-only[`-v`^] flag, which mounts folders from the host device into the container. This means that if I have files or scripts I need to access inside the container, the container can see these through a mounted volume. In our case, we have mapped a local `data` folder to the `/var/lib/mysql` folder in the container (for data load), and we have mapped a local `log` folder to the `/var/log/mysql` folder in the container (for viewing log files).
+
+Next, our `-e` option is setting environment variables to pass into the container. For us, this means a password for the database. The last bit of text in the command is specifying the image to use for building the container (jmreif/mariadb).
+
+With that knowledge, we can take a look at the MongoDB container changes.
+
+=== MongoDB
+
+Moving now to the https://github.com/JMHReif/docker-mongo[docker-mongo^] repository, we don't see too many changes here either. The change for the author syntax on the Dockerfile was mentioned earlier, and I added a README for details. Otherwise, I did the same as with the MariaDB container - rebuilt the image so it pulled an updated https://hub.docker.com/_/mongo[mongo base image^], then tested the container, then pushed the updated version.
+
+The MongoDB base image also supports multiple architectures (including x86-64 and arm64), so I didn't need to do anything different. We can confirm this with the Docker Hub image screenshot below. The `x86-64` and `ARM 64` tags are both there.
+
+image::/img/containers/dockerhub-mongo.png[]
+
+The commands for all these steps are very similar to the MariaDB ones shown earlier, but we will note the differences below.
+
+[source,shell]
+----
+docker build . -t jmreif/mongodb
+
+docker run --name mymongo -p27017:27017 \
+    -e MONGO_INITDB_ROOT_USERNAME=mongoadmin \
+    -e MONGO_INITDB_ROOT_PASSWORD=Testing123 \
+    -d -v $HOME/Projects/docker/data/mongo:/data/db \
+    -v $HOME/Projects/docker/logs/mongo:/logs \
+    -v $HOME/Projects/docker/tmp/mongo:/tmp \
+    jmreif/mongodb
+
+docker push jmreif/mongodb
+----
+
+We will focus on the second command. The syntax is similar, using the `--name` option to specify a name for our container and then using the `-p` option to bind a container port to a host port, with 27017 being MongoDB's default port. Next, we specify our environment variables for the database username and password with `-e`. If you remember, we specified these options last in our mariadb container, but ordering doesn't really matter here. After our password, we use the `-d` option to run the container in the background and have three `-v` options for mounting data, logs, and temporary folders to the container. Lastly, we have the image name used for creating the container.
+
+This completes our update for the MongoDB container. Now we can continue on to Neo4j.
+
+=== Neo4j
+
+The update to https://github.com/JMHReif/docker-neo4j[this repository^] was a bit more complicated, as there is not a single container that supports both x86-64 and arm64 architectures. Currently, the https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[Neo4j arm64 image^] is classified as experimental, though I have not had any issues running containers with it so far. This only results in a minor change to the Dockerfile, though it took me considerably longer than I had hoped to get all the pieces organized (i.e. finding the repository, for starters).
+
+As you might have guessed, we changed the author syntax in the Dockerfile for Neo4j, just as we did with MariaDB and MongoDB. I also added a README file in this repository to match the others. Looking at the https://github.com/JMHReif/docker-neo4j/commit/2f895e55d70f501d683dc87f46a8521616c30615#[commit^], though, there are a couple other changes, so let's walk through those.
+
+First, as we mentioned above, I needed to pull a different base image for the arm64 architecture. _*Note:* if you are using a different architecture, you will need to copy and modify the Dockerfile for your system._ For using the arm64 system, I modified the https://github.com/JMHReif/docker-neo4j/commit/2f895e55d70f501d683dc87f46a8521616c30615#diff-f34da55ca08f1a30591d8b0b3e885bcc678537b2a9a4aadea4f190806b374ddcR3[base image line^] to use the https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[neo4j-arm64-experimental^] image. We can see any specified architectures for both Neo4j repositories in the screenshots below.
+
+.Neo4j arm64:
+image:/img/containers/dockerhub-neo4j-arm64.png[]
+
+.Neo4j x86-64:
+image:/img/containers/dockerhub-neo4j.png[]
+
+*Note:* You might have noticed that the Neo4j arm64 image does not have any tags like the official images do, which might explain why it was so hard to find. 😅
+
+I also realized that Neo4j requires you to specify a version tag for the image, so I used the `4.3.3` version. However, feel free to use one to fit your needs. The current (as of writing this) release version is 4.3, so picking any minor versions of that ensures you have the latest features.
+
+Next, I exposed an extra port for the default Neo4j HTTPS port (7473). The other two ports in the Dockerfile are for Neo4j's default HTTP and BOLT ports, respectively. Though it is not required to have them all, I have all connection types covered.
+
+With those changes in place, we can build, test, and push the new container. As before, I'll show the commands used for all of these steps below.
+
+[source,shell]
+----
+docker build . -t jmreif/neo4j-arm64
+
+docker run \
+    --name myneo4j -p7474:7474 -p7687:7687 \
+    -e NEO4J_AUTH=neo4j/Testing123 \
+    -d -v $HOME/Projects/docker/data/neo4j:/data \
+    -v $HOME/Projects/docker/logs/neo4j:/logs \
+    -v $HOME/Projects/docker/data/neo4j/import:/import \
+    -v $HOME/Projects/docker/data/neo4j/plugins:/plugins \
+    jmreif/neo4j-arm64
+
+docker push jmreif/neo4j-arm64
+----
+
+The only change for the build and push commands is the image name, so we will skip to the run command differences. All of the options should look familiar, since we don't have anything new compared to the MariaDB and MongoDB versions. The `--name` option lets me set a container name for referencing, and the `-p` lets me map host to container ports. In this case, I've bound both 7474 and 7687, which are the HTTP and BOLT ports for Neo4j. This means I can access https://neo4j.com/developer/neo4j-browser/[Neo4j Browser^] using port 7474, and I can connect via applications through 7687 with the https://en.wikipedia.org/wiki/Bolt_(network_protocol)[bolt protocol^].
+
+On the next line, the `-e` option is used to set an environment variable for the username and password (both are set with a single variable, using a `/` to separate the two values). A `-d` option follows that to run the container in the background, and then all of our `-v` options mount folders for data and logs, as well as two Neo4j-specific ones for import files (/import) and  plugins (for adding extensions like https://neo4j.com/labs/apoc/[APOC^]). The final bit of text specifies the image to use for building the container - `jmreif/neo4j-arm64`.
+
+== Doing things with the container
+
+There are a variety of commands you can use to access and interact with the containers we just upgraded. Probably some of the most common are listed below.
+
+* `docker start <containerName>`: starts a stopped, existing container
+* `docker stop <containerName>`: stops a running container
+* `docker rm <containerName>`: delete a container. You will need to do a `docker run` command again to create a fresh container. Use when you need to change options in the run command or make adjustments to the Dockerfile. *Note:* if you make adjustments to the Dockerfile, that you will also need to rebuild the image.
+* `docker exec -it <containerName> <type>`: allows you to ssh into the container. Helpful for running scripts, loading data, and making other changes inside the container itself.
+
+I hope to cover more about these pertaining to this project in later posts, but there is plenty of general documentation for these commands, as well.
+
+== Wrapping up!
+
+In this post, we walked through my experience of upgrading Docker containers for three major databases - MariaDB, MongoDB, and Neo4j. We saw how some images handle support for multiple architectures, either through including support in a single image or providing a separate image per architecture. The new Apple silicon chip that I'm using also meant a bit of a change (at least for Neo4j's container), though I honestly expected more hassle across the board with Docker and the recent chip.
+
+We also looked at the commands for how to rebuild images so that they pull latest versions, whether through a default (not specifying a tag for the base image in the Dockerfile) or through defining a base image tag. Lastly, we reviewed the commands for rebuilding images and pushing them to a repository on DockerHub so that we can share them.
+
+As a final note, though Neo4j's image for arm64 (Apple silicon) architecture is currently experimental, there is hopefully official support coming in the next version (4.4 in Fall 2021). This should help abate any hesitations you might have with using the image. If you have any questions or want to provide feedback on the container or multi-architecture support, please do https://github.com/neo4j/docker-neo4j/issues[raise Github issues^] or https://community.neo4j.com/c/integrations/docker/86[ask questions^]!
+
+Happy coding!
+
+== Resources
+
+* Documentation: https://docs.docker.com/engine/reference/run/[Docker run command^]
+* Documentation: https://docs.docker.com/engine/reference/commandline/docker/[Docker command list^]
+* Github: https://github.com/JMHReif/docker-maria[MariaDB^], https://github.com/JMHReif/docker-mongo[MongoDB^], and https://github.com/JMHReif/docker-neo4j[Neo4j^] repositories
+* Developer guide: https://neo4j.com/developer/docker/[Docker and Neo4j^]
