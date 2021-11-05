@@ -1,0 +1,15 @@
+---
+date: 2021-11-04T09:00:00-06:00
+featured_image: "/img/???.jpeg"
+image_credit: https://unsplash.com/photos/WYiIkQFclA4?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["career","programming","music","learning","tech"]
+title: "Fingerboard to Keyboard - Learning to Program as a Musician"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+== Alternate titles
+* Bach to Java: How a Musician Turned Developer
+* Musician to Developer - Transposing Skills from One Career to the Next

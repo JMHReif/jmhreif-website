@@ -5,9 +5,11 @@ featured_image: "/img/neo4j-london-2018.jpg"
 draft: false
 ---
 
-[cols="2,2,1",options="header",stripes=even]
+This page is dedicated to Jennifer's resume as a speaker. She has traveled the world to participate in world-class technical events with audiences large and small. Speaking provides a way to share her learnings and experiences with others and learn from theirs, as well. Many of her slide decks are available on https://speakerdeck.com/jmhreif[Jennifer's SpeakerDeck page^] or included in her https://github.com/JMHReif?tab=repositories[code projects on Github^], and recordings of presentations are aggregated to a https://youtube.com/playlist?list=PLf8aIqYXdUo9Su_yALHM2Z4CPDnl491wt[YouTube playlist^].
+
+== *Conferences*
+[cols="2,2,1",options="header"]
 |===
-3+|*Conferences:*
 |*Name*                   |*Location*               |*Years*
 
 |JavaOne/Oracle CodeOne   |San Francisco, CA, USA   |2016-2019
@@ -17,20 +19,21 @@ draft: false
 |VoxxedDays Banff         |Banff, AB, Canada        |2018-2019
 |NODES                    |Online                   |2019,2021
 |JFokus                   |Stockholm, Sweden        |2019
-|DevoxxUK                 |London, England, UK      |2019
+|DevoxxUK                 |London, England, UK      |2019,2021
 |ConFoo                   |Montreal, QC, Canada     |2019-2020
 |GraphTour                |various cities, USA      |2018-2019
 |Devnexus                 |Atlanta, GA, USA         |2019
 |Big Data/AI Toronto      |Toronto, ON, Canada      |2019
-|KCDC                     |Kansas City, MO, USA     |2019
+|KCDC                     |Kansas City, MO, USA     |2019,2021
 |ODSC                     |San Francisco, CA, USA   |2019
+|Spring One               |Online                   |2021
+|Scale by the Bay         |Online                   |2021
 |===
 
-
+== *Meetups*
 [cols="2,2,1",options="header"]
 |===
-3+|*Meetups:*
-|*Name*                      |*Location*             |*Years*
+|*Group*                     |*Location*             |*Years*
 
 |Women WhoCode               |London, England, UK    |2018
 |Women in ML/Data Science    |San Francisco, CA, USA |2018
@@ -39,6 +42,8 @@ draft: false
 |KCJUG                       |Kansas City, KS, USA   |2019
 |Data Science KC             |Kansas City, KS, USA   |2019
 |Detroit JUG                 |Detroit, MI, USA       |2019
-|Women in Data (Stl chapter) |online                 |2021
-|STLJUG                      |online                 |2021
+|Women in Data (Stl chapter) |Online                 |2021
+|STLJUG                      |Online                 |2021
+|STLFullStack                |Online                 |2021
+|StarTech Java               |Online                 |2021
 |===

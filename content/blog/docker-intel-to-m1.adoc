@@ -1,0 +1,105 @@
+---
+date: 2021-11-04T09:00:00-06:00
+featured_image: "/img/dockerM1/unsplash-apple-laptop.jpeg"
+image_credit: https://unsplash.com/photos/lzh3hPtJz9c?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["docker","m1","migrate","learning","upgrade"]
+title: "What I Learned Going from Intel to Apple Silicon"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+Earlier this year, I received a new work laptop with the recent Apple silicon chip (versus Intel chip). The new M1 has been critically examined with avid enthusiasm and criticism, so I wasn't sure what my outcome would be. 
+
+Thus far, it's been positive, and I really haven't noticed too much disruption in my work. Things have been faster, but I'm not sure whether to entirely attribute that new chip itself, or just the new machine, in general.
+
+I had heard a few horrifying reviews about the incompatibility of Docker, but since the machines had been around 6 months or more, I hoped most of the major issues had been corrected. With this post, I want to provide some info on my learning curve to move from the old to the new, with some extra details on how that impacted Docker.
+
+Let's dive in!
+
+== First stop: Restore from backup
+
+As probably many of you do, I made sure to have a final backup with any latest changes before migrating to the new device. This was handled through Time Machine and only took a little while to complete. Once that was done, I shut down my old machine and started up the new one.
+
+There are a couple of initial setup screens before it asks whether you want to set up the laptop as a new device or restore from backup. I chose to restore from backup, then proceeded to choose which one I wanted (latest in a list). The restore process took quite a while (a few hours), but there weren't any major hiccups.
+
+Ok, so far, so good. Now it's time to start working and patch the gaps.
+
+== Next stop: Updates, updates, updates
+
+The backup finished, and I could log in to the new machine. Now I needed to start trying to access things and operate as usual to find any missing pieces.
+
+Naturally, there were some updates from the App Store (out-of-sync with latest system and app updates). These weren't too complex to fix and only took a few minutes.
+
+Next, I started logging in to my usual work applications - Gmail, Terminal, Github, Slack, Zoom, Neo4j Desktop, Keynote, and more. I ran across a few places where I needed to approve the new device through 2-factor auth (Gmail, Github, etc), and if you're like me with a few devices, I also had to remove the old device from my iCloud account before adding the new one to sync things like Messages across my devices.
+
+Finally, there were a few things that were incompatible and needed more investigation.
+
+== Next stop: Apply thinking cap to resolve issues
+
+The biggest one in this category was figuring out what (if anything) had changed with Docker. Most other applications and processes either supported both architectures (Intel x86 and Apple arm64), but Docker wasn't as simple. Why?
+
+While I'm not familiar with all the under-the-hood details, let's think about what Docker is trying to do. It allows you to run various technologies in a box that is agnostic from the system. It creates its own environment, but that environment still needs to be able to spin up and down on top of whatever operating system and hardware you're working with. So, while the technology you want to containerize doesn't have to know or understand your device's OS, Docker itself does in order to function within your system's innerworkings.
+
+I mostly followed instructions in the https://docs.docker.com/desktop/mac/apple-silicon/[Docker docs for Apple silicon^], but got tripped up with some of the new added terms. What is a multi-platform image? Are there different commands to build and run images on arm64 (silicon chip)? Will the Docker images I use be available on Apple silicon? Let's take a quick detour to discuss terminology.
+
+=== Multi-platform
+
+A multi-platform image does as its name suggests - supports (or can be run on) multiple platforms. For instance, if you go to Docker Hub's https://hub.docker.com/search?type=image[list of containers^], you will see supported architectures listed as tags. You can also search containers with a filter for particular architectures. Both are shown in the image below.
+
+image::/img/dockerM1/docker-hub-multi.png[]
+
+Some containers support multiple architectures, while others do not. The example Docker uses in the documentation is between the `mysql` container and `mariadb` container. The https://hub.docker.com/$$_$$/mysql?tab=tags&page=1&ordering=last_updated[mysql container^] does not support arm64, while the https://hub.docker.com/$$_$$/mariadb?tab=tags&page=1&ordering=last_updated[mariadb container^] does.
+
+.MySQL container - amd64 (x86) only
+image:/img/dockerM1/mysql-arch.png[]
+
+.MariaDB container - arm64 (M1) and amd64
+image:/img/dockerM1/mariadb-arch.png[]
+
+Notice that MariaDB supports both Intel and Apple chip architectures (amd64 and arm64). This is what we want to look for - containers that support both. Why? If you have a project that supports one or the other, then anyone who tries to replicate or run that project on a different architecture is going to need to modify code to pull a different image.
+
+Let's take the Neo4j container as the example. If you look at https://hub.docker.com/$$_$$/neo4j?tab=tags[Neo4j's Docker image^], it only supports amd64 (Intel chip). So what do we do for my M1?
+
+Thankfully, Neo4j also has an option for arm64 architecture, although it's a separate image. The https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[arm64 image^] is currently marked as experimental, but that is expected to change to official in the coming weeks. :)
+
+This means that you will need to locate the container image that supports your architecture, unless the image is already multi-platform (supports multiple). Also, if you pull someone else's project with a Docker container, you may need to update code with a different image to match your architecture. Might not be that much of an impact, but definitely something to watch for!
+
+=== Buildx tool
+
+The Apple silicon instructions from Docker mention the https://docs.docker.com/engine/reference/commandline/buildx/[buildx command line tool^]. This threw me off, too, thinking that I needed to move to this rather than using the `docker build` command. What is buildx and what does it do?
+
+Buildx gives us a way to build Docker images for a particular platform (or several), rather than only building for our machine's architecture. For instance, let's say I am building a base image for a technology from my M1 laptop, but I want it to run on x86 (Intel chip) architecture. I can use buildx to override my machine's system to build it for any system I specify, such as x86 or even multi-platform for both x86 and arm64.
+
+So, I don't need to use `buildx` in order to build all my Docker images on M1. I can use the regular Docker https://docs.docker.com/engine/reference/commandline/build/[build command^] (as long as any container base image I'm using is compatible with my architecture, of course). The only time I need buildx is if I'm building a container for a system that doesn't match my own or if I want it to support multiple architectures. 
+
+Note: I'm making an assumption that any sourced images used in a container built with `buildx` would also need to support multiple platforms. For example, I don't think I could use buildx to "re-package" an image that only supports amd64 as one that supports arm64.
+
+== Migrating Docker images and projects
+
+The biggest learning for Docker thus far is that the chip operates entirely differently, so unless the technology explicitly supports both, images built specifically for one architecture will be incompatible with another architecture. Therefore, my old Docker images will not build or run on my new machine. Ugh! However, mine only required a few small tweaks to get them back to running state.
+
+First, I needed to find any Docker images I had to update. I post most of https://github.com/JMHReif?tab=repositories&q=docker&type=&language=&sort=[my Dockerfiles^] to Github, anyway, so I copied those locally to make changes.
+
+I've done projects with MariaDB, MongoDB, and Neo4j. These are the images I will need to check to see if they support multi-architecture. From earlier in this post, we know MariaDB supports both amd64 and arm64, so I just needed to rebuild the image to pull the current version of the MariaDB base image. That one didn't take long. MongoDB is also a multi-architecture image (see tags on https://hub.docker.com/$$_$$/mongo[Docker Hub image^]), so I did the same as with Maria. Neo4j was the only one different because the https://hub.docker.com/$$_$$/neo4j[official image^] does not support multiple platforms - only amd64. So, I had to update the Dockerfile to pull the https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[Neo4j arm64 image^], then rebuild the container. It wasn't difficult and didn't cause any problems. It was just a quick code change before it was up and running, too.
+
+== Wrapping up!
+
+While everything we've covered so far seems pretty minor, I wasn't entirely sure what to expect. I anticipated a more arduous transition - to have to change commands or how I used applications. It caused me to overscrutinize and take longer, thinking it had to be more complex than it was.
+
+Some of my applications have recent versions that are optimized for M1 (IntelliJ IDEA and others), and I actually have yet to migrate those. The old versions have worked out-of-the-box straight from the backup of my old laptop, so it hasn't been urgent. I'm sure updating the apps would give me a performance and optimization boost that I need to try, though. Honestly, the only true impact the M1 transition had for me was that I needed to pull updated base images for my Docker containers and use a different Neo4j base image that supported arm64.
+
+Whether you are curious about multi-platform support or debating a platform switch, maybe my migration experiences showed that there may actually be very little you have to change. Some environments and workloads might be more impacted than others, but at least for myself, the transition was unexpectedly smooth. I hope that any potential migrations you experience are just as smooth. :)
+
+Happy coding!
+ 
+== Resources
+
+* Docker documentation: https://docs.docker.com/desktop/mac/apple-silicon/[Docker for Apple silicon^]
+* Docker Hub: https://hub.docker.com/search?type=image&architecture=arm64[Images with support for ARM64 (Apple silicon) platform^]
+* Docker documentation: https://docs.docker.com/engine/reference/commandline/buildx/[buildx command line tool^]
+* Docker Hub: https://hub.docker.com/$$_$$/mariadb[MariaDB image^] (multi-platform)
+* Docker Hub: https://hub.docker.com/$$_$$/mongo[MongoDB image^] (multi-platform)
+* Docker Hub: https://hub.docker.com/$$_$$/neo4j[Neo4j image^] (amd64/x86 platform)
+* Docker Hub: https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[Neo4j image^] (arm64/Apple silicon platform)
