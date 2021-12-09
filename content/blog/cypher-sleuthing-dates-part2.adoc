@@ -7,6 +7,8 @@ draft: false
 omit_header_text: true
 ---
 
+_*Updated Dec 9, 2021_
+
 My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[part 1 post^] on this topic introduced Cypher dates and translated a few other date formats to the Cypher-supported ISO 8601 format. If you read that, then this post is the next step with Cypher dates that covers durations and more. If you haven’t seen part 1, feel free to catch up - though this part 2 doesn’t necessarily require reading part 1. :)
 
 We will continue a bit of the last post by showing how to truncate dates and times. Then we will look at the next area of built-in Cypher date functionality - time distance measurements and difference calculations between dates with durations. We will discuss and see examples of how durations in Cypher work - calculating durations from single dates, adding or subtracting durations from dates, and calculating the distance between 2 dates or times. Time to dive in!

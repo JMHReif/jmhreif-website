@@ -7,6 +7,8 @@ draft: false
 omit_header_text: true
 ---
 
+_*Updated Dec 9, 2021_
+
 My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[part 1^] and https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[part 2^] posts on this topic introduced Cypher dates, translated formats to the Cypher-supported ISO 8601 format, calculated durations, and measured lengths of time. If you read those, then this post is the next step with Cypher dates on date components, component translations, and duration conversions. If you haven’t read parts 1 or 2, feel free to catch up - though this post doesn’t require the previous ones. :)
 
 We will take a brief detour back to components of temporal instants to see some additional use cases. Then, for the bulk of this post, we will cover translating duration values into specific measurements (converting months to weeks and more).
@@ -15,7 +17,7 @@ We will take a brief detour back to components of temporal instants to see some 
 
 We briefly mentioned temporal components in https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[Part 1 of this series^] (Examples 6, 7, and 8), but I wanted to come back and add a couple more use cases that came to mind.
 
-In the Part 1 post examples, we used date components as a way to set a property to a specific piece of a date (year of current date stamp), do a general search (blog posts for month of March), and return a specific piece of a longer date (day of the week). Accessing parts of a full date or time could also be helpful for searches that aren’t a good fit for date ranges or extracting part of a value for UIs. We can see some examples below.
+In the Part 1 post examples, we used date components as a way to set a property to a specific piece of a date (year of current date stamp), do a general search (blog posts for month of March), and return a specific piece of a longer date (day of the week). Accessing parts of a full date or time could also be helpful for searches that aren't a good fit for date ranges or extracting part of a value for UIs. We can see some examples below.
 
 Dataset:
 [source,cypher]
@@ -44,19 +46,19 @@ image::/img/date-part-3/sleuth_date_part3_1.png[]
 
 _Note: I switched to the text view (tab on left of the result pane) so I could see all the values without scrolling. :)_
 
-The example above works well for finding dates in any year and on any day, but within a certain month. This type of search wouldn’t work so well if you were trying to use ranges. With date ranges, you would end up with a query something like this:
+The example above works well for finding dates in any year and on any day, but within a certain month. This type of search wouldn't work so well if you were trying to use ranges. With date ranges, you would end up with a query something like this:
 
 ```
 MATCH (o:Order)
-WHERE date(‘2019-05-01’) < o.orderDate > date(‘2019-05-30’)
-OR date(‘2020-05-01’) < o.orderDate > date(‘2020-05-30’)
-OR date(‘2021-05-01’) < o.orderDate > date(‘2021-05-30’)
+WHERE date('2019-05-01') < o.orderDate > date('2019-05-30')
+OR date('2020-05-01') < o.orderDate > date('2020-05-30')
+OR date('2021-05-01') < o.orderDate > date('2021-05-30')
 RETURN o.orderDate;
 ```
 
-Now, there may be better ways to write the ugly query above, but a Cypher truncate wouldn’t work in this case, since it defaults only to smaller values where we couldn’t default the year without defaulting the month and day as well.
+Now, there may be better ways to write the ugly query above, but a Cypher truncate wouldn't work in this case, since it defaults only to smaller values where we couldn’t default the year without defaulting the month and day as well.
 
-Let’s continue with our example above to see which purchases were made on a specific day of the month or day of the week.
+Let's continue with our example above to see which purchases were made on a specific day of the month or day of the week.
 
 Example 2: Orders for a particular day of the month
 [source,cypher]
@@ -86,7 +88,7 @@ Now that we have seen some extra examples of how we could use component values o
 
 == Translating Duration Values to Different Precisions
 
-In the https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[previous blog post in this series^], we saw how to specify and calculate a variety of durations with Cypher. One particular example of this was for dosing medicine and determining how long before a person could take another dose. The duration returned from that example wasn’t very meaningful (48,600 seconds after midnight), and I promised to return in another post to show how to translate this value into something more readable.
+In the https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[previous blog post in this series^], we saw how to specify and calculate a variety of durations with Cypher. Many of the durations returned values in various time buckets (months, days, hours, etc), but we might want to convert those mixed values into a single unit (e.g. all in hours).
 
 Before we jump into examples, however, there are a couple of steps we need to take in order to get there. First, we can calculate durations with the default process (largest unit and cascade remainders into smaller units), or we can specify a certain unit to convert the value. Here are the options we can have Cypher use:
 
@@ -119,13 +121,15 @@ RETURN duration.between(b.publishedDatetime, datetime()) as publishedDuration,
 
 image::/img/date-part-3/sleuth_date_part3_5.png[]
 
-Above, we can determine how many days a blog post has been live (published). On the right, we see the precise duration calculation (2 months, 15 days, plus thousands of seconds). On the left, we see that duration translated to days (76). With some other information, we could use the 76 days to tell us an average of how much traffic per day we have seen or compare against other posts to track trends over time.
+Above, we can determine how long a blog post has been live (published). On the left, we see the precise duration calculation (2 months, 15 days, plus thousands of seconds). On the right, we see that duration translated to days (260). With some other information, we could use the 260 days to tell us an average of how much traffic per day we have seen or compare against other posts to track trends over time.
+
+_Note: There is currently a bug in Browser that is rendering the `.inDays()` to months+days. This will hopefully be resolved soon, but running the same query via cypher-shell (shown in screenshot above) or a language driver should correctly display the 260 days._
 
 Example 6: Translate time until vacation starts :)
 [source,cypher]
 ```
 MATCH (v:Vacation)
-SET v.startDate = date('2021-09-10')
+SET v.startDate = date('2022-05-01')
 RETURN duration.between(date(),v.startDate) as preciseDuration, 
  duration.inMonths(date(),v.startDate) as months;
 ```
@@ -141,8 +145,9 @@ Just like with temporal instant types, we can also access components (or parts) 
 You can only convert among units in a component grouping, not across groups. (explanation coming)
 Reminder: there must be whole values in order to convert to larger values. It will not retain partial or fractions of larger units (i.e. `12 hours` -> `0.5 days`).
 
-We have already discussed the second item above, but it’s one I have to constantly remember when writing queries. So, let’s dive into the first item above a bit more. I’ve discovered that if I have a duration that certain components don’t return and others do. It took me some time, but I have figured out that there are component groupings, and components don’t convert across them. Here are the component groups, as shown in the https://neo4j.com/docs/cypher-manual/current/syntax/temporal/#cypher-temporal-accessing-components-durations[Cypher manual section^]:
+We have already discussed the second item above, but it’s one I have to constantly remember when writing queries. So, let's dive into the first item above a bit more. I've discovered that if I have a duration that certain components don't return and others do. It took me some time, but I have figured out that there are component groupings, and components don't convert across them. Here are the component groups, as shown in the https://neo4j.com/docs/cypher-manual/current/syntax/temporal/#cypher-temporal-accessing-components-durations[Cypher manual section^]:
 
+image::/img/date-part-3/cypher_component_groups.png[]
 
 The column on the right is the key - values within one column can be converted to any other unit in that same cell, but not one in another cell. For instance, I can convert a duration in quarters to years and months, but not to weeks or hours. Also, I could convert a duration in days to weeks, but not to months or minutes. Notice, also, that these categories correspond to our duration functions of `inMonths()`, `inDays()`, and `inSeconds()`. That is for a specific purpose that we'll cover in just a bit.
 
