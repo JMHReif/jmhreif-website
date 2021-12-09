@@ -97,7 +97,7 @@ RETURN d.frequency;
 
 image::/img/date-part-2/sleuth_date_part2_5.png[]
 
-The example above uses this to calculate how often someone can take a prescribed medication. Now, you might say “wait, why did it calculate as seconds instead of hours and minutes”? We will explain this in further detail after a couple more examples. For now, know that hour and minute durations are converted to seconds.
+The example above uses this to calculate how often someone can take a prescribed medication. This value provides a nice way to add or subtract durations later on to calculate next doses and other intervals.
 
 Example 3: Calculate a specific date as a duration
 [source,cypher]
@@ -108,9 +108,9 @@ RETURN rel.startDate as date, duration('P'+ rel.startDate) as duration;
 
 image::/img/date-part-2/sleuth_date_part2_6.png[]
 
-_NOTE: Date format cannot include timezone value. A helpful memory key is that a length of time isn’t based on geographic location - only the distance between 2 dates or times. Also, date must be preceded by a literal ‘P’ and time must be preceded by a literal `'T'`._
+_NOTE: Date format cannot include timezone value. A helpful memory key is that a length of time isn’t based on geographic location - only the distance between 2 dates or times. Also, date must be preceded by a literal `'P'` and time must be preceded by a literal `'T'`._
 
-If we divide the resulting 24,254 months by 12 (to find the number of years), we get `2021.16667`. This tells us the number of months from year 0 that the date `2021-02-15` is. While this probably isn’t super useful for this use case, it might be more helpful in science fields to precisely date artifacts or geography.
+This tells us that we have 2021 years, 2 months, and 15 days from year 0. This has formatted our typical date as a duration (distance in time from some starting point, i.e. month, day, and year 0).
 
 Example 3: Calculate specific time as a duration
 [source,cypher]
@@ -122,27 +122,7 @@ RETURN d.dose1Time;
 
 image::/img/date-part-2/sleuth_date_part2_7.png[]
 
-The example above tells us exactly how long after midnight a person took a medication. This could be incredibly critical for determining how close together doses are, as well as for tracking a strict schedule. Again, we see that our duration has been converted to seconds. Before we get too much further, let’s talk a bit about the conversion of hours and minutes into seconds. This has to do with precision in calculations, as explained in the next paragraph.
-
-== Duration precision
-
-One thing to note is that there are very specific rules that duration follows for calculations. Durations are stored as months, days, seconds, nanoseconds. This is because some components of time can vary - hours in a day (due to daylight savings time), days in a month (28, 29, 30, 31), etc. This is the reason you might notice hour and minute calculations diverting to the more precise and consistent second values.
-
-This is why our earlier queries (listed below for memory) were converted to seconds. In the first query for medicine dose frequency, `4 hours` is converted to seconds because larger time values cannot be assumed as 100% consistent at all times. This could actually be a life-and-death situation if dose frequency was not calculated properly.
-
-The same scenario exists for the second query. If we took the dose at `9:30AM` on a regular day or on a day that changed to/from Daylight Savings Time, this time could be off. It is more precise to calculate the seconds from midnight (34,200 seconds / 60 seconds in minute / 60 minutes in hour = 9.5 hours from midnight). This ensures no incorrect storage values and that users can calculate the time based on their circumstances.
-
-```
-MERGE (d:Dose)-[r:PRESCRIBED_AMOUNT]->(m:Medicine)
-SET d.frequency = duration('PT4H')
-RETURN d.frequency;
-
-MERGE (p:Person)-[r:TAKES]->(d:Dose)
-SET d.dose1Time = duration('PT093000')
-RETURN d.dose1Time;
-```
-
-We will see how to convert these small, precise values into more meaningful amounts (like hours) in the next post. For now, we will simply deal with the math of turning durations into precise amounts and finding the difference between 2 date values.
+The example above tells us exactly how long after midnight a person took a medication. This could be incredibly critical for determining how close together doses are, as well as for tracking a strict schedule.
 
 == Calculations with dates and durations
 
@@ -182,9 +162,7 @@ RETURN d.dose2Time;
 
 image::/img/date-part-2/sleuth_date_part2_10.png[]
 
-_NOTE: we could do a quick manual calculation (48,600 / 60 seconds in minute / 60 minutes in hour = 13.5 hours after midnight), which would be around 1:30PM on a standard day. We’ll see how to do this with Cypher in another post, though._
-
-Based on the dose taken in a previous query and the frequency we can take the medication, the above query calculates the time (in seconds) of our next dosage.
+Based on the dose taken in a previous query and the frequency we can take the medication, the above query calculates the time (in hours and minutes from midnight) of our next dosage.
 
 == Calculate difference between 2 dates with duration.between
 
@@ -210,7 +188,7 @@ RETURN rel.startDate as assigned, duration.between(rel.startDate, date()) as tim
 
 image::/img/date-part-2/sleuth_date_part2_12.png[]
 
-Using the query above, we can know how long our project has been going on. This tells us how much time has passed, and as with the previous query, can help us understand how many resources have been used on a project at a point in time. We will do that calculation in the next post! :)
+Using the query above, we can know how long our project has been going on. This tells us how much time has passed, and as with the previous query, can help us understand how many resources have been used on a project at a point in time.
 
 Example 3: Calculate duration between differing datetime values
 [source,cypher]
@@ -221,13 +199,13 @@ RETURN date('2021-03-22') as started, b.publishedDatetime as published, duration
 
 image::/img/date-part-2/sleuth_date_part2_13.png[]
 
-In our above query, we can find out how long it took to write a blog post. Again, this could be used to determine average time consumption for a person or for planning time needed on future posts. Because the time and timezone exist on the publishedDatetime and not on the start date we set, the duration second and millisecond values are a little odd-looking, but we’ll see how to format that better in the next post!
+In our above query, we can find out how long it took to write a blog post. Again, this could be used to determine average time consumption for a person or for planning time needed on future posts. Because the time and timezone exist on the publishedDatetime and not on the start date we set, the duration time values (hours, minutes, seconds, milliseconds) are a little odd-looking, but we’ll see how to format that better in the next post!
 
 == Wrapping up!
 
-We saw how to use Cypher’s duration to measure distance in time - whether starting from a length like `2 days`, adding or subtracting an amount from a date or time, or finding the difference between 2 dates/times. While some of the amounts returned converted to more precise (and maybe less meaningful) values, we found that this occurs on purpose to ensure consistent amounts that can be relied upon no matter the time of year, geographic location, or the time changes observed.
+We saw how to use Cypher's duration to measure distance in time - whether starting from a length like `2 days`, adding or subtracting an amount from a date or time, or finding the difference between 2 dates/times.
 
-In the next post, we will cover formatting and date components. We will see how to transform these precise values into more meaningful values, as well as how to access components of full date/time values and translate other temporal amounts into different units (i.e. `120 seconds` into `2 minutes`, or `72 hours` into `3 days`). Tune in next time and happy coding!
+In the next post, we will cover formatting and date components. We will see how to transform some of these durations into different formats, as well as how to access components of full date/time values and translate other temporal amounts into different units (i.e. `120 seconds` into `2 minutes`, or `72 hours` into `3 days`). Tune in next time and happy coding!
 
 == Resources
 
