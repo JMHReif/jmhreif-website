@@ -1,6 +1,6 @@
 ---
 date: 2021-07-27T12:00:00-06:00
-featured_image: "/img/date-part-4/spyglass-blue.jpeg"
+featured_image: "/img/date-part-4/code-dream-reality.jpeg"
 image_credit: https://unsplash.com/photos/mo4UZiHy_KU?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
 tags: ["cypher","query language","dates","temporal","programming"]
 title: "Cypher Sleuthing: Dealing with Dates, Part 4"
@@ -124,7 +124,7 @@ RETURN b.dateOfBirth,
 
 image::/img/date-part-4/sleuth_date_part4_6.png[]
 
-We could use this in a baby tracker app to tell us that a baby is exactly `19 weeks and 1 day old`. This could also be used for more precision on a product/application being live, amount of time without incidents, or many other use cases!
+We could use this in a baby tracker app to tell us that a baby is exactly `41 weeks and 3 days old`. This could also be used for more precision on a product/application being live, amount of time without incidents, or many other use cases!
 
 == Cypher puzzles
 
