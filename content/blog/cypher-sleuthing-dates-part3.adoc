@@ -9,7 +9,7 @@ omit_header_text: true
 
 _*Updated Dec 9, 2021_
 
-My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[part 1^] and https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[part 2^] posts on this topic introduced Cypher dates, translated formats to the Cypher-supported ISO 8601 format, calculated durations, and measured lengths of time. If you read those, then this post is the next step with Cypher dates on date components, component translations, and duration conversions. If you haven’t read parts 1 or 2, feel free to catch up - though this post doesn’t require the previous ones. :)
+My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[part 1^] and https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[part 2^] posts on this topic introduced Cypher dates, translated formats to the Cypher-supported ISO 8601 format, calculated durations, and measured lengths of time. If you read those, then this post is the next step with Cypher dates on date components, component translations, and duration conversions. If you haven't read parts 1 or 2, feel free to catch up - though this post doesn't require the previous ones. :)
 
 We will take a brief detour back to components of temporal instants to see some additional use cases. Then, for the bulk of this post, we will cover translating duration values into specific measurements (converting months to weeks and more).
 
@@ -56,7 +56,7 @@ OR date('2021-05-01') < o.orderDate > date('2021-05-30')
 RETURN o.orderDate;
 ```
 
-Now, there may be better ways to write the ugly query above, but a Cypher truncate wouldn't work in this case, since it defaults only to smaller values where we couldn’t default the year without defaulting the month and day as well.
+Now, there may be better ways to write the ugly query above, but a Cypher truncate wouldn't work in this case, since it defaults only to smaller values where we couldn't default the year without defaulting the month and day as well.
 
 Let's continue with our example above to see which purchases were made on a specific day of the month or day of the week.
 
@@ -109,7 +109,7 @@ image::/img/date-part-3/sleuth_date_part3_4.png[]
 
 Note that our first calculation preserves the full value at `1 month, 7 days`, while the second calculation only shows `1 month` because it takes complete months and discards the remaining days.
 
-With that, let’s dive into a couple of use case examples.
+With that, let's dive into a couple of use case examples.
 
 Example 5: Calculate the number of days a blog post has been published
 [source,cypher]
@@ -145,13 +145,13 @@ Just like with temporal instant types, we can also access components (or parts) 
 You can only convert among units in a component grouping, not across groups. (explanation coming)
 Reminder: there must be whole values in order to convert to larger values. It will not retain partial or fractions of larger units (i.e. `12 hours` -> `0.5 days`).
 
-We have already discussed the second item above, but it’s one I have to constantly remember when writing queries. So, let's dive into the first item above a bit more. I've discovered that if I have a duration that certain components don't return and others do. It took me some time, but I have figured out that there are component groupings, and components don't convert across them. Here are the component groups, as shown in the https://neo4j.com/docs/cypher-manual/current/syntax/temporal/#cypher-temporal-accessing-components-durations[Cypher manual section^]:
+We have already discussed the second item above, but it's one I have to constantly remember when writing queries. So, let's dive into the first item above a bit more. I've discovered that if I have a duration that certain components don't return and others do. It took me some time, but I have figured out that there are component groupings, and components don't convert across them. Here are the component groups, as shown in the https://neo4j.com/docs/cypher-manual/current/syntax/temporal/#cypher-temporal-accessing-components-durations[Cypher manual section^]:
 
 image::/img/date-part-3/cypher_component_groups.png[]
 
 The column on the right is the key - values within one column can be converted to any other unit in that same cell, but not one in another cell. For instance, I can convert a duration in quarters to years and months, but not to weeks or hours. Also, I could convert a duration in days to weeks, but not to months or minutes. Notice, also, that these categories correspond to our duration functions of `inMonths()`, `inDays()`, and `inSeconds()`. That is for a specific purpose that we'll cover in just a bit.
 
-Example 7: Access components of duration in seconds
+Example 7: Access components of multi-group duration
 [source,cypher]
 ```
 MATCH (c:Conference)
@@ -160,11 +160,11 @@ RETURN c.length, c.length.minutes, c.length.hours, c.length.days;
 
 image::/img/date-part-3/sleuth_date_part3_7.png[]
  
-In the example above, I have a duration of 10,800 seconds, which sits in the `Seconds` category of our table above. When I access the components, I can easily convert those seconds to minutes and hours (10800/60 and 10800/60/60), but I cannot convert to days, even though `30 hours` is well above `1 day` (30 > 24 hours).
+In the example above, I have a duration of `1 day, 6 hours`, which spans multiple duration groups in our table (days and seconds). When I access the components, I can easily convert that duration to minutes and hours, but I cannot convert to days, even though `30 hours` is well above `1 day` (30 > 24 hours).
  
-_Note: I cannot go up to the `.weeks` component for 2 reasons - cannot go to the next category (`Days` row in the table), and I do not have a whole week in hours (168hrs = 1week). Even if you put in 168+ hours for the duration, we cannot convert to weeks because it’s in another conversion category._
+_Note: I cannot go up to the `.weeks` component for 2 reasons - cannot go to the next category (`Days` row in the table), and I do not have a whole week in hours (168hrs = 1week). Even if you put in 168+ hours for the duration, we cannot convert to weeks because it's in another conversion category._
  
-Let’s look at another example.
+Let's look at another example.
  
 Example 8: Access components of duration in days
 [source,cypher]
@@ -175,11 +175,11 @@ RETURN v.length, v.length.weeks, v.length.days, v.length.hours;
 
 image::/img/date-part-3/sleuth_date_part3_8.png[]
  
-Wow, none of my conversions worked here. Why is that? For both of our rules - 1) we do not have a whole week (only 5 days), 2) we cannot convert to values outside our category (days/weeks).
+Only one of my conversions worked here. Why is that? For both of our rules - 1) we do not have a whole week (only 5 days), 2) we cannot convert to values outside our category (hours).
  
 That leaves us stuck with our lonely 5 days. So is it possible to convert to something in another category? YES! We can do this by combining our duration functions (`inMonths`, `inDays`, `inSeconds`), and then using components to get to the desired conversion. A couple more examples, and we will jump into that.
  
-Remember our medicine dose example from Part 2 of this blog series? Let’s look at that conversion!
+Remember our medicine dose example from Part 2 of this blog series? Let's look at that conversion!
  
 Example 9: Convert medicine dose seconds to hours
 [source,cypher]
@@ -190,17 +190,15 @@ RETURN d.frequency, d.frequency.hours;
 
 image::/img/date-part-3/sleuth_date_part3_9.png[]
  
-Ok, here we have converted our lovely precise dose frequency into something we can understand a bit better. Instead of our medicine instructions to take a dose every `14,400 seconds`, it can say to take a dose every `4 hours`. Much better!
+Ok, here we have converted the whole duration format into a single value (`4 hours`). Now, what about getting individual components of our dose times? In our last post, we left them as durations (`09:30:00` as `PT9H30M` and `13:30:00` as `PT13H30M`), which are not very pretty to read or understand. While the simpler (and probably more logical) method would be to store the dose times as temporal instants and calculate the time by adding the temporal value with the frequency duration, I'll show how we can take our existing durations and calculate them back into readable durations.
  
-Now, what about converting our dose times to something more meaningful? In our last post, we left them as durations (`09:30:00` as `P0M0DT34200S` and `13:30:00` as `P0M0DT48600S`), which are not very pretty to read or understand. While the simpler (and probably more logical) method would be to store the dose times as temporal instants and calculate the time by adding the temporal value with the frequency duration, I’ll show how we can take our existing durations and calculate them back into readable durations.
- 
-I mentioned above that the components would only convert to whole values, but there are a few components where you can display remainders in smaller units (i.e. `9 hours, 30 minutes`). I’ll show a screenshot of the https://neo4j.com/docs/cypher-manual/current/syntax/temporal/#cypher-temporal-accessing-components-durations[section in the documentation^] of those below.
+I mentioned above that the components would only convert to whole values, but there are a few components where you can display remainders in smaller units (i.e. `9 hours, 30 minutes`). I'll show a screenshot of the https://neo4j.com/docs/cypher-manual/current/syntax/temporal/#cypher-temporal-accessing-components-durations[section in the documentation^] of those below.
  
 image::/img/date-part-3/sleuth_date_part3_10.png[]
  
-Let’s use our dose time example to demonstrate this!
+Let's use our dose time example to demonstrate this!
  
-Example 10: Translate dose time from seconds duration to hours/minutes
+Example 10: Format dose time into hours/minutes components
 [source,cypher]
 ```
 MATCH (d:Dose)
@@ -209,10 +207,10 @@ RETURN d.dose1Time, d.dose1Time.hours, d.dose1Time.minutesOfHour;
 
 image::/img/date-part-3/sleuth_date_part3_11.png[]
  
-If we simply translate the duration `P0M0DT34200S` with the `.minutes` component, we get 570 minutes, which is the entire duration (9.5hrs) converted to minutes. However, if we use the `.minutesOfHour` component, it preserves the partial hour and displays the remainder after we remove whole hours (9) from the amount.
+If we simply format the duration `PT9H30M` with the `.minutes` component, we get 570 minutes, which is the entire duration (9.5hrs) converted to minutes. However, if we use the `.minutesOfHour` component, it preserves the partial hour and displays the remainder after we remove whole hours (9) from the amount.
  
-We could do the same with the `dose2Time`, but I’ll let you tackle that on your own. Next example!
- 
+We could do the same with the `dose2Time`, but I'll let you tackle that on your own. Next example!
+
 Example 11: Conversions with values in multiple categories
 [source,cypher]
 ```
@@ -222,13 +220,13 @@ RETURN currentLength, currentLength.quarters, currentLength.months,
  currentLength.weeks, currentLength.days, currentLength.hours;
 ```
 
-image::/img/date-part-3/sleuth_date_part3_13.png[]
+image::/img/date-part-3/sleuth_date_part3_12.png[]
  
 This query is a bit more complicated because we now have duration amounts in different categories we can convert, but it helps us understand our rules even better. Here, we have measured how long someone has been on a project by calculating the duration between the date an employee was assigned to the current date, which returns `P3M25DT0S`.
  
-Our result means that the 3 months can be converted to years, months, and quarters, and the 25 days can be converted to weeks. Since we don’t have any amount in the time category, we cannot use any components for hours, seconds, etc. And this is what we see - 3 months converted to quarters (`1`), 25 days converted to weeks (`3`), and no hours.
+Our result means that the 3 months can be converted to years, months, and quarters, and the 25 days can be converted to weeks. Since we don't have any amount in the time category, we cannot use any components for hours, seconds, etc. And this is what we see - 3 months converted to quarters (`1`), 25 days converted to weeks (`3`), and no hours.
  
-If you’d like to try a couple more examples to help solidify this information, let me leave you with a couple more examples to play with on these duration components.
+If you'd like to try a couple more examples to help solidify this information, let me leave you with a couple more examples to play with on these duration components.
  
 Example 12: Variety of durations to test with components
 [source,cypher]

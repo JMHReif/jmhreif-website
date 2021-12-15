@@ -9,7 +9,7 @@ omit_header_text: true
 
 _*Updated Dec 9, 2021_
 
-My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[part 1 post^] on this topic introduced Cypher dates and translated a few other date formats to the Cypher-supported ISO 8601 format. If you read that, then this post is the next step with Cypher dates that covers durations and more. If you haven’t seen part 1, feel free to catch up - though this part 2 doesn’t necessarily require reading part 1. :)
+My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[part 1 post^] on this topic introduced Cypher dates and translated a few other date formats to the Cypher-supported ISO 8601 format. If you read that, then this post is the next step with Cypher dates that covers durations and more. If you haven't seen part 1, feel free to catch up - though this part 2 doesn't necessarily require reading part 1. :)
 
 We will continue a bit of the last post by showing how to truncate dates and times. Then we will look at the next area of built-in Cypher date functionality - time distance measurements and difference calculations between dates with durations. We will discuss and see examples of how durations in Cypher work - calculating durations from single dates, adding or subtracting durations from dates, and calculating the distance between 2 dates or times. Time to dive in!
 
@@ -23,7 +23,7 @@ A temporal instant value can be created by truncating another temporal instant v
 *My version:*
 You can trim (truncate) a temporal value at a specific point, which sets any smaller units to default values. For instance, truncating the date `2021-04-21` to the year means the year value will be preserved, and the month and day values will be defaulted to `01`, returning a result of `2021-01-01`.
 
-This can be helpful if you want to default a search to generalize all dates by year or month. Note that if you want to completely shorten the date to the desired component (e.g. `2021-04-21` to just `2021`), you can do that by accessing the component of the value. This will be covered more in-depth in another post. Let’s look at a few examples of truncating dates.
+This can be helpful if you want to default a search to generalize all dates by year or month. Note that if you want to completely shorten the date to the desired component (e.g. `2021-04-21` to just `2021`), you can do that by accessing the component of the value. This will be covered more in-depth in another post. Let's look at a few examples of truncating dates.
 
 Each of the Neo4j temporal instants (Date, Time, Datetime, LocalDatetime, LocalTime) can use the `.truncate()` at the end. Just as with the last post, we will stick with the more common Date, Time, and Datetime values. While LocalDatetime and LocalTime are valid and supported, there are very few cases that truly require the use of local, and it is more complex to work with.
 
@@ -75,7 +75,7 @@ A duration in Cypher is the amount of time between two temporal instants. Whethe
 * Unit-based amounts (literal `'P'` and/or `'T'` + numeric value + component id) - e.g. `P1Y3M10D` or `{hours: 24}`.
 * Date and Time instants (literal `'P'` and/or `'T'` + date and/or time value) - e.g. `P20210419` or `PT090000`.
 
-Let’s look at some examples.
+Let's look at some examples.
 
 Example 1: Getting a duration value (using unit-based amount)
 [source,cypher]
@@ -87,7 +87,7 @@ RETURN v.length as vacationDuration;
 
 image::/img/date-part-2/sleuth_date_part2_4.png[]
 
-Setting the length for a person’s vacation. We could use this query for lodging planning, out-of-office emails, vacation activity scheduling, or other use cases.
+Setting the length for a person's vacation. We could use this query for lodging planning, out-of-office emails, vacation activity scheduling, or other use cases.
 
 Example 2: Set duration as frequency for medicine dosage
 [source,cypher]
@@ -110,7 +110,7 @@ RETURN rel.startDate as date, duration('P'+ rel.startDate) as duration;
 
 image::/img/date-part-2/sleuth_date_part2_6.png[]
 
-_NOTE: Date format cannot include timezone value. A helpful memory key is that a length of time isn’t based on geographic location - only the distance between 2 dates or times. Also, date must be preceded by a literal `'P'` and time must be preceded by a literal `'T'`._
+_NOTE: Date format cannot include timezone value. A helpful memory key is that a length of time isn't based on geographic location - only the distance between 2 dates or times. Also, date must be preceded by a literal `'P'` and time must be preceded by a literal `'T'`._
 
 This tells us that we have 2021 years, 2 months, and 15 days from year 0. This has formatted our typical date as a duration (distance in time from some starting point, i.e. month, day, and year 0).
 
@@ -168,7 +168,7 @@ Based on the dose taken in a previous query and the frequency we can take the me
 
 == Calculate difference between 2 dates with duration.between
 
-Now let’s calculate the difference between 2 dates. We will need to use `duration.between` to compare two dates and find the difference.
+Now let's calculate the difference between 2 dates. We will need to use `duration.between` to compare two dates and find the difference.
 
 Example 1: Calculate duration between project start and end dates
 [source,cypher]
@@ -201,7 +201,7 @@ RETURN date('2021-03-22') as started, b.publishedDatetime as published, duration
 
 image::/img/date-part-2/sleuth_date_part2_13.png[]
 
-In our above query, we can find out how long it took to write a blog post. Again, this could be used to determine average time consumption for a person or for planning time needed on future posts. Because the time and timezone exist on the publishedDatetime and not on the start date we set, the duration time values (hours, minutes, seconds, milliseconds) are a little odd-looking, but we’ll see how to format that better in the next post!
+In our above query, we can find out how long it took to write a blog post. Again, this could be used to determine average time consumption for a person or for planning time needed on future posts. Because the time and timezone exist on the publishedDatetime and not on the start date we set, the duration time values (hours, minutes, seconds, milliseconds) are a little odd-looking, but we'll see how to format that better in the next post!
 
 == Wrapping up!
 
