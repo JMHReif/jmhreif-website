@@ -10,6 +10,8 @@ omit_header_text: true
 
 {{< image-credit >}}
 
+_*Updated Dec 16, 2021_
+
 I created a demo project a couple of years ago that included a lot of technical setup - containers, data import, queries, and such. I presented it for a conference or two, and while it was one of my favorite projects, it was a lot of preparation for the live demo. 
 
 I recently rediscovered the project, and submitted it to a couple of conferences. It got accepted, so I needed to upgrade the versions of all the software. With so much setup in the project, I thought it would certainly be a giant undertaking. However, I was pleasantly surprised on several things, even though a few things tripped me up. This blog post will document things I learned along the way, so that hopefully, you don't run into the same road blocks I did…or at least, I might help you solve them faster. With that, let's jump in!
@@ -29,6 +31,8 @@ Now to the technical details.
 One common change across all of my containers was that the syntax for defining an author in the Dockerfile had changed from a `MAINTAINER` wording to a `LABEL` term. You can see this in my commit from the https://github.com/JMHReif/docker-maria/commit/f430112ac974c351cd28656c52353c0aee95f1d5#diff-f34da55ca08f1a30591d8b0b3e885bcc678537b2a9a4aadea4f190806b374ddcR7[docker-maria^] Github repository, and in similar commits for the https://github.com/JMHReif/docker-mongo/commit/16d3e80b4c7830116541e3cefeaa2c8e0f4eab68#diff-f34da55ca08f1a30591d8b0b3e885bcc678537b2a9a4aadea4f190806b374ddcR7[docker-mongo^] and https://github.com/JMHReif/docker-neo4j/commit/2f895e55d70f501d683dc87f46a8521616c30615#diff-f34da55ca08f1a30591d8b0b3e885bcc678537b2a9a4aadea4f190806b374ddcR7[docker-neo4j^] repositories. While I don't think this syntax feels as logical and clear to me, the old maintainer syntax is no longer supported by Docker, so this change was required.
 
 Another difference to note is that my previous versions of these containers operated on the x86-64 architecture (my MacOS laptop, Intel chip); however, that laptop recently was replaced with one that has arm64 architecture (MacOS laptop, Apple silicon chip). Some containers support both architectures in the same image, but others do not - I'm looking at you, Neo4j. 😅 I'll talk more about this with each image.
+
+_*Note(2021-12-16):* As of Neo4j version 4.4+, the Neo4j official DockerHub image supports both amd64 (Intel chip) and arm64 (Apple silicon chip) architectures (see OS/ARCH for each tag). If you are using Neo4j prior to v4.4, then you will need to use the neo4j/neo4j-arm64-experimental DockerHub repository._
 
 === MariaDB
 
@@ -92,21 +96,21 @@ This completes our update for the MongoDB container. Now we can continue on to N
 
 === Neo4j
 
-The update to https://github.com/JMHReif/docker-neo4j[this repository^] was a bit more complicated, as there is not a single container that supports both x86-64 and arm64 architectures. Currently, the https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[Neo4j arm64 image^] is classified as experimental, though I have not had any issues running containers with it so far. This only results in a minor change to the Dockerfile, though it took me considerably longer than I had hoped to get all the pieces organized (i.e. finding the repository, for starters).
+With Neo4j's latest update to version 4.4, the changes align very closely with those we saw for MariaDB and MongoDB. As you might have guessed, we changed the author syntax in the Dockerfile for Neo4j, just as we did with MariaDB and MongoDB. I also added a README file in this repository to match the others. Looking at the https://github.com/JMHReif/docker-neo4j/commit/bf09ef7b8bb546097882f6fe506ee35cf97aae23[commit^], though, there are a couple other changes, so let's walk through those.
 
-As you might have guessed, we changed the author syntax in the Dockerfile for Neo4j, just as we did with MariaDB and MongoDB. I also added a README file in this repository to match the others. Looking at the https://github.com/JMHReif/docker-neo4j/commit/2f895e55d70f501d683dc87f46a8521616c30615#[commit^], though, there are a couple other changes, so let's walk through those.
+----
+_*Note(2021-12-16):* Neo4j supports multi-arch as of version 4.4+! The following paragraphs are only needed if you are using Neo4j 4.3 and older.
 
-First, as we mentioned above, I needed to pull a different base image for the arm64 architecture. _*Note:* if you are using a different architecture, you will need to copy and modify the Dockerfile for your system._ For using the arm64 system, I modified the https://github.com/JMHReif/docker-neo4j/commit/2f895e55d70f501d683dc87f46a8521616c30615#diff-f34da55ca08f1a30591d8b0b3e885bcc678537b2a9a4aadea4f190806b374ddcR3[base image line^] to use the https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[neo4j-arm64-experimental^] image. We can see any specified architectures for both Neo4j repositories in the screenshots below.
+The update to https://github.com/JMHReif/docker-neo4j[this repository^] was a bit more complicated for v4.3, as there is not a single container that supports both x86-64 and arm64 architectures for that version. The https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[Neo4j arm64 image^] supports arm64. This only results in a minor change to the Dockerfile, though it took me considerably longer than I had hoped to get all the pieces organized (i.e. finding the repository, for starters).
 
-.Neo4j arm64:
-image:/img/containers/dockerhub-neo4j-arm64.png[]
+First, I needed to pull a different base image for the arm64 architecture. For using the arm64 system, I modified the https://github.com/JMHReif/docker-neo4j/commit/2f895e55d70f501d683dc87f46a8521616c30615#diff-f34da55ca08f1a30591d8b0b3e885bcc678537b2a9a4aadea4f190806b374ddcR3[base image line^] to use the https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[neo4j-arm64-experimental^] image._
+----
 
-.Neo4j x86-64:
-image:/img/containers/dockerhub-neo4j.png[]
+We can see both the specified architectures on the official Neo4j repository in the screenshot below.
 
-*Note:* You might have noticed that the Neo4j arm64 image does not have any tags like the official images do, which might explain why it was so hard to find. 😅
+image::/img/containers/dockerhub-neo4j.png[]
 
-I also realized that Neo4j requires you to specify a version tag for the image, so I used the `4.3.3` version. However, feel free to use one to fit your needs. The current (as of writing this) release version is 4.3, so picking any minor versions of that ensures you have the latest features.
+Neo4j also requires you to specify a version tag for the image (actually a Docker best practice), so I used the `4.4.1` version. However, feel free to use one to fit your needs. The current (as of writing this) release version is 4.4, so picking any minor versions of that ensures you have the latest features.
 
 Next, I exposed an extra port for the default Neo4j HTTPS port (7473). The other two ports in the Dockerfile are for Neo4j's default HTTP and BOLT ports, respectively. Though it is not required to have them all, I have all connection types covered.
 
@@ -114,7 +118,7 @@ With those changes in place, we can build, test, and push the new container. As 
 
 [source,shell]
 ----
-docker build . -t jmreif/neo4j-arm64
+docker build . -t jmreif/neo4j
 
 docker run \
     --name myneo4j -p7474:7474 -p7687:7687 \
@@ -123,14 +127,14 @@ docker run \
     -v $HOME/Projects/docker/logs/neo4j:/logs \
     -v $HOME/Projects/docker/data/neo4j/import:/import \
     -v $HOME/Projects/docker/data/neo4j/plugins:/plugins \
-    jmreif/neo4j-arm64
+    jmreif/neo4j
 
-docker push jmreif/neo4j-arm64
+docker push jmreif/neo4j
 ----
 
 The only change for the build and push commands is the image name, so we will skip to the run command differences. All of the options should look familiar, since we don't have anything new compared to the MariaDB and MongoDB versions. The `--name` option lets me set a container name for referencing, and the `-p` lets me map host to container ports. In this case, I've bound both 7474 and 7687, which are the HTTP and BOLT ports for Neo4j. This means I can access https://neo4j.com/developer/neo4j-browser/[Neo4j Browser^] using port 7474, and I can connect via applications through 7687 with the https://en.wikipedia.org/wiki/Bolt_(network_protocol)[bolt protocol^].
 
-On the next line, the `-e` option is used to set an environment variable for the username and password (both are set with a single variable, using a `/` to separate the two values). A `-d` option follows that to run the container in the background, and then all of our `-v` options mount folders for data and logs, as well as two Neo4j-specific ones for import files (/import) and  plugins (for adding extensions like https://neo4j.com/labs/apoc/[APOC^]). The final bit of text specifies the image to use for building the container - `jmreif/neo4j-arm64`.
+On the next line, the `-e` option is used to set an environment variable for the username and password (both are set with a single variable, using a `/` to separate the two values). A `-d` option follows that to run the container in the background, and then all of our `-v` options mount folders for data and logs, as well as two Neo4j-specific ones for import files (/import) and  plugins (for adding extensions like https://neo4j.com/labs/apoc/[APOC^]). The final bit of text specifies the image to use for building the container - `jmreif/neo4j`.
 
 == Doing things with the container
 
@@ -145,11 +149,11 @@ I hope to cover more about these pertaining to this project in later posts, but 
 
 == Wrapping up!
 
-In this post, we walked through my experience of upgrading Docker containers for three major databases - MariaDB, MongoDB, and Neo4j. We saw how some images handle support for multiple architectures, either through including support in a single image or providing a separate image per architecture. The new Apple silicon chip that I'm using also meant a bit of a change (at least for Neo4j's container), though I honestly expected more hassle across the board with Docker and the recent chip.
+In this post, we walked through my experience of upgrading Docker containers for three major databases - MariaDB, MongoDB, and Neo4j. All of our database images support multiple architectures, simplifying our process and future updates. I honestly expected more hassle across the board with Docker and the recent Apple silicon chip. The transition wasn't too big of a hurdle.
 
 We also looked at the commands for how to rebuild images so that they pull latest versions, whether through a default (not specifying a tag for the base image in the Dockerfile) or through defining a base image tag. Lastly, we reviewed the commands for rebuilding images and pushing them to a repository on DockerHub so that we can share them.
 
-As a final note, though Neo4j's image for arm64 (Apple silicon) architecture is currently experimental, there is hopefully official support coming in the next version (4.4 in Fall 2021). This should help abate any hesitations you might have with using the image. If you have any questions or want to provide feedback on the container or multi-architecture support, please do https://github.com/neo4j/docker-neo4j/issues[raise Github issues^] or https://community.neo4j.com/c/integrations/docker/86[ask questions^]!
+As a final note, if you have any questions or want to provide feedback on Neo4j's Docker container, please do https://github.com/neo4j/docker-neo4j/issues[raise Github issues^] or https://community.neo4j.com/c/integrations/docker/86[ask questions^]!
 
 Happy coding!
 
