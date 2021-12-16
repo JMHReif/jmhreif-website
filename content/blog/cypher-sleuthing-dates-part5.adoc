@@ -15,7 +15,7 @@ This post will be the final in the series. We will take a brief departure from C
 
 All the way back in our https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[part 1 post^], we covered 4 APOC functions that could format epoch time (to any string and to an ISO8601 string), translate various string formats, and convert a string to a Neo4j (ISO8601) temporal. In the remainder of this post, we will briefly cover the rest of the existing `apoc.date.x` and `apoc.temporal.x` functions to explain their purpose and note which ones are replaced by ones in Cypher.
 
-Let’s start our list! Ones that are crossed out were covered in the https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[Part 1^] post of this series.
+Let's start our list! Ones that are crossed out were covered in the https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[Part 1^] post of this series.
 
 1. apoc.date.add()
 2. apoc.date.convert()
@@ -42,7 +42,7 @@ Example: Cypher vs APOC epoch subtract time
 [source,cypher]
 ```
 RETURN datetime({epochSeconds: 1626149356}) - duration('P1D') as cypher, 
- apoc.date.add(1626149356,'s',-1,'d') as apoc
+ apoc.date.add(1626149356,'s',-1,'d') as apoc;
 ```
 
 image::/img/date-part-5/sleuth_date_part5_1.png[]
@@ -51,7 +51,7 @@ Notice that the return type for Cypher is still a temporal value, while the retu
 
 === apoc.date.convert()
 
-This function converts a time-based integer value from one format to another. For instance, we can convert 120 minutes to 2 hours. One difference to keep in mind is that Cypher's version of using duration functions and components deals in duration syntax (strings with literal 'P' and 'T'), whereas APOC’s version deals entirely with integer math.
+This function converts a time-based integer value from one format to another. For instance, we can convert 120 minutes to 2 hours. One difference to keep in mind is that Cypher's version of using duration functions and components deals in duration syntax (strings with literal 'P' and 'T'), whereas APOC's version deals entirely with integer math.
 
 Example: Cypher vs APOC convert units
 [source,cypher]
@@ -90,7 +90,7 @@ RETURN datetime().hour as cypher,
 
 image::/img/date-part-5/sleuth_date_part5_3.png[]
 
-In this example, I'm showing Cypher's functionality with both a Neo4j datetime input, as well as an epoch time input. Cypher’s syntax (second value in the return) is slightly more verbose, but still simple to understand. For this function, I think I would lean toward using the built-in Cypher functionality unless there is an edge case that Cypher won't accept and APOC will.
+In this example, I'm showing Cypher's functionality with both a Neo4j datetime input, as well as an epoch time input. Cypher's syntax (second value in the return) is slightly more verbose, but still simple to understand. For this function, I think I would lean toward using the built-in Cypher functionality unless there is an edge case that Cypher won't accept and APOC will.
 
 === apoc.date.fields()
 
