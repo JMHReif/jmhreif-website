@@ -98,13 +98,7 @@ This completes our update for the MongoDB container. Now we can continue on to N
 
 With Neo4j's latest update to version 4.4, the changes align very closely with those we saw for MariaDB and MongoDB. As you might have guessed, we changed the author syntax in the Dockerfile for Neo4j, just as we did with MariaDB and MongoDB. I also added a README file in this repository to match the others. Looking at the https://github.com/JMHReif/docker-neo4j/commit/bf09ef7b8bb546097882f6fe506ee35cf97aae23[commit^], though, there are a couple other changes, so let's walk through those.
 
-----
-_*Note(2021-12-16):* Neo4j supports multi-arch as of version 4.4+! The following paragraphs are only needed if you are using Neo4j 4.3 and older.
-
-The update to https://github.com/JMHReif/docker-neo4j[this repository^] was a bit more complicated for v4.3, as there is not a single container that supports both x86-64 and arm64 architectures for that version. The https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[Neo4j arm64 image^] supports arm64. This only results in a minor change to the Dockerfile, though it took me considerably longer than I had hoped to get all the pieces organized (i.e. finding the repository, for starters).
-
-First, I needed to pull a different base image for the arm64 architecture. For using the arm64 system, I modified the https://github.com/JMHReif/docker-neo4j/commit/2f895e55d70f501d683dc87f46a8521616c30615#diff-f34da55ca08f1a30591d8b0b3e885bcc678537b2a9a4aadea4f190806b374ddcR3[base image line^] to use the https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[neo4j-arm64-experimental^] image._
-----
+_*Note(2021-12-16):* Neo4j supports multi-arch as of version 4.4+! For Neo4j 4.3 and older, the https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[Neo4j arm64 image^] supports arm64. You will need to pull a different base image by modifying the https://github.com/JMHReif/docker-neo4j/commit/2f895e55d70f501d683dc87f46a8521616c30615#diff-f34da55ca08f1a30591d8b0b3e885bcc678537b2a9a4aadea4f190806b374ddcR3[base image line^] to use the https://hub.docker.com/r/neo4j/neo4j-arm64-experimental[neo4j-arm64-experimental^] image._
 
 We can see both the specified architectures on the official Neo4j repository in the screenshot below.
 
