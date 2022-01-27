@@ -90,7 +90,7 @@ So short and sweet, right? Let's charge on to Service 2!
 
 Now that we have completed our backend service, we need to build the second service on the front to call it. Time to head back to the Spring Initializr! Our fields will look very similar to those in our last project, which makes this one faster. The only change is our artifact name. We will keep the same dependencies of `Spring Reactive Web` and `Lombok`. Click the `Generate` button, pick a place to save, unzip, and open the project in your IDE.
 
-image::/img/microservices-lvl1/springio-svc1.png[]
+image::/img/microservices-lvl1/springio-svc2.png[]
 
 Let's add some code!
 
