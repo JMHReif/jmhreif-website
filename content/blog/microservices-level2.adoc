@@ -40,7 +40,7 @@ There are still a few options, but the most popular is probably MongoDB. It offe
 
 We will need to add a couple of additional dependencies in order to create an embedded MongoDB instance and populate/interact with the data. The changes to the `pom.xml` project file are shown below, and the https://github.com/JMHReif/microservices-level2/blob/main/service1/pom.xml[full file^] is available on Github.
 
-[source,java]
+[source,xml]
 ----
 <dependency>
    <groupId>de.flapdoodle.embed</groupId>
@@ -56,6 +56,17 @@ We will need to add a couple of additional dependencies in order to create an em
 Flapdoodle provides the embedded version of MongoDB, although only scoped for testing. We can tweak this by commenting out the scope, so that we can use embedded MongoDB instances for our whole application. Note, this is not recommended for production. ;)
 
 Then, we need to include the Spring Data MongoDB starter, which allows us access to all the https://spring.io/projects/spring-data-mongodb[goodies Spring Data offers with MongoDB^] (annotations for entities, domain-specific language for custom queries, and more).
+
+Adding an embedded database means we have a couple more properties to set in the `application.properties` file from last time.
+
+[source,text]
+----
+server.port=8080
+spring.data.mongodb.port=27017
+spring.mongodb.embedded.version=3.0.0
+----
+
+In addition to the port, we are also setting the database port and the embedded MongoDB version. The database port getting set (`27017`) is MongoDB's default, and the embedded version ensures no conflicts or compatibility issues.
 
 === Service 1 - project code
 
@@ -140,7 +151,7 @@ We can run the application now, though it only confirms data gets loaded via log
 
 In service2, we don't need to add any dependencies because we are not changing the functionality, only the data being passed. Our frontend service still sends a request and displays a response, and while the format of that data is different (books), the technologies to sending and receiving it isn't.
 
-That means no changes to our `pom.xml` file. On to the application class code!
+That means no changes to our `pom.xml` or to the `application.properties` files. On to the application class code!
 
 === Service 2 - project code
 

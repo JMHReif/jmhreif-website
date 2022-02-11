@@ -1,7 +1,7 @@
 baseURL = "https://jmhreif.com/"
 languageCode = "en-us"
 title = "Jennifer Reif"
-theme = "ananke"
+theme = ["github.com/theNewDynamic/gohugo-theme-ananke"]
 
 [params]
 description = """
@@ -41,3 +41,16 @@ custom_css = ["custom.css"]
   identifier = "abstracts"
   weight = 400
   url = "/abstracts/"
+
+[security]
+  enableInlineShortcodes = false
+  [security.exec]
+    allow = ['^dart-sass-embedded$', '^go$', '^npx$', '^postcss$', '^asciidoctor$']
+    osEnv = ['(?i)^(PATH|PATHEXT|APPDATA|TMP|TEMP|TERM)$']
+
+  [security.funcs]
+    getenv = ['^HUGO_']
+
+  [security.http]
+    methods = ['(?i)GET|POST']
+    urls = ['.*']

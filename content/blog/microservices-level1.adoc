@@ -58,15 +58,24 @@ In the `Dependencies` area, we need to add two things - `Spring Reactive Web` an
 
 image::/img/microservices-lvl1/springio-svc1.png[]
 
-_*Note:* the Spring Initializr displays in dark mode or light mode via the moon or sun icons in the right column of the page. The image above is in dark mode._
+_Note: the Spring Initializr displays in dark mode or light mode via the moon or sun icons in the right column of the page. The image above is in dark mode._
 
 After the project downloads, find the `.zip` file and uncompress it. Open the uncompressed folder in your favorite IDE, and let's start coding!
+
+First, since both applications are running locally (at least for now), we need to ensure they don't try to run on the same ports. We can point them to non-conflicting ports in the `application.properties` file, as shown below.
+
+[source,text]
+----
+server.port=8080
+----
+
+Service1 will use port `8080`, then we can set Service2 to use a different one when we get there.
 
 === Service 1 - project code
 
 There is very little code we need to add to this project. Our goal is to create an REST endpoint that another application can reach, returning results so that we confirm the connection. That means we will need a REST endpoint and some return value.
 
-I'll code everything in the `Service1Application` file, since we don't have much code to add. To add the REST controller bit, we can use the `@RestController` annotation in Spring and set up the endpoint using `@RequestMapping("/text")`. This tells the application that we will use the `/text` suffix in order to get to anything we define within this class. With Lombok, I also add the `@AllArgsConstructor` to create a constructor with all arguments. All that's left is to define a method to return something.
+I'll code the rest of the code in the `Service1Application` file, since we don't have much to add. To add the REST controller bit, we can use the `@RestController` annotation in Spring and set up the endpoint using `@RequestMapping("/text")`. This tells the application that we will use the `/text` suffix in order to get to anything we define within this class. With Lombok, I also add the `@AllArgsConstructor` to create a constructor with all arguments. All that's left is to define a method to return something.
 
 For now, we will return a bit of text because I don't want to add complexity with a data store just yet. Adding complexity defeats our purpose, after all. :) We can define a method with a `String` return type and call it `sayHello()`. Next, we will return a hard-coded message from the call. Let's use the string "Hello, World!". It's simple and doesn't require additional dependencies.
 
@@ -92,7 +101,14 @@ Now that we have completed our backend service, we need to build the second serv
 
 image::/img/microservices-lvl1/springio-svc2.png[]
 
-Let's add some code!
+Let's add some code! First, we need to specify a port for service2 to use to match what we did in service1.
+
+[source,text]
+----
+server.port=8081
+----
+
+So service2 will use port `8081` and recall that service1 is using port `8080`. This means traffic for each application can communicate with one another without conflicting or getting sent to the wrong place.
 
 === Service 2 - project code
 
