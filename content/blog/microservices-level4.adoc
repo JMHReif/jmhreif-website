@@ -1,0 +1,99 @@
+---
+date: 2022-03-28T09:00:00-06:00
+featured_image: "/img/microservices-lvl4/unsplash-italy-art-bridge.jpeg"
+image_credit: https://unsplash.com/photos/hFXZ5cNfkOk?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["java","microservices","applications","development","spring-boot"]
+title: "Journeys in Java, Level 4: Building an Empire of Microservices"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+This blog post is iteration four in a series of posts about building microservices in Java. The initial post started with a single string message passed between two locally-running applications, and we are gradually adding services and functionality along the way.
+
+In this level 4 installment, we will add a new service that will manage book authors. It will call a database containing a book data domain and retrieve authors and their information. This will entail creating a new, separate service from our previously written service1 and service2. However, our previous data set also was not broad enough to cover authors as separate data entities, so I needed to find and load a better data set for our progressing use case. We will try to keep the details short on data loading, so that we can focus on the microservices themselves.
+
+Without further ado, let's get started!
+
+== Architecture
+
+The first microservices architecture we started with in the https://jmhreif.com/blog/microservices-level1/[level 1 version^] of this project comprised of two Spring Boot applications trading a single message text between them. In the next two levels, we added an embedded and then a separate MongoDB database with a book data set for the applications to host and call.
+
+Today's level 4 architecture adds a totally new service to host a REST API for other potential services or clients to interact with author data. For now, we are only creating the backend service that hosts the API. We can use it from other services at a later date.
+
+Here is the updated architecture:
+
+image::/img/microservices-lvl3/microservices-level3.png[]
+
+We also have a few changes in services 1 and 2 due to switching data sets in the database. A couple of fields are named differently, and the data has more information. While we won't spend a lot of time in this area in this post, the new data set is a trimmed-down subset of the https://sites.google.com/eng.ucsd.edu/ucsdbookgraph/home?authuser=0[UCSD Book Graph^].
+
+== New data load
+
+The above-mentioned UCSD Book Graph data set we are using is very thorough and diverse, which makes it great for larger projects. However, for lightweight demos, I needed to carve out a smaller subset to load and use. With some effort and time (more than I'd like), the resulting data set contained 10,000 books and a little over 12,000 authors.
+
+I used the load script from the previous level 3 code with an updated data file name to import books, and then created a similar script for loading the author data into a separate database collection. Once the data was in, I ran a couple queries to verify the format looked as I expected it, then turned to the microservices application code!
+
+== Applications - Service 1
+
+Since we are adding a separate service to interact with a different entity (author vs. book), the only changes needed for `service1` are to align properties with the new data set. The `pom.xml` file does not need any updates, as we are not changing the technologies used, and there is only one small change to a more generic database name (`goodreads` vs `books`) in the properties file.
+
+[source,text]
+----
+spring.data.mongodb.database=goodreads
+----
+
+Changes in the application class code will also be very few. Let's take a look at that next.
+
+=== Service 1 - project code
+
+The data domain class (`Book`) is the only section that needs to change here. This is due to the fields on the book object have changed with the new data set. The updated class code is below.
+
+[source,java]
+----
+@Data
+@Document
+class Book {
+	@Id
+	private String book_id;
+	@NonNull
+	private String title;
+
+	private String format, isbn, isbn13, edition_information;
+}
+----
+
+If you are looking at the https://github.com/JMHReif/microservices-level3/blob/main/service1/src/main/java/com/jmhreif/service1/Service1Application.java[previous version of the code^], we have added a couple more fields and removed the `authors` field. Since authors are now a separate entity (and database collection), this field will end up in our new service.
+
+With those changes to the data domain, let's see if there are any other updates to `service2`.
+
+== Applications - Service 2
+
+
+//overview of service2 changes, pom, props, etc.
+
+=== Service 2 - project code
+
+//actual class and functionality code changes for service2
+
+== Applications - Service 3
+
+//overview of service3 changes, pom, props, etc.
+
+=== Service 3 - project code
+
+//actual class and functionality code changes for service3
+
+== Put it to the test
+
+//how to run the apps and test the code!
+
+== Wrapping up!
+
+//brief recap and hint at next steps
+
+Happy coding!
+
+== Resources
+
+//any resources

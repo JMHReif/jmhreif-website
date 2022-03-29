@@ -66,10 +66,10 @@ First, since both applications are running locally (at least for now), we need t
 
 [source,text]
 ----
-server.port=8080
+server.port=8081
 ----
 
-Service1 will use port `8080`, then we can set Service2 to use a different one when we get there.
+Service1 will use port `8081`, then we can set Service2 to use a different one when we get there.
 
 === Service 1 - project code
 
@@ -105,10 +105,10 @@ Let's add some code! First, we need to specify a port for service2 to use to mat
 
 [source,text]
 ----
-server.port=8081
+server.port=8080
 ----
 
-So service2 will use port `8081` and recall that service1 is using port `8080`. This means traffic for each application can communicate with one another without conflicting or getting sent to the wrong place.
+So service2 will use port `8080` and recall that service1 is using port `8081`. This means traffic for each application can communicate with one another without conflicting or getting sent to the wrong place.
 
 === Service 2 - project code
 
@@ -124,22 +124,22 @@ First, we will need to create a bean for our WebClient object, so that we can in
 ----
 @SpringBootApplication
 public class Service2Application {
-
 	public static void main(String[] args) {
 		SpringApplication.run(Service2Application.class, args);
 	}
 
 	@Bean
 	WebClient client() {
-		return WebClient.create("http://localhost:8080");
+		return WebClient.create("http://localhost:8081");
 	}
-
 }
 ----
 
 Next, we need to create another controller for us (as the user) to interact with and call our backing service. For more on what the controller is/does, see the explanation of https://www.geeksforgeeks.org/mvc-design-pattern/[MVC design pattern^] (design pattern Spring follows). Similar to our `service1`, I added the class below the application class, but in the same file.
 
-We will use the https://www.baeldung.com/spring-component-annotation[`@Component`^] annotation to let Spring know to create a bean for this class and inject any dependencies (i.e. our WebClient bean) into it. I also will need a constructor, so I'll use the `@AllArgsConstructor` annotation from Lombok to create one. Next, we need to inject our `WebClient` bean into the class to use it for calling the backing service over HTTP and returning the results in a non-blocking fashion.
+We will use the https://www.baeldung.com/spring-component-annotation[`@Component`^] annotation to let Spring know to create a bean for this class and inject any dependencies (i.e. our WebClient bean) into it. In order to expose this service for users to interact with, I'll also create a REST service with `@RestController` and `@RequestMapping` annotations, just as I did with service1. This allows users to only interface with service2 (through `:8080/hello` endpoint), and then service2 interacts with service1 and any other backing services.
+
+I also will need a constructor, so I'll use the `@AllArgsConstructor` annotation from Lombok to create one. Next, we need to inject our `WebClient` bean into the class to use it for calling the backing service over HTTP and returning the results in a non-blocking fashion.
 
 Last, but certainly, not least, we need to create the method that calls our backing service. We know to expect a single `String` value in return, so because we are working with reactive types, our type choices are `Mono<>` or `Flux<>`. `Mono<>` is for 0 or 1 return values, so this is what we need. _*Note:* `Flux<>` is 0 to n values._ 
 
@@ -150,10 +150,13 @@ Final code is shown below (https://github.com/JMHReif/microservices-level1/blob/
 [source,java]
 ----
 @Component
+@RestController
 @AllArgsConstructor
+@RequestMapping("/hello")
 class TextController {
 	private final WebClient client;
 
+	@GetMapping
 	Mono<String> getText() {
 		return client.get()
 				.uri("/text")
@@ -167,7 +170,7 @@ Time to test it out and see if it works!
 
 == Put it to the test
 
-Start each of the applications, either through your IDE or via the command line. Once both are running, open a browser and go to `localhost:8080/text`. Alternatively, you can run this at the command line with `curl localhost:8080/text` or (if you have https://httpie.io/[httpie^] tool installed) `http :8080/text`.
+Start each of the applications, either through your IDE or via the command line. Once both are running, open a browser and go to `localhost:8080/hello`. Alternatively, you can run this at the command line with `curl localhost:8080/hello` or (if you have https://httpie.io/[httpie^] tool installed) `http :8080/hello`.
 
 And here should be the output!
 
@@ -177,7 +180,7 @@ image::/img/microservices-lvl1/microservices-lvl1-results.png[]
 
 Congratulations, we have created our first (albeit, rudimentary) pair of microservices!
 
-We created two individual Spring Boot applications that communicated over HTTP by creating a REST api backing service that produced a string message and a client frontend service that called the backing service and displayed the text in response. We utilized the Spring `WebClient` interface to reactively call and retrieve results. Our starter services successfully prove that our communication channel between the two applications works, solidifying the foundation of the microservices architecture.
+We created two individual Spring Boot applications that communicated over HTTP by creating a REST api backing service that produced a string message and a client REST frontend service that called the backing service and displayed the text in response. We utilized the Spring `WebClient` interface to reactively call and retrieve results. Our starter services successfully prove that our communication channel between the two applications works, solidifying the foundation of the microservices architecture.
 
 The root of microservices is all about having multiple applications/technologies as services and getting them to communicate among one another. Of course, there is much more to a production-ready rendition, such as scale, coordination, error-handling, and so on. However, this first step gives us our footbridge, gathering confidence and skill required to eventually tackle the business-scale systems.
 
