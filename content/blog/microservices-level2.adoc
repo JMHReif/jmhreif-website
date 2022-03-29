@@ -61,7 +61,7 @@ Adding an embedded database means we have a couple more properties to set in the
 
 [source,text]
 ----
-server.port=8080
+server.port=8081
 spring.data.mongodb.port=27017
 spring.mongodb.embedded.version=3.0.0
 ----
@@ -159,6 +159,7 @@ As in service1, we will start from the bottom of the `Service2Application.java` 
 
 [source,java]
 ----
+@Data
 class Book {
    private String bookId;
    private String title;
@@ -166,14 +167,16 @@ class Book {
 }
 ----
 
-Service2 does not interact directly with the database, so it only needs the domain class to ensure data being passed matches what our backend services expects and returns. We don't need any of the annotations, since all four ensure data is mapped between application and database. Instead, we simply need our three properties defined for mapping object fields to books.
+Service2 does not interact directly with the database, so it only needs the domain class to ensure data being passed matches what our backend services expects and returns. We only need the `@Data` annotation, since we need to access the getter/setter methods in order to map the object fields.
 
 Moving on up, we need to make a couple of minor adjustments to the controller class that calls our backend endpoint.
 
 [source,java]
 ----
 @Component
+@RestController
 @AllArgsConstructor
+@RequestMapping("/hello")
 class BookController {
    private final WebClient client;
 
@@ -186,15 +189,15 @@ class BookController {
 }
 ----
 
-The first change is to the name of the class itself (from `TextController` to `BookController`) to align with our book domain. On https://github.com/JMHReif/microservices-level2/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L37[line 6^] of the above code, we implement the `getBooks()` method. The name for the method also gets updated to match our book domain, and we need to use a different return type (from `Mono<String>` to `Flux<Book>`) because we are dealing with book objects instead of a string and expect multiple books instead of a single string return.
+The first change is to the name of the class itself (from `TextController` to `BookController`) to align with our book domain. On https://github.com/JMHReif/microservices-level2/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L42[line 9^] of the above code, we implement the `getBooks()` method. The name for the method also gets updated to match our book domain, and we need to use a different return type (from `Mono<String>` to `Flux<Book>`) because we are dealing with book objects instead of a string and expect multiple books instead of a single string return.
 
-On the https://github.com/JMHReif/microservices-level2/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L39[eighth line of controller^], we need to update our endpoint URL path because we changed that in our backend service from `/text` to `/db/books`. Finally, the last line of the method (https://github.com/JMHReif/microservices-level2/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L41[controller line 10^]) maps the return body to a `Flux` (one or more) of `Book` objects, rather than the https://github.com/JMHReif/microservices-level1/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L38[previous mapping to a Mono of String^].
+On the https://github.com/JMHReif/microservices-level2/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L44[eleventh line of controller^], we need to update our endpoint URL path because we changed that in our backend service from `/text` to `/db/books`. Finally, the last line of the method (https://github.com/JMHReif/microservices-level2/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L46[controller line 12^]) maps the return body to a `Flux` (one or more) of `Book` objects, rather than the https://github.com/JMHReif/microservices-level1/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L43[previous mapping to a Mono of String^].
 
 None of the code in the `Service2Application` class needs to change, so now it's time to test it out and see if it works!
 
 == Put it to the test
 
-Start each of the applications, either through your IDE or via the command line. Once both are running, open a browser and go to `localhost:8080/db/books`. Alternatively, you can run this at the command line with `curl localhost:8080/db/books` or (if you have https://httpie.io/[httpie^] tool installed) `http :8080/db/books`.
+Start each of the applications, either through your IDE or via the command line. Once both are running, open a browser and go to `localhost:8080/hello`. Alternatively, you can run this at the command line with `curl localhost:8080/hello` or (if you have https://httpie.io/[httpie^] tool installed) `http :8080/hello`.
 
 And here is the resulting output!
 
