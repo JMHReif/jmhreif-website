@@ -94,7 +94,7 @@ We will also need to make a couple of changes to the `application.properties` fi
 
 [source,text]
 ----
-server.port=8080
+server.port=8081
 
 #database connection
 spring.data.mongodb.uri=mongodb://mongoadmin:Testing123@localhost:27017
@@ -152,10 +152,11 @@ Let's see about the class code.
 
 === Service 2 - project code
 
-We also do not need to change the request syntax or way it is pulling/retrieving the information. However, we changed the domain class in service1, so that means we need to align the domain class in service2, as well.
+Since we changed the domain class in service1, so that means we need to align the domain class in service2, as well.
 
 [source,java]
 ----
+@Data
 class Book {
 	private String bookID;
 	private String title;
@@ -164,6 +165,29 @@ class Book {
 ----
 
 Just as in service1, we updated the first and last properties to `bookID` and `authors`. This maps our data coming from service1 to the correct fields in service2.
+
+We do not need to change the way the request is pulling/retrieving the information. However, we did change our data domain, so I will make one minor change to the client url from `/hello` to `/goodreads` so that it aligns with our domain better.
+
+[source,java]
+----
+@Component
+@RestController
+@AllArgsConstructor
+@RequestMapping("/goodreads")
+class BookController {
+	private final WebClient client;
+
+	@GetMapping
+	Flux<Book> getBooks() {
+		return client.get()
+				.uri("/db/books")
+				.retrieve()
+				.bodyToFlux(Book.class);
+	}
+}
+----
+
+The `@RequestMapping` annotation is the only line that has changed, so we will need to go to `localhost:8080/goodreads` now.
 
 Let's test our changes!
 
@@ -177,7 +201,7 @@ image:/img/microservices-lvl3/dockerpsMongoBooks_notrunning.png[]
 .Docker start mongoBooks
 image:/img/microservices-lvl3/dockerstartMongoBooks.png[]
 
-Next, we can start the service1 and service2 applications, either through an IDE or the command line. Once both are running, open a browser and go to `localhost:8080/db/books`. Alternatively, you can run this at the command line with `curl localhost:8080/db/books` or (if you have https://httpie.io/[httpie^] tool installed) `http :8080/db/books`.
+Next, we can start the service1 and service2 applications, either through an IDE or the command line. Once both are running, open a browser and go to `localhost:8080/goodreads`. Alternatively, you can run this at the command line with `curl localhost:8080/goodreads` or (if you have https://httpie.io/[httpie^] tool installed) `http :8080/goodreads`.
 
 And here is the resulting output!
 
