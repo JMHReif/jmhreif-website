@@ -3,7 +3,7 @@ date: 2022-03-23T09:00:00-06:00
 featured_image: "/img/decision-tree/unsplash-kitchen-tools.jpeg"
 image_credit: https://unsplash.com/photos/x5SRhkFajrA?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
 tags: ["data","data manipulation","command line","tools"]
-title: "Data Housekeeping: Picking Data Tools"
+title: "Data Tool Decision Tree: Reduce Data Cleaning Time"
 draft: false
 omit_header_text: true
 ---
@@ -119,4 +119,4 @@ Happy coding!
 * Command line tool: https://csvkit.readthedocs.io/en/latest/[`csvkit`] for delimited data (CSV, PSV, TSV, etc)
 * Linux command: https://tecadmin.net/linux-head-command/[`head`^] for printing data from beginning
 * Linux command: https://www.baeldung.com/linux/tr-command#delete[`tr`^] for translating/removing values
-* Database: https://dev.neo4j.com/neo4j-aura[Neo4j graph database^] (free cloud instance)
+* Database: https://bit.ly/neo4j-aura[Neo4j graph database^] (free cloud instance)

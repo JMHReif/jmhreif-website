@@ -26,7 +26,7 @@ Here is the updated architecture:
 
 image::/img/microservices-lvl3/microservices-level3.png[]
 
-We also have a few changes in services 1 and 2 due to switching data sets in the database. A couple of fields are named differently, and the data has more information. While we won't spend a lot of time in this area in this post, the new data set is a trimmed-down subset of the https://sites.google.com/eng.ucsd.edu/ucsdbookgraph/home?authuser=0[UCSD Book Graph^].
+We also have a few changes in services 1 and 2 due to switching data sets in the database. A couple of fields are named differently, and the data has more information. While we won't spend a lot of time on that, the new data set is a trimmed-down subset of the https://sites.google.com/eng.ucsd.edu/ucsdbookgraph/home?authuser=0[UCSD Book Graph^].
 
 == New data load
 
@@ -65,35 +65,134 @@ class Book {
 
 If you are looking at the https://github.com/JMHReif/microservices-level3/blob/main/service1/src/main/java/com/jmhreif/service1/Service1Application.java[previous version of the code^], we have added a couple more fields and removed the `authors` field. Since authors are now a separate entity (and database collection), this field will end up in our new service.
 
-With those changes to the data domain, let's see if there are any other updates to `service2`.
+With those changes to the data domain, let's see what changes to `service2` entail.
 
 == Applications - Service 2
 
-
-//overview of service2 changes, pom, props, etc.
+There are no changes to the dependencies, properties, or other configuration pieces of the application, so we can skip straight to the application class.
 
 === Service 2 - project code
 
-//actual class and functionality code changes for service2
+The same changes we made to the data domain in service1 also need to be made in service2 for field name changes and additions.
+
+[source,java]
+----
+@Data
+class Book {
+	private String book_id;
+	private String title;
+	private String format, isbn, isbn13, edition_information;
+}
+----
+
+On to the new service for the book authors!
 
 == Applications - Service 3
 
-//overview of service3 changes, pom, props, etc.
+This will be the real core of this step in the microservices project. We are adding a separate service to manage and interact with author data. The code will look very similar to service1 for books because we are essentially creating the same functionality, except for author objects.
+
+Just like we did with our previous services, we can go to the Spring Initializr at https://start.spring.io/[start.spring.io^] to create the skeleton of our project.
+
+The first three fields stay with defaults (Maven project, Java language, Spring Boot 2.6.5), but I'll make a tweak the group and artifact fields for my personal preference. Packaging and Java version will also stay defaulted.
+
+In the `Dependencies` area, we need to add 3 things - `Spring Reactive Web`, `Lombok`, and `Spring Data Reactive MongoDB`. The use of Lombok is personal preference, as well, but I wanted to use it here to trim some code. Next, click the `Generate` button at the bottom of the screen and pick a location to save it.
+
+image::/img/microservices-lvl4/springio-svc3.png[]
+
+_Note: the Spring Initializr displays in dark mode or light mode via the moon or sun icons in the right column of the page. The image above is in dark mode._
+
+After the project downloads, find the `.zip` file and uncompress it. Open the uncompressed folder in your favorite IDE, and let's start coding!
+
+Our `pom.xml` and `application.properties` files will look nearly identical to service1's. We have the same three dependencies (plus the standard test and reactor ones) - webflux for reactive REST, MongoDB reactive for the database connection, and lombok for reducing boilerplate.
+
+Though our properties will also be nearly the same, we need to specify a different port for service3 to use so that traffic doesn't conflict with service1 or service2. Service1 is on `8081`, and service2 is on `8080`, so we'll assign `8082` for service3. The other two properties are for connecting to the MongoDB database running in a Docker container.
+
+[source,text]
+----
+server.port=8082
+
+#database connection
+spring.data.mongodb.uri=mongodb://mongoadmin:Testing123@localhost:27017
+spring.data.mongodb.database=goodreads
+----
+
+On to the code!
 
 === Service 3 - project code
 
-//actual class and functionality code changes for service3
+The data domain class, repository interface, and controller class in service3 follow the same patterns as what we did in service1, but for authors. That means really only fields, names, and endpoints need changed, so let's take a look!
+
+.Data domain class
+[source,java]
+----
+@Data
+@Document
+class Author {
+	@Id
+	private String author_id;
+
+	private String name, average_rating, ratings_count, text_reviews_count;
+}
+----
+
+The `@Data` and `@Document` annotations create our getter and setter methods for the class fields and map the class to document objects in the database, respectively. Then, we have our `@Id` annotation followed by the related id field for the class, along with other fields we want to capture about the author below that.
+
+In the https://github.com/JMHReif/microservices-level4/blob/main/service3/src/main/java/com/jmhreif/service3/Service3Application.java#L34[`AuthorRepository` interface^], we extend the `ReactiveCrudRepository<>`, just like we did in service1. We don't define any methods here because (for now) we are sticking with the default ones provided out-of-the-box in Spring Data.
+
+The rest controller class code also looks remarkably like service1.
+
+[source,java]
+----
+@RestController
+@AllArgsConstructor
+@RequestMapping("/db")
+class AuthorController {
+	private final AuthorRepository authorRepo;
+
+	@GetMapping("/authors")
+	Flux<Author> getAuthors() { return authorRepo.findAll(); }
+}
+----
+
+We annotate this class as a rest controller using `@RestController` and `@RequestMapping` and define the base endpoint as `/db`, just like in service1. On https://github.com/JMHReif/microservices-level4/blob/main/service3/src/main/java/com/jmhreif/service3/Service3Application.java#L28[line 5 of the controller class^], we inject the `AuthorRepository` interface, so we can access the methods for the database.
+
+Next, we set up a nested endpoint of `/authors` that will be mapped to the `getAuthors()` method. This method returns a `Flux<>` (one or more objects) of authors and calls the author repository's built-in `findAll()` method, retrieving all authors in the database.
+
+Finally, the `Service3Application` class doesn't need any changes at all. It only includes the standard `main()` method that Spring Boot templates for us when the project is created.
+
+Let's test all the services together!
 
 == Put it to the test
 
-//how to run the apps and test the code!
+As usual, we will spin up our project from top to bottom, starting with the database in the Docker container. Running `docker ps` will show us whether the container is running. If not started, use `docker start mongoBooks` to kick it off.
+
+.Docker start mongoBooks
+image:/img/microservices-lvl4/dockerstartMongoBooks.png[]
+
+Next, we can start the service1, service2, and service3 applications, either through an IDE or the command line. Once running, we can test each service with the below commands.
+
+1. Test service1 for backend books api: open a browser and go to `localhost:8081/db/books` or go to command line with `curl localhost:8081/db/books`.
+2. Test service2 and ensure client service connects to books api: open a browser and go to `localhost:8080/goodreads/books` or go to command line with `curl localhost:8080/goodreads/books`.
+3. Test service3 for backend authors api: open a browser and go to `localhost:8082/db/authors` or go to command line with `curl localhost:8082/db/authors`.
+
+And here is the resulting output from authors api results from service3!
+
+image::/img/microservices-lvl4/microservices-lvl4-results.png[]
 
 == Wrapping up!
 
-//brief recap and hint at next steps
+In this post, we took another big leap by adding a separate, new service that hosts a REST API for authors in the database. The outline of the service3 code looks very similar to that of service1, as each is providing an api - one for books and one for authors.
+
+We also transitioned our database to a new data set, but stuck with our previous book domain. This meant that we had a few minor changes to field names on our domain classes, but not much else was impacted in the application layer. However, there was some work at the database level to trim the larger data set down to demo size and get it loaded, though those steps were only mentioned in this post.
+
+_*Note:* For a bit more detail about trimming the data set for this project, check out my https://jmhreif.com/blog/data-cleaning-goodreads/[blog post on picking data cleaning tools^]._
+
+We ran and tested all of these changes together by starting all of our three applications and hitting their related endpoints; however, you may have noticed that three services and a database is a lot to spin up manually. It provides a great transition to a tool to run and manage multiple applications together. That is where we will go in the next post, so stay tuned. :)
 
 Happy coding!
 
 == Resources
 
-//any resources
+* Github: https://github.com/JMHReif/microservices-level4[microservices-level4^] repository
+* Previous blog posts: https://jmhreif.com/blog/microservices-level1/[Microservices Level 1^], https://jmhreif.com/blog/microservices-level2/[Microservices Level 2^], https://jmhreif.com/blog/microservices-level3/[Microservices Level 3^]
+* Data set blog post: https://jmhreif.com/blog/data-cleaning-goodreads/[Goodreads data cleaning^]

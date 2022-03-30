@@ -141,7 +141,7 @@ We will use the https://www.baeldung.com/spring-component-annotation[`@Component
 
 I also will need a constructor, so I'll use the `@AllArgsConstructor` annotation from Lombok to create one. Next, we need to inject our `WebClient` bean into the class to use it for calling the backing service over HTTP and returning the results in a non-blocking fashion.
 
-Last, but certainly, not least, we need to create the method that calls our backing service. We know to expect a single `String` value in return, so because we are working with reactive types, our type choices are `Mono<>` or `Flux<>`. `Mono<>` is for 0 or 1 return values, so this is what we need. _*Note:* `Flux<>` is 0 to n values._ 
+Last, but certainly, not least, we need to create the method that calls our backing service. We know to expect a single `String` value in return, so because we are working with reactive types, our type choices are `Mono<>` or `Flux<>`. `Mono<>` is for 0 or 1 return values, so this is what we need. _*Note:* `Flux<>` is 0 to n values._
 
 We can name the method anything we want to. Here, it is just called `getText()`. Inside the method, we will return the outcome of calling the client, getting values (read only), at the uri `/text`, retrieving the body portion of the response (`.retrieve()`), and then mapping that body to a single String (`.bodyToMono()` of `String.class`).
 
