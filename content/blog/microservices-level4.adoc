@@ -1,38 +1,40 @@
 ---
-date: 2022-03-28T09:00:00-06:00
+date: 2022-03-31T09:00:00-06:00
 featured_image: "/img/microservices-lvl4/unsplash-italy-art-bridge.jpeg"
 image_credit: https://unsplash.com/photos/hFXZ5cNfkOk?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
 tags: ["java","microservices","applications","development","spring-boot"]
 title: "Journeys in Java, Level 4: Building an Empire of Microservices"
-draft: true
+draft: false
 omit_header_text: true
 ---
 
 {{< image-credit >}}
 
-This blog post is iteration four in a series of posts about building microservices in Java. The initial post started with a single string message passed between two locally-running applications, and we are gradually adding services and functionality along the way.
+This blog post is the fourth iteration in a series of posts about building microservices in Java. The initial post started with a single string message passed between two locally-running applications, and we are gradually adding services and functionality along the way.
 
-In this level 4 installment, we will add a new service that will manage book authors. It will call a database containing a book data domain and retrieve authors and their information. This will entail creating a new, separate service from our previously written service1 and service2. However, our previous data set also was not broad enough to cover authors as separate data entities, so I needed to find and load a better data set for our progressing use case. We will try to keep the details short on data loading, so that we can focus on the microservices themselves.
+In this level 4 installment, we will add a new service that will manage book authors. It will call a database containing a data domain of books and retrieve authors and their information. This will entail creating a new, separate service from our previously written service1 and service2. However, our previous data set also was not broad enough to cover authors as separate data entities, so I needed to find and load a better data set for our progressing use case. We will try to keep the details short on data loading, so that we can focus on the microservices themselves.
 
 Without further ado, let's get started!
 
 == Architecture
 
-The first microservices architecture we started with in the https://jmhreif.com/blog/microservices-level1/[level 1 version^] of this project comprised of two Spring Boot applications trading a single message text between them. In the next two levels, we added an embedded and then a separate MongoDB database with a book data set for the applications to host and call.
+The first microservices architecture we started with in the https://jmhreif.com/blog/microservices-level1/[level 1 version^] of this project comprised of two Spring Boot applications trading a single message string between them. In the next two levels, we added an embedded and then a separate MongoDB database with imported book data set for the applications to host and call.
 
-Today's level 4 architecture adds a totally new service to host a REST API for other potential services or clients to interact with author data. For now, we are only creating the backend service that hosts the API. We can use it from other services at a later date.
+Today's level 4 architecture adds a totally new service to host a REST API for interacting with author data. For now, we are only creating the backend service that hosts the API. We can build other services to use it at a later date.
 
 Here is the updated architecture:
 
-image::/img/microservices-lvl3/microservices-level3.png[]
+image::/img/microservices-lvl4/microservices-level4.png[]
 
-We also have a few changes in services 1 and 2 due to switching data sets in the database. A couple of fields are named differently, and the data has more information. While we won't spend a lot of time on that, the new data set is a trimmed-down subset of the https://sites.google.com/eng.ucsd.edu/ucsdbookgraph/home?authuser=0[UCSD Book Graph^].
+We also have a few changes in services 1 and 2 due to switching data sets in the database. A couple of field names are different, and the data has more information. While we won't spend a lot of time on that, the new data set is a trimmed-down subset of the https://sites.google.com/eng.ucsd.edu/ucsdbookgraph/home?authuser=0[UCSD Book Graph^].
 
 == New data load
 
 The above-mentioned UCSD Book Graph data set we are using is very thorough and diverse, which makes it great for larger projects. However, for lightweight demos, I needed to carve out a smaller subset to load and use. With some effort and time (more than I'd like), the resulting data set contained 10,000 books and a little over 12,000 authors.
 
 I used the load script from the previous level 3 code with an updated data file name to import books, and then created a similar script for loading the author data into a separate database collection. Once the data was in, I ran a couple queries to verify the format looked as I expected it, then turned to the microservices application code!
+
+_*Note:* For more info about trimming the data set for this project, check out my https://jmhreif.com/blog/data-cleaning-goodreads/[blog post on picking data cleaning tools^]. Detailed steps on importing the data to the database are provided in the https://github.com/JMHReif/microservices-level4/tree/main/docker-mongodb[Github project's docker folder^]._
 
 == Applications - Service 1
 
@@ -93,7 +95,7 @@ This will be the real core of this step in the microservices project. We are add
 
 Just like we did with our previous services, we can go to the Spring Initializr at https://start.spring.io/[start.spring.io^] to create the skeleton of our project.
 
-The first three fields stay with defaults (Maven project, Java language, Spring Boot 2.6.5), but I'll make a tweak the group and artifact fields for my personal preference. Packaging and Java version will also stay defaulted.
+The first three fields keep default values (Maven project, Java language, Spring Boot 2.6.5), but I'll tweak the group and artifact fields for my preference. Packaging and Java version will also stay defaulted.
 
 In the `Dependencies` area, we need to add 3 things - `Spring Reactive Web`, `Lombok`, and `Spring Data Reactive MongoDB`. The use of Lombok is personal preference, as well, but I wanted to use it here to trim some code. Next, click the `Generate` button at the bottom of the screen and pick a location to save it.
 
@@ -101,11 +103,11 @@ image::/img/microservices-lvl4/springio-svc3.png[]
 
 _Note: the Spring Initializr displays in dark mode or light mode via the moon or sun icons in the right column of the page. The image above is in dark mode._
 
-After the project downloads, find the `.zip` file and uncompress it. Open the uncompressed folder in your favorite IDE, and let's start coding!
+After the project downloads, find the `.zip` file where it downloaded and uncompress it. Open the uncompressed folder in your favorite IDE, and let's start coding!
 
 Our `pom.xml` and `application.properties` files will look nearly identical to service1's. We have the same three dependencies (plus the standard test and reactor ones) - webflux for reactive REST, MongoDB reactive for the database connection, and lombok for reducing boilerplate.
 
-Though our properties will also be nearly the same, we need to specify a different port for service3 to use so that traffic doesn't conflict with service1 or service2. Service1 is on `8081`, and service2 is on `8080`, so we'll assign `8082` for service3. The other two properties are for connecting to the MongoDB database running in a Docker container.
+Though our properties will also be nearly the same, we need to specify a different port for service3 so that traffic doesn't conflict with service1 or service2. Service1 is on `8081`, and service2 is on `8080`, so we'll assign `8082` for service3. The other two properties are for connecting to the MongoDB database running in a Docker container.
 
 [source,text]
 ----
@@ -158,7 +160,7 @@ We annotate this class as a rest controller using `@RestController` and `@Reques
 
 Next, we set up a nested endpoint of `/authors` that will be mapped to the `getAuthors()` method. This method returns a `Flux<>` (one or more objects) of authors and calls the author repository's built-in `findAll()` method, retrieving all authors in the database.
 
-Finally, the `Service3Application` class doesn't need any changes at all. It only includes the standard `main()` method that Spring Boot templates for us when the project is created.
+Moving to the `Service3Application` class, no changes are needed. It already includes a standard `main()` method that is defaulted when the project is created.
 
 Let's test all the services together!
 
@@ -172,7 +174,7 @@ image:/img/microservices-lvl4/dockerstartMongoBooks.png[]
 Next, we can start the service1, service2, and service3 applications, either through an IDE or the command line. Once running, we can test each service with the below commands.
 
 1. Test service1 for backend books api: open a browser and go to `localhost:8081/db/books` or go to command line with `curl localhost:8081/db/books`.
-2. Test service2 and ensure client service connects to books api: open a browser and go to `localhost:8080/goodreads/books` or go to command line with `curl localhost:8080/goodreads/books`.
+2. Test service2 for client service connecting to books api: open a browser and go to `localhost:8080/goodreads/books` or go to command line with `curl localhost:8080/goodreads/books`.
 3. Test service3 for backend authors api: open a browser and go to `localhost:8082/db/authors` or go to command line with `curl localhost:8082/db/authors`.
 
 And here is the resulting output from authors api results from service3!
@@ -183,11 +185,9 @@ image::/img/microservices-lvl4/microservices-lvl4-results.png[]
 
 In this post, we took another big leap by adding a separate, new service that hosts a REST API for authors in the database. The outline of the service3 code looks very similar to that of service1, as each is providing an api - one for books and one for authors.
 
-We also transitioned our database to a new data set, but stuck with our previous book domain. This meant that we had a few minor changes to field names on our domain classes, but not much else was impacted in the application layer. However, there was some work at the database level to trim the larger data set down to demo size and get it loaded, though those steps were only mentioned in this post.
+We also transitioned our database to a new data set, but stuck with a book domain. This meant that we had a few minor changes to field names on our domain classes, but not much else was impacted in the application layer. However, there was some work at the database level to trim the larger data set down to demo size and get it loaded, though those steps were only mentioned in this post.
 
-_*Note:* For a bit more detail about trimming the data set for this project, check out my https://jmhreif.com/blog/data-cleaning-goodreads/[blog post on picking data cleaning tools^]._
-
-We ran and tested all of these changes together by starting all of our three applications and hitting their related endpoints; however, you may have noticed that three services and a database is a lot to spin up manually. It provides a great transition to a tool to run and manage multiple applications together. That is where we will go in the next post, so stay tuned. :)
+We ran and tested all of these changes together by starting all three of our applications and hitting their related endpoints; however, you may have noticed that three services and a database is a lot to spin up manually. It provides a great transition to a tool for running and managing multiple applications together. That is where we will go in the next post, so stay tuned. :)
 
 Happy coding!
 
