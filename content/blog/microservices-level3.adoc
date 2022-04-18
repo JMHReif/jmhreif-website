@@ -177,7 +177,7 @@ We do not need to change the way the request is pulling/retrieving the informati
 class BookController {
 	private final WebClient client;
 
-	@GetMapping
+	@GetMapping("/books")
 	Flux<Book> getBooks() {
 		return client.get()
 				.uri("/db/books")
@@ -187,7 +187,7 @@ class BookController {
 }
 ----
 
-The `@RequestMapping` annotation is the only line that has changed, so we will need to go to `localhost:8080/goodreads` now.
+The mapping annotations are the only lines that has changed, so we will need to go to `localhost:8080/goodreads/books` now.
 
 Let's test our changes!
 
@@ -201,7 +201,7 @@ image:/img/microservices-lvl3/dockerpsMongoBooks_notrunning.png[]
 .Docker start mongoBooks
 image:/img/microservices-lvl3/dockerstartMongoBooks.png[]
 
-Next, we can start the service1 and service2 applications, either through an IDE or the command line. Once both are running, open a browser and go to `localhost:8080/goodreads`. Alternatively, you can run this at the command line with `curl localhost:8080/goodreads` or (if you have https://httpie.io/[httpie^] tool installed) `http :8080/goodreads`.
+Next, we can start the service1 and service2 applications, either through an IDE or the command line. Once both are running, open a browser and go to `localhost:8080/goodreads/books`. Alternatively, you can run this at the command line with `curl localhost:8080/goodreads/books` or (if you have https://httpie.io/[httpie^] tool installed) `http :8080/goodreads/books`.
 
 And here is the resulting output!
 

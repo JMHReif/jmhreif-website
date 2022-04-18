@@ -1,0 +1,108 @@
+---
+date: 2022-04-14T09:00:00-06:00
+featured_image: "/img/microservices-lvl4/unsplash-long-low-stone-bridge.jpeg"
+image_credit: https://unsplash.com/photos/XacrTY7hdYg?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["java","microservices","applications","development","spring-boot"]
+title: "Journeys in Java, Level 5: Building an Empire of Microservices"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+We continue building our microservices system by adding a coordination layer to handle the complexity of spinning multiple services up and down. In previous blog posts, we grew from two Spring Boot applications to three applications + a database container. As we continue to scale and broaden our system, we will need something to handle coordination of services to ensure consistent communication (and avoid human error).
+
+We will do this through an orchestration layer using https://docs.docker.com/compose/[`docker-compose`^]. Docker compose is a tool that handles a variety of functions related to running and managing containerized applications.
+
+For our project, this means we have two high-level steps to get managed microservice containers - 1. containerize our currently-local applications, 2. set up the management layer with docker compose. Neither of these may seem daunting, but I ran into a few unexpected gotchas, which I will be sure to mention. :)
+
+Let's get started!
+
+== Architecture
+
+As in previous iterations in this blog series, we are building up from a base level explained in the https://jmhreif.com/blog/microservices-level1/[level 1 blog post^] from two Spring Boot applications. Currently, our microservices system consists of three services and a database container. While still pretty small in the microservices world, issues like coordination are already becoming cumbersome, so this is a good time to introduce orchestration tools like docker compose that attempt to reduce that pain.
+
+The number of services and their functions have not changed from the previous blog post, but the management of them has.
+
+Here is the updated architecture:
+
+image::/img/microservices-lvl5/microservices-level5.png[]
+
+Due to containerizing our applications, we will need to change a couple of lines of code in our applications that will help minimize changes later for different environments or configuration. Let's start by creating individual containers first.
+
+== Containerizing - Service 1
+
+To create a container for service1, we need to have a Dockerfile in the main service folder (`/service1`). This will allow Docker to reach the files it needs and build the current folder when we build the image.
+
+We could include a variety of tools and tech in our container, but I have opted to only use the minimum we need. The existing Dockerfile is below.
+
+[source,text]
+----
+#Pull base image
+#-----------------
+FROM openjdk:11
+
+#Author
+#-------
+LABEL org.opencontainers.image.authors="Jennifer Reif,jennifer@thehecklers.org,@JMHReif"
+
+#Copy jar and expose entrypoints
+#--------------------------------
+COPY target/service1-*.jar goodreads-svc1.jar
+ENTRYPOINT ["java","-jar","/goodreads-svc1.jar"]
+----
+
+First, I want a Java environment in the container, so Docker will pull openjdk's version11 image as the base layer for our container. Next, the author/maintainer information is listed so users know who to contact for issues. Lastly, there are a couple of instructions to copy the JAR file (our application) into the container and list commands/arguments for the build command (`ENTRYPOINT`).
+
+In the next section, we will see how to build the image using the Dockerfile we just created.
+
+=== Service 1 - building and running the container
+//LEFT OFF HERE
+
+== Containerizing - Service 2
+
+
+=== Service 2 - building and running the container
+
+
+== Containerizing - Service 3
+
+
+=== Service 3 - building and running the container
+
+
+== Docker compose for everything
+
+
+== Put it to the test
+
+As usual, we will spin up our project from top to bottom, starting with the database in the Docker container. Running `docker ps` will show us whether the container is running. If not started, use `docker start mongoBooks` to kick it off.
+
+.Docker start mongoBooks
+image:/img/microservices-lvl4/dockerstartMongoBooks.png[]
+
+Next, we can start the service1, service2, and service3 applications, either through an IDE or the command line. Once running, we can test each service with the below commands.
+
+1. Test service1 for backend books api: open a browser and go to `localhost:8081/db/books` or go to command line with `curl localhost:8081/db/books`.
+2. Test service2 for client service connecting to books api: open a browser and go to `localhost:8080/goodreads/books` or go to command line with `curl localhost:8080/goodreads/books`.
+3. Test service3 for backend authors api: open a browser and go to `localhost:8082/db/authors` or go to command line with `curl localhost:8082/db/authors`.
+
+And here is the resulting output from authors api results from service3!
+
+image::/img/microservices-lvl4/microservices-lvl4-results.png[]
+
+== Wrapping up!
+
+In this post, we took another big leap by adding a separate, new service that hosts a REST API for authors in the database. The outline of the service3 code looks very similar to that of service1, as each is providing an api - one for books and one for authors.
+
+We also transitioned our database to a new data set, but stuck with a book domain. This meant that we had a few minor changes to field names on our domain classes, but not much else was impacted in the application layer. However, there was some work at the database level to trim the larger data set down to demo size and get it loaded, though those steps were only mentioned in this post.
+
+We ran and tested all of these changes together by starting all three of our applications and hitting their related endpoints; however, you may have noticed that three services and a database is a lot to spin up manually. It provides a great transition to a tool for running and managing multiple applications together. That is where we will go in the next post, so stay tuned. :)
+
+Happy coding!
+
+== Resources
+
+* Github: https://github.com/JMHReif/microservices-level4[microservices-level4^] repository
+* Previous blog posts: https://jmhreif.com/blog/microservices-level1/[Microservices Level 1^], https://jmhreif.com/blog/microservices-level2/[Microservices Level 2^], https://jmhreif.com/blog/microservices-level3/[Microservices Level 3^]
+* Data set blog post: https://jmhreif.com/blog/data-cleaning-goodreads/[Goodreads data cleaning^]

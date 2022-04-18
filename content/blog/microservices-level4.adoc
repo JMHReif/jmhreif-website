@@ -57,11 +57,11 @@ The data domain class (`Book`) is the only section that needs to change here. Th
 @Document
 class Book {
 	@Id
-	private String book_id;
+	private String mongoId;
 	@NonNull
-	private String title;
+	private String book_id;
 
-	private String format, isbn, isbn13, edition_information;
+	private String title, format, isbn, isbn13, edition_information;
 }
 ----
 
@@ -81,9 +81,9 @@ The same changes we made to the data domain in service1 also need to be made in 
 ----
 @Data
 class Book {
+	private String mongoId;
 	private String book_id;
-	private String title;
-	private String format, isbn, isbn13, edition_information;
+	private String title, format, isbn, isbn13, edition_information;
 }
 ----
 
@@ -131,8 +131,10 @@ The data domain class, repository interface, and controller class in service3 fo
 @Document
 class Author {
 	@Id
+	private String mongoId;
+	@NonNull
 	private String author_id;
-
+	
 	private String name, average_rating, ratings_count, text_reviews_count;
 }
 ----
