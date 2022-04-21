@@ -173,7 +173,6 @@ Moving on up, we need to make a couple of minor adjustments to the controller cl
 
 [source,java]
 ----
-@Component
 @RestController
 @AllArgsConstructor
 @RequestMapping("/hello")

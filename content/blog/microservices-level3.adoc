@@ -170,7 +170,6 @@ We do not need to change the way the request is pulling/retrieving the informati
 
 [source,java]
 ----
-@Component
 @RestController
 @AllArgsConstructor
 @RequestMapping("/goodreads")

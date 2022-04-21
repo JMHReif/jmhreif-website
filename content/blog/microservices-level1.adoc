@@ -137,7 +137,7 @@ public class Service2Application {
 
 Next, we need to create another controller for us (as the user) to interact with and call our backing service. For more on what the controller is/does, see the explanation of https://www.geeksforgeeks.org/mvc-design-pattern/[MVC design pattern^] (design pattern Spring follows). Similar to our `service1`, I added the class below the application class, but in the same file.
 
-We will use the https://www.baeldung.com/spring-component-annotation[`@Component`^] annotation to let Spring know to create a bean for this class and inject any dependencies (i.e. our WebClient bean) into it. In order to expose this service for users to interact with, I'll also create a REST service with `@RestController` and `@RequestMapping` annotations, just as I did with service1. This allows users to only interface with service2 (through `:8080/hello` endpoint), and then service2 interacts with service1 and any other backing services.
+Users will interface with service2 (through `:8080/hello` endpoint), and then service2 interacts with service1 and any other backing services. In order to expose this service for users, I will create a REST service with `@RestController` and `@RequestMapping` annotations, just as I did with service1. The rest controller annotation will find our custom WebClient bean and inject it into the class.
 
 I also will need a constructor, so I'll use the `@AllArgsConstructor` annotation from Lombok to create one. Next, we need to inject our `WebClient` bean into the class to use it for calling the backing service over HTTP and returning the results in a non-blocking fashion.
 
@@ -149,7 +149,6 @@ Final code is shown below (https://github.com/JMHReif/microservices-level1/blob/
 
 [source,java]
 ----
-@Component
 @RestController
 @AllArgsConstructor
 @RequestMapping("/hello")
