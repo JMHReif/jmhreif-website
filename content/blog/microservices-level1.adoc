@@ -189,3 +189,4 @@ Happy coding!
 
 * Github: https://github.com/JMHReif/microservices-level1[microservices-level1^] repository
 * Documentation: https://spring.io/projects/spring-boot[Spring Boot^]
+* Blog post: https://www.baeldung.com/spring-5-webclient#whatswebclient[Baeldung's Guide to WebClient^]

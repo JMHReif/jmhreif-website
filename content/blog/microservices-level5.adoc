@@ -296,3 +296,4 @@ There is so much more we can explore with microservices, such as adding more dat
 * Github: https://github.com/JMHReif/microservices-level5[microservices-level5^] repository
 * Github: https://github.com/JMHReif/microservices-java[Meta repository for all related content^]
 * Documentation: https://docs.docker.com/compose/[Docker compose^]
+* Blog post: https://www.baeldung.com/ops/docker-compose[Baeldung's Introduction to Docker Compose^]
