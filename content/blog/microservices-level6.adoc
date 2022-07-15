@@ -3,7 +3,7 @@ date: 2022-06-21T09:00:00-06:00
 featured_image: "/img/microservices-lvl6/unsplash-sunset-goldengate-bridge.jpeg"
 image_credit: https://unsplash.com/photos/SHP1t8EduMY?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
 tags: ["java","microservices","applications","development","spring-boot"]
-title: "Journeys in Java, Level 6: Building an Empire of Microservices"
+title: "Journeys in Java, Level 6: Build a Microservice with Neo4j"
 draft: false
 omit_header_text: true
 ---
@@ -17,7 +17,7 @@ If you are new to graphs, I will leave a couple of resources below for more info
 * https://medium.com/neo4j/how-do-you-know-if-a-graph-database-solves-the-problem-a7da10393f5[Blog post: How do you know if a graph database solves the problem^]
 * https://neo4j.com/developer/graph-database/[Neo4j guide: What is a graph database?^]
 
-Utilizing another database means starting a database instance, and there were a few choices here. Several graph databases exist on the market, but Neo4j is a popular one and offers several deployment options. We could spin up a Docker container (as we did in an https://jmhreif.com/blog/microservices-level3/[earlier section with MongoDB^]) or take advantage of the database-as-a-service option called https://bit.ly/neo4j-aura[AuraDB^] with their free tier. Neo4j will handle managing the database, and it should have everything we need.
+Utilizing another database means starting a database instance, and there were a few choices here. Several graph databases exist on the market, but Neo4j is a popular one and offers several deployment options. We could spin up a Docker container (as we did in an https://jmhreif.com/blog/microservices-level3/[earlier section with MongoDB^]) or take advantage of the database-as-a-service option called https://dev.neo4j.com/aura-java[AuraDB^] with their free tier. Neo4j will handle managing the database, and it should have everything we need.
 
 In this post, we will create our Neo4j database and get the data loaded, then build our new service that interacts with the database and provides an API for client services.
 
@@ -37,7 +37,7 @@ The items outside the grey box are what we are adding today - Neo4j database and
 
 == Database-as-a-service: AuraDB
 
-We want to add a new database into our microservices system, and we know we want to use https://bit.ly/neo4j-aura[AuraDB^] free tier. Signing up and creating the database instance requires a couple steps and a bit of information, such as verifying your email address and waiting for the instance to spin up (takes a few minutes). Details of that process (with screenshots) are shown in most of my colleague https://twitter.com/mesirii[Michael Hunger^]'s "Discover AuraDB Free" blog posts, such as https://medium.com/neo4j/discover-auradb-free-week-26-goodreads-books-and-recommendations-54fb47e3f201[this week's^].
+We want to add a new database into our microservices system, and we know we want to use https://dev.neo4j.com/aura-java[AuraDB^] free tier. Signing up and creating the database instance requires a couple steps and a bit of information, such as verifying your email address and waiting for the instance to spin up (takes a few minutes). Details of that process (with screenshots) are shown in most of my colleague https://twitter.com/mesirii[Michael Hunger^]'s "Discover AuraDB Free" blog posts, such as https://medium.com/neo4j/discover-auradb-free-week-26-goodreads-books-and-recommendations-54fb47e3f201[this week's^].
 
 Once the instance is running, we can get started with our data load.
 
@@ -164,7 +164,7 @@ Next, we need to start our `service4` application, either through the IDE or com
 2. Test backend reviews api finding reviews: open a browser and go to `localhost:8083/neo/reviews` or go to command line with `curl localhost:8083/neo/reviews`.
 3. Test api finding reviews for a certain book: open a browser and go to `localhost:8083/neo/reviews/178186` or go to command line with `curl localhost:8083/neo/178186`.
 
-And here is the resulting output from authors api results from service4!
+And here is the resulting output from reviews api results from service4!
 
 .Find 1000 reviews
 image:/img/microservices-lvl6/microservices-lvl6-results.png[]
@@ -183,5 +183,5 @@ There is so much more we can do on this topic. In upcoming posts, we need to ext
 * Github: https://github.com/JMHReif/microservices-level6[microservices-level6^] repository
 * Github: https://github.com/JMHReif/microservices-java[Meta repository for all related content^]
 * Developer guide: https://neo4j.com/developer/graph-database/[Neo4j graph database^]
-* Neo4j AuraDB: https://bit.ly/neo4j-aura[Create a FREE database^]
+* Neo4j AuraDB: https://dev.neo4j.com/aura-java[Create a FREE database^]
 * Documentation: https://spring.io/projects/spring-data-neo4j[Spring Data Neo4j^]

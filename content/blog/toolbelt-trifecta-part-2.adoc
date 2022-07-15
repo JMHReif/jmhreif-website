@@ -1,0 +1,479 @@
+---
+date: 2022-06-28T09:00:00-06:00
+featured_image: "/img/toolbelt-part2/toolbelt-part2-builder.jpeg"
+image_credit: https://unsplash.com/photos/oamw52SCGi0?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["neo4j","aws-lambda","java","cloud","functional-programming"]
+title: "Toolbelt Trifecta II: Connecting to Neo4j with Java and AWS Lambda"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+I wrote an article earlier this year on writing an AWS Lambda in Java that connects to Neo4j, but it used the more manual approach to defining and creating AWS cloud infrastructure. The newer https://docs.aws.amazon.com/cdk/v2/guide/home.html[AWS Cloud Development Kit^] (CDK) is a framework that provides a more automated and repeatable way of handling the infrastructure. It allows developers to use a variety of programming languages (including Java) to "define reusable cloud components known as Constructs"and "compose these together into Stacks and Apps". The architecture of the AWS CDK in the image below is also in the documentation.
+
+image::/img/toolbelt-part2/cdk-arch.png[]
+
+In this post, we will walk through how to use the new AWS CDK to build an AWS Lambda function in Java that connects to Neo4j.
+
+== Technologies
+
+If you read my https://medium.com/neo4j/toolbelt-trifecta-connecting-to-neo4j-with-java-and-aws-lambda-3c0fda6d5c1c[prior blog post on this topic^], the architecture diagram is the same as before. We are writing an AWS Lambda function in the Java programming language to connect to Neo4j, run a query against the graph database, and return the results.
+
+image::/img/toolbelt-part2/aws-lambda-java-neo4j-arch.png[]
+
+The only difference from last time is that we will use the AWS CDK to build and run the infrastructure, rather than executing scripts/commands to do that manually. We will get a better look at that when we dive into the code in a few minutes.
+
+First, let's cover a couple of quick setup steps.
+
+== Setup
+
+As with any technology project, we will need a few tools installed and ready-to-use. If you are a Java developer already, you probably already have a JDK and a preferred IDE set up.
+
+We will also need a Neo4j database instance. Using Neo4j's AuraDB free tier gives us a cloud instance we can spin up in just a few minutes. Details on how to get that set up are available in my https://medium.com/neo4j/announcing-neo4j-auradb-free-971ed09113c3[colleague's blog post^] (choose the empty/blank database option in the form, and follow the article through "Create Your First Database" section).
+
+*Note:* Save (or download) the generated password in a place you can access it later. It will not be displayed again in the console.
+
+Previously, the trickiest (and longest) part of the setup was the AWS portion, but that is reduced quite a bit with the CDK. However, we will need the AWS CDK and a couple of dependencies.
+
+The first requirement is Node.js. No matter in which language you are writing your code, the backend foundation is the same, so this is a required dependency. There is a link to the https://nodejs.org/en/download/[Node.js download page^] in the AWS CDK Getting Started guide under https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_prerequisites[Prerequisites^], but because I had previously installed it using the nvm package manager, I located the guide for https://nodejs.org/en/download/package-manager/[installing Node.js via a package manager^].
+
+Before I installed anything, though, I checked whether I had Node.js already installed and which version I had. This avoided me using a different method/package manager to install it in a secondary location and ensured I had an updated version. Commands for these steps and related output from my machine are shown below.
+
+[source,shell]
+----
+jenniferreif@elf-lord ~ % which node      
+/Users/jenniferreif/.nvm/versions/node/v16.15.0/bin/node
+jenniferreif@elf-lord ~ % node --version
+v16.15.0
+----
+
+The next step in the https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_prerequisites[prerequisites section of the guide^] is to configure your AWS account credentials. This means you will need an AWS account created, and you can follow the commands in this section to get the proper access.
+
+Next, we finally https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_install[install the AWS CDK^] itself with the `npm install -g aws-cdk`! We can verify the install was successful by running `cdk --version`.
+
+I didn't need to run the bootstrapping step in the following section, but I may have already had S3 provisioned to my account. Depending on your account setup, you may need to complete that step, as well.
+
+With setup steps complete, we can now move to the Java code!
+
+== Deploy
+
+Just as with my last Lambda blog post, I wanted to use example code as much as possible and avoid writing functionality from scratch. AWS has a https://github.com/aws-samples/cdk-lambda-packaging-java[Github repository for CDK Java code^], similar to it did for the code without the CDK. 
+
+If you followed the non-CDK version, you might remember that we ran some provided scripts to create an S3 bucket, deploy the function code, and execute the function. However, with the CDK, these scripts have been bundled into a couple of development kit commands that source in architecture definitions. This makes the process more consistent and less prone to command errors.
+
+The project's https://github.com/aws-samples/cdk-lambda-packaging-java#readme[README file^] covers the high-level process and structure of the code. It also lists prerequisites of the AWS CDK and Docker. We already installed the CDK above, but if you don't have Docker, you'll need to https://docs.docker.com/get-docker/[install it^] and make sure it is running. Next, is the https://github.com/aws-samples/cdk-lambda-packaging-java#getting-started[Getting Started section^] for running the code!
+
+There are three commands to get the project running. The first command puts you in the infrastructure directory where all the configuration is organized. `cdk synth` "synthesizes" or packages and preps the functions and instructure, and `cdk deploy` deploys the stack to AWS cloud. Each command and related output is included below.
+
+[source, shell]
+----
+cd infrastructure
+----
+
+image::/img/toolbelt-part2/cd-infrastructure.png[]
+
+[source, shell]
+----
+cdk synth
+----
+
+image::/img/toolbelt-part2/cdk-synth.png[]
+
+[source, shell]
+----
+cdk deploy
+----
+
+image::/img/toolbelt-part2/cdk-deploy.png[]
+
+*Note:* Deployment may ask if you want to deploy security changes (image below). Type `y` and press `<Enter>` to continue deployment. Also, the sample project has not been upgraded to AWS CDK v2 yet, so you may see the NOTICE 19836 at the bottom of your output.
+
+image::/img/toolbelt-part2/deploy-security-changes.png[]
+
+With the code deployed, we can check the AWS Console and/or execute the functions. I like to verify everything deployed as expected, so from the AWS Console, find the Lambda service, and click on it. You should see a list similar to the one below (though you may only see two starting with `LambdaPackagingStack-Function#`).
+
+image::/img/toolbelt-part2/aws-lambda-list.png[]
+
+Now we can call our functions and retrieve the output shown below. Don't worry if you're not sure where these are coming from. We will walk through that!
+
+[source,shell]
+----
+jenniferreif@elf-lord infrastructure % curl https://de84kmx75g.execute-api.us-east-2.amazonaws.com/one     
+{ "message": "hello world", "location": "3.22.66.250" }
+jenniferreif@elf-lord infrastructure % curl https://de84kmx75g.execute-api.us-east-2.amazonaws.com/two
+{ "message": "hello world", "location": "3.145.0.104" }
+----
+
+*Note:* IP addresses in the results can differ.
+
+== Infrastructure walkthrough
+
+To understand what is going on, we need to look at the infrastructure defined in the infrastructure folder of the code. The `/infrastructure/src/main/java/com/myorg` folder contains two classes - `InfrastructureApp.java` and `InfrastructureStack.java`. The app class only has a main method that creates a new stack, so let's take a look at the https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/infrastructure/src/main/java/com/myorg/InfrastructureStack.java[stack class^].
+
+The https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/infrastructure/src/main/java/com/myorg/InfrastructureStack.java#L36[InfrastructureStack constructor^] contains a few different instructions, which I'll highlight in the code block below.
+
+[source,java]
+----
+public InfrastructureStack(final Construct parent, final String id, final StackProps props) {
+    super(parent, id, props);
+
+    List<String> functionOnePackagingInstructions = Arrays.asList(
+            "/bin/sh",
+            "-c",
+            "cd FunctionOne " +
+            "&& mvn clean install " +
+            "&& cp /asset-input/FunctionOne/target/functionone.jar /asset-output/"
+    );
+
+	BundlingOptions.Builder builderOptions = BundlingOptions.builder()
+                .command(functionOnePackagingInstructions)
+                .image(Runtime.JAVA_11.getBundlingImage())
+                .volumes(singletonList(
+                        DockerVolume.builder()
+                                .hostPath(System.getProperty("user.home") + "/.m2/")
+                                .containerPath("/root/.m2/")
+                                .build()
+                ))
+                .user("root")
+                .outputType(ARCHIVED);
+
+    Function functionOne = new Function(this, "FunctionOne", FunctionProps.builder()
+            .runtime(Runtime.JAVA_11)
+            .code(Code.fromAsset("../software/", AssetOptions.builder()
+                    .bundling(builderOptions
+                            .command(functionOnePackagingInstructions)
+                            .build())
+                    .build()))
+            .handler("helloworld.App")
+            .memorySize(1024)
+            .timeout(Duration.seconds(10))
+            .logRetention(RetentionDays.ONE_WEEK)
+            .build());
+
+	HttpApi httpApi = new HttpApi(this, "sample-api", HttpApiProps.builder()
+                .apiName("sample-api")
+                .build());
+
+    httpApi.addRoutes(AddRoutesOptions.builder()
+            .path("/one")
+            .methods(singletonList(HttpMethod.GET))
+            .integration(new LambdaProxyIntegration(LambdaProxyIntegrationProps.builder()
+                    .handler(functionOne)
+                    .payloadFormatVersion(PayloadFormatVersion.VERSION_2_0)
+                    .build()))
+            .build());
+
+        new CfnOutput(this, "HttApi", CfnOutputProps.builder()
+                .description("Url for Http Api")
+                .value(httpApi.getApiEndpoint())
+                .build());
+}
+----
+
+The https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/infrastructure/src/main/java/com/myorg/InfrastructureStack.java#L37[first line^] creates an object using the parent class's constructor. Next, we https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/infrastructure/src/main/java/com/myorg/InfrastructureStack.java#L39[define a list of packaging instructions^] to use later. Then, we https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/infrastructure/src/main/java/com/myorg/InfrastructureStack.java#L55[setup build options^] for a Docker container with `Java 11` and mount the Maven directory (avoid downloading dependencies each time). The https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/infrastructure/src/main/java/com/myorg/InfrastructureStack.java#L68[next block^] uses the build options to package and test a function.
+
+After that, we https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/infrastructure/src/main/java/com/myorg/InfrastructureStack.java#L94[set up an API^] in order to access and execute our functions. We https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/infrastructure/src/main/java/com/myorg/InfrastructureStack.java#L98[add a separate route^] (endpoint) for our function, and then https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/infrastructure/src/main/java/com/myorg/InfrastructureStack.java#L116[create an output object^] that will be displayed when we call the endpoint.
+
+Now that we understand what the infrastructure is doing and how it is assembled, it's time to start tweaking it for a new Neo4j function.
+
+== Combining Bits of Code
+
+We want to leave the existing functions as they are, but copy the template provided to create another function for Neo4j. We start with the infrastructure code to add the following pieces to the https://github.com/JMHReif/aws-lambda-java-neo4j/blob/main/infrastructure/src/main/java/com/myorg/InfrastructureStack.java#L36[InfrastructureStack constructor^].
+
+[source,java]
+----
+//new function packaging instructions
+List<String> functionThreePackagingInstructions = Arrays.asList(
+        "/bin/sh",
+        "-c",
+        "cd FunctionThree " +
+                "&& mvn clean install " +
+                "&& cp /asset-input/FunctionThree/target/functionthree.jar /asset-output/"
+);
+
+//build and test FunctionThree
+Function functionThree = new Function(this, "FunctionThree", FunctionProps.builder()
+        .runtime(Runtime.JAVA_11)
+        .code(Code.fromAsset("../software/", AssetOptions.builder()
+                .bundling(builderOptions
+                        .command(functionThreePackagingInstructions)
+                        .build())
+                .build()))
+        .handler("helloworld.App")
+        .memorySize(1024)
+        .timeout(Duration.seconds(10))
+        .logRetention(RetentionDays.ONE_WEEK)
+        .build());
+
+//add API route for new function
+httpApi.addRoutes(AddRoutesOptions.builder()
+        .path("/three")
+        .methods(singletonList(HttpMethod.GET))
+        .integration(new LambdaProxyIntegration(LambdaProxyIntegrationProps.builder()
+                .handler(functionThree)
+                .payloadFormatVersion(PayloadFormatVersion.VERSION_2_0)
+                .build()))
+        .build());
+----
+
+The completed code is available in today's https://github.com/JMHReif/aws-lambda-java-neo4j/blob/main/infrastructure/src/main/java/com/myorg/InfrastructureStack.java[code repository^]. This sets up our infrastructure to build and deploy a new function, but now we need to write the function code itself. Before we do that, let's take a look at the existing function code for `FunctionOne` and `FunctionTwo`.
+
+== Function Walkthrough
+
+The function code is organized under the https://github.com/aws-samples/cdk-lambda-packaging-java/tree/main/software[`software` folder^] in the project. We can look at either folder, as the contents are an exact mirror of each other (i.e. FunctionOne and FunctionTwo contain the same code).
+
+Dependencies for each function are in the respective `pom.xml` files, but we will skip to the core code in the https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/software/FunctionOne/src/main/java/helloworld/App.java[App.java file^]. *Note:* I'm showing FunctionOne code, but remember FunctionTwo looks the same.
+
+[source,java]
+----
+public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+	@Tracing(captureMode = DISABLED)
+    @Metrics(captureColdStart = true)
+    public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent input, final Context context) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+        headers.put("X-Custom-Header", "application/json");
+
+        APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent()
+                .withHeaders(headers);
+        try {
+            final String pageContents = this.getPageContents("https://checkip.amazonaws.com");
+            String output = String.format("{ \"message\": \"hello world\", \"location\": \"%s\" }", pageContents);
+
+            return response
+                    .withStatusCode(200)
+                    .withBody(output);
+        } catch (IOException e) {
+            return response
+                    .withBody("{}")
+                    .withStatusCode(500);
+        }
+    }
+
+    @Tracing(namespace = "getPageContents")
+    private String getPageContents(String address) throws IOException {
+        URL url = new URL(address);
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()))) {
+            return br.lines().collect(Collectors.joining(System.lineSeparator()));
+        }
+    }
+}
+----
+
+First, the App class implements a `RequestHandler<>` map that sends a request and gets a response (`APIGatewayProxyRequestEvent` and `APIGatewayProxyResponseEvent`). Next, we have the `handleRequest()` method that will return an APIGatewayProxyResponseEvent, passing in the request event and the context. Within the method, we https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/software/FunctionOne/src/main/java/helloworld/App.java#L28[define headers^] for our response and set up a https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/software/FunctionOne/src/main/java/helloworld/App.java#L32[response object^] with those headers.
+
+The next block is the core of our function. We use a `try...catch` statement to retrieve the page contents from a URL by calling another method (`getPageContents()`). The code then creates a formatted output message with the "hello world" String and the page contents (IP address of the URL). The last statement in the `try` section returns the response status code and body, and the `catch` section catches any input/output errors.
+
+The https://github.com/aws-samples/cdk-lambda-packaging-java/blob/main/software/FunctionOne/src/main/java/helloworld/App.java#L49[`getPageContents()` method^] takes the URL as input and moves that to a URL object. The code uses another `try...catch` block to get a stream of the URL contents (using https://docs.oracle.com/javase/tutorial/networking/urls/readingURL.html#:~:text=After%20you've%20successfully%20created,reading%20from%20an%20input%20stream.[`.openStream` method^]). In this case, it returns the IP address.
+
+Now we can use this code to create a new function that connects to Neo4j!
+
+== Connecting to Neo4j
+
+First, we can copy either of the function folders and paste it as a new folder called `FunctionThree`. *Note:* You will need to refactor file and class names (and the app name in the `pom.xml`) to the new `FunctionThree`, but most IDEs have a pretty efficient way to do this.
+
+Your project structure should now look like the image below.
+
+image::/img/toolbelt-part2/function-three-project.png[]
+
+Next, we need to find some connection details for Neo4j. Going with our theme of using existing code, the Neo4j AuraDB console has some sample code provided for various languages and frameworks. We can copy/paste bits of this and tweak it, as necessary.
+
+image::/img/toolbelt-part2/auradb-connect-java.png[]
+
+[source,java]
+----
+String uri = "<URI for Neo4j AuraDB instance>";
+String user = "<Username for Neo4j AuraDB instance>";
+String password = "<Password for Neo4j AuraDB instance>";
+private final Driver driver;
+
+public DriverIntroductionExample(String uri, String user, String password, Config config) {
+    // The driver is a long living object and should be opened during the start of your application
+    driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password), config);
+}
+----
+
+According to the example AuraDB code, we are hard-coding database credentials, creating a driver variable, then creating a driver object via a class constructor. However, hard-coding login credentials in our application isn't really best practice, so we will take advantage of AWS Lambda's environment variables to pass the sensitive values into the function.
+
+I also had trouble creating a driver object outside the function (at the class level) and am still working on why. Creating the driver inside the handler means that driver objects are created and destroyed with the function each time, which can be inefficient. There seem to be ways to handle an external driver object (database connection pool), but I'm still researching how to do that with Neo4j. Once I figure it out, there might be another blog post! :) In the meantime, we will create the driver object inside the handler.
+
+We also will need to add a couple of dependencies to our `pom.xml`. First, we will need to connect to Neo4j, so we need the `neo4j-java-java`, and second, we want to serialize and deserialize JSON data to and from the database, so we need the `gson` library.
+
+[source,xml]
+----
+<dependencies>
+    <dependency>
+        <groupId>org.neo4j.driver</groupId>
+        <artifactId>neo4j-java-driver</artifactId>
+        <version>4.4.0</version>
+    </dependency>
+	<dependency>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>2.8.9</version>
+    </dependency>
+<dependencies>
+----
+
+Now, our FunctionThree App.java class looks like below, so far.
+
+[source,java]
+----
+public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+	Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+    @Tracing(captureMode = DISABLED)
+    @Metrics(captureColdStart = true)
+    public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent input, final Context context) {
+        String uri = System.getenv("NEO4J_URI");
+        String user = System.getenv("NEO4J_USER");
+        String password = System.getenv("NEO4J_PASSWORD");
+        
+        Driver driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password), Config.defaultConfig());
+
+		//<rest of code>
+	}
+}
+----
+
+Next, we can leave the headers and response object definition as-is and move to defining our query that we want to run against Neo4j. Since we are working in Java, I decided to load the Java language versions and diffs into the graph for us to query. Cypher statements to load this data are available in my https://github.com/JMHReif/graph-demo-datasets/blob/main/java-versions/java-version-import-small.cypher[graph-demo-datasets^] Github repository. You should be able to copy/paste and run each statement into Neo4j Browser to get the data model shown below.
+
+image::/img/toolbelt-part2/java-version-trim-model.png[]
+
+*Note:* Run `CALL apoc.meta.graph()` after the data is loaded in your instance to see the data model above.
+
+Let's write our query! We will stick with only searching for and returning a `JavaVersion` node and not worrying about relationships yet. To look for a particular Java version, though, we will need to pass in a parameter. Our API endpoints allow us to do this like we would with any other HTTP endpoint using query parameters. We can attach our specified version we want to search to the end of our URL and inspect the parameter from the function. So, our next block of code that checks query parameters and defines our Neo4j query is shown below.
+
+[source,java]
+----
+public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+	//<previous code>
+
+    public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent input, final Context context) {
+        //<previous code>
+
+        String version = null;
+        if (input.getQueryStringParameters().get("version") != null) {
+            version = input.getQueryStringParameters().get("version");
+        }
+
+        String readQuery = "MATCH (j:JavaVersion)\n" +
+                "WHERE j.version = $version\n" +
+                "RETURN j.version AS version, j.status AS status, j.gaDate AS ga, j.eolDate AS eol;";
+        Map<String, Object> params = Collections.singletonMap("version", version);
+
+		//<rest of code>
+	}
+}
+----
+
+In the code above, we define a variable that will hold the version we are passing in as a URL query parameter. Then, we check if the input contains a non-null `version` query string parameter, and if it has a value, we assign the query parameter value to the variable.
+
+The next paragraph defines the read query (in the Cypher query language) that we want to run in Neo4j. We want to match `JavaVersion` nodes where the version property equals the parameter we are passing in (URL's query string parameter value) and return the version, its status (end-of-life, long-term-support, etc), the date it published as "general availability", and its projected/past end-of-life date. The next line sets our URL parameter to a variable that will be passed to the query at runtime.
+
+Last, but not least, we need to connect to Neo4j and execute the query! We will do this using a `try...catch` block to gracefully execute code that might throw exceptions. Code is shown below.
+
+[source,java]
+----
+public class App implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+	//<previous code>
+
+    public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent input, final Context context) {
+        //<previous code>
+
+		try {
+            Session session = driver.session();
+            Record record = session.readTransaction(tx -> {
+                Result result = tx.run(readQuery, params);
+                return result.single();
+            });
+            String output = String.format("{ \"results\": \"%s\" }", gson.toJson(record.asMap()));
+
+            return response
+                    .withStatusCode(200)
+                    .withBody(output);
+        } catch (Neo4jException e) {
+            return response
+                    .withBody("{}")
+                    .withStatusCode(500);
+        }
+
+		//<rest of code>
+	}
+}
+----
+
+First, we will write our `try...catch` statement, then put our risky statements in the `try` section. We create a database driver session, then define a `Record` that calls a session's `readTransaction()` method. Using a lambda expression, we create a `Result` that calls the transaction's `run()` method, passing in the query string and the parameter for our version we want to search, and returning a single result to the `record` variable. We want to adjust the `output` variable definition a bit, so that we return the `record` as a map and convert it to standard JSON using the `gson.toJson()` method. The last bit of the `try` section returns the response with the status code and body (our output message).
+
+In the `catch` block, we will catch any Neo4jExceptions, so that we know if our query failed in Neo4j. That completes our `handleRequest()` code, but since we aren't inspecting URL page contents with our new function, we can remove the `pageContents()` method at the bottom of our class.
+
+Time to test our code! Just as before, we need to run the synthesize and deployment commands, as follows (from command line and from the `infrastructure` folder):
+
+[source,shell]
+----
+jenniferreif@elf-lord infrastructure % cdk synth
+...
+jenniferreif@elf-lord infrastructure % cdk deploy
+...
+----
+
+Output to both commands should look similar to when we ran the project earlier, except you should also see output for our new FunctionThree.
+
+*Note:* Process may ask you to deploy security changes again. Type `y` and press `<Enter>` to continue.
+
+One last step before we can test our functions is to add the environment variables to FunctionThree in the AWS Console. To do that, navigate to the AWS Lambda service, then choose `LambdaPackagingStack-FunctionThree<hash>`. Under the overview section, there are six tabs. Choose the `Configuration` tab, then choose `Environment variables` from the tab's left menu, and click the `Edit` button on the right side. Next, fill in the environment variables with your database credentials as the values. Once you save, you should see something similar to the screenshot below.
+
+image::/img/toolbelt-part2/aws-lambda-env-vars.png[]
+
+Now let's test our code! Back at the command line, we can run all three functions with the commands and output below.
+
+[source,shell]
+----
+jenniferreif@elf-lord aws-lambda-java-neo4j % curl https://de84kmx75g.execute-api.us-east-2.amazonaws.com/one
+{ "message": "hello world", "location": "3.23.111.249" }
+jenniferreif@elf-lord aws-lambda-java-neo4j % curl https://de84kmx75g.execute-api.us-east-2.amazonaws.com/two 
+{ "message": "hello world", "location": "3.19.245.192" }
+jenniferreif@elf-lord aws-lambda-java-neo4j % curl "https://de84kmx75g.execute-api.us-east-2.amazonaws.com/three?version=17"
+{ "results": "{
+  "version": "17",
+  "status": "LTS",
+  "ga": {
+    "year": 2021,
+    "month": 9,
+    "day": 14
+  },
+  "eol": {
+    "year": 2030,
+    "month": 1,
+    "day": 1
+  }
+}" }
+----
+
+*Note:* Because I'm using zshell for my terminal theme, I have to use quotes around the URL when I have a query parameter.
+
+You can test passing in any Java language version you like, such as `17`, `11`, etc.! If there are errors, you can go to the CloudWatch logs and check out what went wrong. Often, it's because environment variables are not getting mapped properly, which is why I included logger statements for each of those variables and values, so we can ensure those come through.
+
+To get to the logs, go to the `Monitor` tab from the function page in the AWS Console. Click on the first `LogStream` link, as that should be the most recent. It will take you to CloudWatch and display the log file for that execution of the function!
+
+image::/img/toolbelt-part2/func3-cloudwatch-logs.png[]
+
+== Wrapping Up
+
+We successfully used the AWS Cloud Development Kit (CDK) to run an AWS Lambda function written in Java that connects to Neo4j, runs a query, and returns results. Using an existing AWS Lambda example with Java and the CDK, we tested the sample code, then added a new function to use Neo4j and added related infrastructure steps.
+
+We were also able to utilize some example code from the AuraDB console that provided the outline for connecting to and running a Cypher query against Neo4j. Adjustments were made so that we could use environment variables for our database credentials, and we needed to create the database driver object inside the handler (for now). Our query retrieved Java version information from the database by passing in a particular Java version as a query parameter for our search. We executed the query and returned the results as JSON outputted to the console.
+
+Finally, we built and deployed our three Lambda functions again and tested them via their endpoints (adding the query parameter to the URL for FunctionThree). We verified the command line output, as well as checked output in the CloudWatch logs.
+
+Up next, we could dive deeper into creating a single driver object that multiple executions of the handler could share, as well as upgrade the example to use the AWS CDK v2 (requires dependency changes). If you are interested in seeing the non-CDK version of the code, feel free to check out the https://github.com/JMHReif/aws-lambda-java-neo4j/tree/v1[`v1` version of the repository^] and the https://medium.com/neo4j/toolbelt-trifecta-connecting-to-neo4j-with-java-and-aws-lambda-3c0fda6d5c1c[related blog post^].
+
+Happy coding!
+
+== Resources
+
+* Github: https://github.com/JMHReif/aws-lambda-java-neo4j[Java, Neo4j, AWS Lambda (CDK)^] repository
+* Github: https://github.com/JMHReif/aws-lambda-java-neo4j/tree/v1[Java, Neo4j, AWS Lambda (v1)^] repository
+* Blog post: https://medium.com/neo4j/toolbelt-trifecta-connecting-to-neo4j-with-java-and-aws-lambda-3c0fda6d5c1c[Java, Neo4j, AWS Lambda I^]
+* Neo4j AuraDB: https://dev.neo4j.com/aura-java[Create a FREE database^]

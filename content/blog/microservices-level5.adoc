@@ -3,7 +3,7 @@ date: 2022-04-21T09:00:00-06:00
 featured_image: "/img/microservices-lvl5/unsplash-long-low-stone-bridge.jpeg"
 image_credit: https://unsplash.com/photos/XacrTY7hdYg?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
 tags: ["java","microservices","applications","development","spring-boot"]
-title: "Journeys in Java, Level 5: Building an Empire of Microservices"
+title: "Journeys in Java, Level 5: Manage Microservices with Docker Compose"
 draft: false
 omit_header_text: true
 ---

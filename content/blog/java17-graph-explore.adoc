@@ -42,7 +42,7 @@ I toyed quite awhile with the relationship names between the `JavaVersion` and `
 
 I ended up just using Cypher for the import because it can be applied with any instance of Neo4j, and is accessible for a wide audience to replicate. You can copy/paste all of the contents of the https://github.com/JMHReif/graph-demo-datasets/blob/main/java-versions/java-version-import.cypher[java-version-import.cypher^] file directly to a Neo4j Browser UI and import everything exactly as I have it. 
 
-*Note:* for Neo4j instances outside of https://sandbox.neo4j.com/[Sandbox^] or https://console.neo4j.io/[Aura^], you will need to add the https://neo4j.com/labs/apoc/[APOC plugin^] for the import to succeed.
+*Note:* for Neo4j instances outside of https://sandbox.neo4j.com/[Sandbox^] or https://dev.neo4j.com/aura-java[AuraDB^], you will need to add the https://neo4j.com/labs/apoc/[APOC plugin^] for the import to succeed.
 
 Once those Cypher statements complete, you can run `CALL apoc.meta.graph()` in the Neo4j Browser to see the data model. It should look like the one shown below.
 

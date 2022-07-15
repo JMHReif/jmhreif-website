@@ -119,4 +119,4 @@ Happy coding!
 * Command line tool: https://csvkit.readthedocs.io/en/latest/[`csvkit`] for delimited data (CSV, PSV, TSV, etc)
 * Linux command: https://tecadmin.net/linux-head-command/[`head`^] for printing data from beginning
 * Linux command: https://www.baeldung.com/linux/tr-command#delete[`tr`^] for translating/removing values
-* Database: https://bit.ly/neo4j-aura[Neo4j graph database^] (free cloud instance)
+* Database: https://dev.neo4j.com/aura-java[Neo4j graph database^] (free cloud instance)
