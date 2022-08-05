@@ -6,4 +6,4 @@ draft: false
 ---
 {{<figure src="/img/profile.jpg" title="Jennifer Reif" >}}
 
-Jennifer Reif is a Developer Relations Engineer at Neo4j, conference speaker, blogger, and an avid developer and problem-solver. She holds a Master’s degree in Computer Management and Information Systems and has worked with large enterprises to organize and make sense of widespread data assets and leverage them for maximum business value. She has worked with a variety of commercial and open source tools and enjoys learning new technologies, sometimes on a daily basis! Her passion is finding ways to organize chaos and deliver software more effectively.
+Jennifer Reif is a Developer Advocate at Neo4j, speaker, and blogger with an MS in CMIS. An avid developer and problem-solver, she has worked with many businesses and projects to organize and make sense of widespread data assets and leverage them for maximum business value. She has expertise in a variety of commercial and open source tools, and she enjoys learning new technologies, sometimes on a daily basis! Her passion is finding ways to organize chaos and deliver software more effectively.
