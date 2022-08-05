@@ -30,7 +30,7 @@ The border around each service represents the container housing each application
 
 == Added test methods
 
-I ran into some errors when testing endpoints, but it was hard to tell the root cause (database, authentication, Docker compose, or something else entirely). To help debugging, I added a method to each service called `liveCheck()` that elimiates a database call, returning a string to confirm our service is up.
+I ran into some errors when testing endpoints, but it was hard to tell the root cause (database, authentication, Docker compose, or something else entirely). To help debugging, I added a method to each service called `liveCheck()` that eliminates a database call, returning a string to confirm our service is up.
 
 I also added a method to `service1` and `service3` that returns a single entity (book or author), so if network is slow or the database has trouble returning all the objects, I can test a single result.
 
@@ -74,7 +74,7 @@ Once you package the application, you can verify by navigating to the service1 `
 
 image::/img/microservices-lvl5/service1-packaged-jar.png[]
 
-Next, we could go ahead and build this individual container, but we want to manage all of the containers together. Instead, we will use wait and use Docker compose, so let's do the same steps for service2.
+Next, we could go ahead and build this individual container, but we want to manage all of the containers together. Instead, we will wait and use Docker compose, so let's do the same steps for service2.
 
 == Containerizing - Service 2
 
