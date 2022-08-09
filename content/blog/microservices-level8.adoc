@@ -1,30 +1,30 @@
 ---
-date: 2022-08-05T09:00:00-06:00
+date: 2022-08-08T09:00:00-06:00
 featured_image: "/img/microservices-lvl8/unsplash-high-stone-bridge.jpg"
 image_credit: https://unsplash.com/photos/GeQSCt3kETw?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
 tags: ["java","microservices","applications","development","spring-boot"]
 title: "Journeys in Java, Level 8: Add MongoDB to Spring Cloud Config"
-draft: true
+draft: false
 omit_header_text: true
 ---
 
 {{< image-credit >}}
 
-In our https://jmhreif.com/blog/microservices-level7/[last blog post^], we externalized database credentials outside the microservice application for a cloud-hosted Neo4j database using Spring Cloud Config. This post will backport this concept to our existing MongoDB database instance and its related microservices. 
+In our https://jmhreif.com/blog/microservices-level7/[last blog post^], we used Spring Cloud Config to provide database credentials to a microservice application connecting to a cloud-hosted Neo4j database. This post will backport this concept to our existing MongoDB database instance and its related microservices. 
 
 We will add our MongoDB credentials to the config server, so that it will be the central place for both our Neo4j and MongoDB database access. However, each service only has access to the credentials that it needs to operate, which provides some level of security through "separation of concerns" (versus universal access).
 
-Since we already did this for our Neo4j microservice, there weren't too many steps, and we could use the previous code as our template. Let's get started!
+Since we already did this for our Neo4j microservice, there aren't too many steps, and we can use the previous code as our template. Let's get started!
 
 == Architecture
 
-This microservices project has grown from an https://jmhreif.com/blog/microservices-level1/[introductory step^] with two Spring Boot applications to a managed, configuration-savvy https://jmhreif.com/blog/microservices-level7/[system of services^]. In today's edition, we are converting our existing services that connect to MongoDB to use Spring Cloud Config for accessing database credentials, matching the architecture we set up last time with the Neo4j microservice.
+This microservices project has grown from an https://jmhreif.com/blog/microservices-level1/[introductory step^] with two Spring Boot applications to a managed, configuration-savvy https://jmhreif.com/blog/microservices-level7/[system of services^]. In today's edition, we are converting our existing MongoDB-connected services to use Spring Cloud Config for accessing database credentials, matching the architecture we set up last time with a Neo4j microservice.
 
 Updated architecture:
 
 image::/img/microservices-lvl8/microservices-level8.png[]
 
-Though we did set up Docker Compose earlier on to manage all services together, we will spend this post focusing on migrating all of our configuration before adding Docker Compose back into the mix later. This means we will run our applications locally today.
+Though we set up Docker Compose to manage all services together a few project iterations ago, we will spend this post focusing on migrating all of our configuration before adding Docker Compose back into the mix later. This means we will run our applications locally today.
 
 == Spring Cloud Config
 
@@ -34,11 +34,11 @@ Our Neo4j microservice (`service4`) is already set up to use Spring Cloud Config
 
 == Applications - Spring Cloud Config Server
 
-The `config-server` is the service that hosts external configuration files and serves them to requesting applications. Since we set this up last time, the only thing we need to add is another configuration file for this service to make available to our MongoDB services.
+The `config-server` is the service that hosts external configuration files and serves them to requesting applications. Since we set this up https://jmhreif.com/blog/microservices-level7/[last time^], the only thing we need to add is another configuration file for this service to make available to our MongoDB services.
 
 == Storing config values
 
-We used a YAML file for our Neo4j microservice last time, so we will stick with this same template. However, a properties file would work, as well.
+We used a YAML file for our Neo4j microservice, so we will stick with this same template. However, a properties file would work, as well.
 
 A sample of the new MongoDB file is in the `microservices-java-config` folder of the https://github.com/JMHReif/microservices-level8[Github project^].
 
@@ -51,7 +51,7 @@ spring:
       database: <insert MongoDB database here>
 ----
 
-We will need to fill in the values for our MongoDB instance in place of the dummy URL and database shown above. Then, we need to save the file and check it into to https://git-scm.com/[git^] by running the next statements from the command line.
+We need to fill in the values for our MongoDB instance in place of the dummy URL and database shown above. Then, we need to save the file and check it into https://git-scm.com/[git^] by running the next statements from the command line.
 
 [source,shell]
 ----
@@ -70,14 +70,14 @@ To test for the newly-added MongoDB config, we need the same `localhost:8888`. N
 
 That makes our full URL for testing `localhost:8888/mongo-client/default`!
 
-.Results
+.Results:
 image:/img/microservices-lvl8/config-server-test.png[]
 
 Next, we need to plug our MongoDB backing services (`service1` and `service3`) in to use the config server we just set up.
 
 == Service1 - modifications
 
-Following what we did last time, we need to add a dependency for the Spring Cloud Config client. Open `service1`'s `pom.xml` file and add the following items:
+Following what we did with our Neo4j app, we need to add a dependency for the Spring Cloud Config client. Open service1's `pom.xml` file and add the following items:
 
 [source,xml]
 ----
@@ -117,7 +117,7 @@ spring.application.name=mongo-client
 spring.config.import=configserver:http://localhost:8888/
 ----
 
-The port property stays the same, but we remove the database credential properties because those are now hosted by the config server. The next two properties specify the application name and location of the config server. Our application name and the name of our config file MUST match, so the `spring.application.name` needs to be `mongo-client`. Our config server is running locally and on the default config server port, so we use the `localhost:8888` for the last property's value.
+The port property stays the same, but we remove the database credential properties because those are now hosted by the config server. The next two properties specify the application name and location of the config server. Our application name and the name of our config file MUST match, so the `spring.application.name` needs to be `mongo-client` (because config file name is `mongo-client.yaml`). Our config server is running locally and on the default config server port, so we use the `localhost:8888` for the last property's value.
 
 This completes the changes needed to `service1`, so we need to do the same to `service3` (our other MongoDB backing service for authors).
 
@@ -132,7 +132,7 @@ Let's test the updated services with our config server!
 
 == Put it to the test
 
-Kicking things off from the bottom to the top of our stack, start the MongoDB instance. _*Note:* I am running MongoDB locally from a Docker container here. More info is available in the https://github.com/JMHReif/microservices-level8/blob/main/docker-mongodb/README.adoc[`docker-mongodb` section^] of the code repository._
+Kicking things off from the bottom to the top of our stack, let's start the MongoDB instance. _Note: I am running MongoDB locally from a Docker container here. More info is available in the https://github.com/JMHReif/microservices-level8/blob/main/docker-mongodb/README.adoc[`docker-mongodb` section^] of the code repository._
 
 Next, we start our `config-server` application, either through the IDE or command line. Once running, we can start each of the `service1` and `service3` applications through the IDE or command line. Time to test everything with the following commands.
 
