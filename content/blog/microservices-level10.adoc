@@ -4,7 +4,7 @@ featured_image: "/img/microservices-lvl10/unsplash-person-high-bridge.jpeg"
 image_credit: https://unsplash.com/photos/BReigPd7XnQ?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
 tags: ["java","microservices","applications","development","spring-boot"]
 title: "Journeys in Java, Level 10: Service Discovery with Eureka"
-draft: true
+draft: false
 omit_header_text: true
 ---
 
