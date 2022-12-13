@@ -1,0 +1,103 @@
+---
+date: 2022-12-13T09:00:00-06:00
+featured_image: "/img/error-msgs/unsplash-coffee-bean-exception.jpg"
+image_credit: https://unsplash.com/photos/1YjItzikS3E?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["errors","java","spring-data-neo4j","debugging","spring-boot"]
+title: "NoSuchBeanDefinitionException: No matching TransactionManager bean found for qualifier 'reactiveTransactionManager'"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+I was working on a Spring Data Neo4j microservice application to add a write method for saving a new book review to the database, when I came across the error message below.
+
+[source,text]
+----
+org.springframework.beans.factory.NoSuchBeanDefinitionException: No bean named 'reactiveTransactionManager' available: No matching TransactionManager bean found for qualifier 'reactiveTransactionManager' - neither qualifier match nor bean name match!
+----
+
+The stacktrace was long and ugly, and I had come across this error before...but I could not remember how I had solved it. Therefore, here is this blog post for my future self (and others) to avoid this error again down the road!
+
+== What we know
+
+First, the joys of debugging. What do I know about my application and this error?
+
+1. The app has been using reactive requests for all of my other methods with no problems. However, they were all `read` requests (no writing to the database).
+2. The error tells me it is looking for a transaction manager for a reactive transaction, and it cannot find one.
+3. I had come across this before, but an initial search of my repositories on Github surfaced nothing.
+
+After beating my head against a proverbial wall, I reached out to a colleague to point me in the right direction. Let's look at fixing it!
+
+== Solving the error
+
+In order to solve the issue, I needed to manually configure a reactive transaction manager. I did this through defining a bean in my application class, as shown below.
+
+[source,java]
+----
+@Bean
+public ReactiveTransactionManager reactiveTransactionManager(Driver driver, ReactiveDatabaseSelectionProvider databaseNameProvider) {
+	return new ReactiveNeo4jTransactionManager(driver, databaseNameProvider);
+}
+----
+
+*Note:* I'd used this piece of code before in an https://github.com/JMHReif/sdnrx-marvel-basic/blob/master/src/main/java/com/example/sdnrxmarvelbasic/SdnrxMarvelBasicApplication.java[SDN-RX example^] (predecessor library of SDN6), but at the time, it had to be configured for any reactive code - both reads and writes. Also, if you are dealing with a cluster, you might also need/want to add a bookmark manager bean (https://github.com/JMHReif/nosuchbean-reactivetransaction-exception/blob/main/BookmarkBeanExample.java[example in Github repo^]).
+
+That simple addition of code resolved the error, and the application was humming along nicely again. Now, if you are like me, you probably want to know why we need to manually configure a reactive transaction manager when we have a write request, but not for reactive read requests or imperative code. Also, some Spring Data projects do not require this manual configuration, so why does Neo4j? I did some research to find out.
+
+== Why?
+
+My colleague informed me that there is no default reactive transaction manager (for Spring Boot reasons). After pressing for a bit more information, he sent along a couple of Github issues that explain more.
+
+1. https://github.com/spring-projects/spring-boot/issues/22851[Spring Boot issue #22851^]: Update transaction auto-configuration to back off if a TransactionManager is defined
+2. https://github.com/spring-projects/spring-boot/issues/22940[Spring Boot issue #22940^]: Stop auto-configuring ReactiveNeo4jTransactionManager
+
+Spring Boot's autoconfiguration checks for both an imperative transaction manager and a reactive transaction manager. If one is defined, it backs down on autoconfiguration (first issue above), otherwise it autoconfigures one.
+
+Because Neo4j ships a database driver that includes both imperative and reactive support in the same driver, Spring would automatically create a bean for both, causing a conflict. To combat this, Spring Boot disables autoconfiguration for a reactive transaction manager for Spring Data Neo4j (second issue above) where we have to explicitly define one in our code.
+
+We don't see this in other Spring Data projects for other data stores because Neo4j seems to be one of the few who currently includes imperative and reactive in the same driver dependency.
+
+Now, why is it that reactive reads don't cause any problems? Another colleague said I could probably find out by enabling debug in the application properties and checking the autoconfiguration reports for an app with only reactive reads and one including a reactive write.
+
+Let's do that next!
+
+=== Spring Boot Autoconfiguration Report
+
+First, our application needs to create the autoconfiguration report. We will need 2 versions of our application in order to compare autoconfiguration reports for only read requests versus for a write request. I copied/pasted my project folder and added the write request to one of the projects.
+
+Next, we enable creating the autoconfiguration reports with a setting in the `application.properties` files of the apps.
+
+[source,text]
+----
+debug=true
+----
+
+Then, we run each application. I ran via the https://www.jetbrains.com/idea/[IntelliJ IDE^], but method shouldn't matter. Output should include a large section of text with the label `Conditions Evaluation Report`. This is the autoconfiguration report, where it details what beans were autoconfigured (positive matches for found, negative matches for not found, exclusions, and unconditional classes). I copied/pasted that output into files that are included in the Github repository for this post (https://github.com/JMHReif/nosuchbean-reactivetransaction-exception/blob/main/reactiveRead_SDNmicroservice.txt[read request app^], https://github.com/JMHReif/nosuchbean-reactivetransaction-exception/blob/main/reactiveWrite_SDNmicroservice.txt[write request app^]).
+
+There are a couple of different ways to compare these files, but I found it most helpful to compare them in an IDE tool, such as https://code.visualstudio.com/[Visual Studio Code^] because it does highlighting and side-by-side line matching that makes differences very easy to pick out. I also included a https://github.com/JMHReif/nosuchbean-reactivetransaction-exception/blob/main/reactiveReadWrite_diff.txt[diff file in the repository^] (using the Linux `diff` command), but I felt that the deltas were harder to see in that format.
+
+This bit is the crux of that comparison:
+
+image::/img/error-msgs/nosuchbeanexception-compare-vscode.png[]
+
+*Note:* App report with writes is on the left, app report with reads is on the right.
+
+We can see the left side is specifically using `reactiveTransactionManager` and the right is using plain `transactionManager` in the image above. What this tells me is that an application with only reactive reads seems to go ahead and autoconfigure an imperative transaction manager by default, but the write request seems to require a reactive transaction manager that does not get autoconfigured, forcing us to do that manually with the bean.
+
+It has me thinking that I should manually configure the reactive transaction manager for any reactive applications going forward (even those with only read requests), because I doubt that reads are being handled in a truly reactive way by an imperative transaction manager. I imagine the reactive transaction manager would better optimize the requests and responses.
+
+This is something that I will need to research further, but in the meantime, I will likely implement a manual reactive transaction manager for all reactive Spring Data Neo4j applications going forward!
+
+== Wrap Up!
+
+In this post, we took a look at the `NoSuchBeanDefinitionException` that I came across when building a Spring Boot application with Spring Data Neo4j. We discovered how to resolve the error message, as well as did some debugging and research to determine where and why it was occurring.
+
+Hopefully, this post saves us precious time in the future by fixing bugs faster. Happy coding!
+
+== Resources
+
+* Github repository: https://github.com/JMHReif/nosuchbean-reactivetransaction-exception[Accompanying code for this blog post^]
+* Github: https://github.com/JMHReif/nosuchbean-reactivetransaction-exception/blob/main/nosuchbeanexception-stacktrace.txt[NoSuchBeanDefinitionException full stack trace^]
+* Github: https://github.com/spring-projects/spring-boot/issues/22851[Spring Boot issue #22851^]
+* Github: https://github.com/spring-projects/spring-boot/issues/22940[Spring Boot issue #22940^]
