@@ -64,7 +64,7 @@ Let's do that next!
 
 === Spring Boot Autoconfiguration Report
 
-First, our application needs to create the autoconfiguration report. We will need 2 versions of our application in order to compare autoconfiguration reports for only read requests versus for a write request. I copied/pasted my project folder and added the write request to one of the projects.
+First, our application needs to create the https://www.baeldung.com/spring-boot-auto-configuration-report[autoconfiguration report^]. We will need 2 versions of our application in order to compare autoconfiguration reports for only read requests versus for a write request. I copied/pasted my project folder and added the write request to one of the projects.
 
 Next, we enable creating the autoconfiguration reports with a setting in the `application.properties` files of the apps.
 
@@ -101,3 +101,4 @@ Hopefully, this post saves us precious time in the future by fixing bugs faster.
 * Github: https://github.com/JMHReif/nosuchbean-reactivetransaction-exception/blob/main/nosuchbeanexception-stacktrace.txt[NoSuchBeanDefinitionException full stack trace^]
 * Github: https://github.com/spring-projects/spring-boot/issues/22851[Spring Boot issue #22851^]
 * Github: https://github.com/spring-projects/spring-boot/issues/22940[Spring Boot issue #22940^]
+* Blog post: https://www.baeldung.com/spring-boot-auto-configuration-report[Baeldung's guide for the autoconfiguration report^]
