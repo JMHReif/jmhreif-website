@@ -1,0 +1,288 @@
+---
+date: 2023-06-01T09:00:00-06:00
+featured_image: "/img/error-msgs/troubleshooting.jpg"
+image_credit: https://unsplash.com/photos/SJwYvNVW1qY?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["errors","java","spring-data-neo4j","debugging","spring-boot"]
+title: "Spring Data Neo4j: How to update an entity"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+As I was incorporating Kafka to my https://github.com/JMHReif/microservices-java[microservices project^], I ran across some trouble updating an entity in Neo4j using https://spring.io/projects/spring-data-neo4j[Spring Data Neo4j^].
+
+My data set contains books, authors, book reviews, and users. Based on a new review getting entered into the system, I want to create that review, and then update the related Book entity with an incremented review count and calculate a new average rating. The new review entity was being created with no issues, but I was struggling to get the update to the related Book entity working. My process for solving this forms the foundation of this blog post.
+
+== What we know
+
+Debugging can be extremely frustrating, but also very rewarding. First, I outline what I know about my application and the problem.
+
+1. The application is able to retrieve Review and related Book entities from the database with no problem, so database connection is working.
+2. The application is able to create a new Review entity in the database, but is not updating the related Book entity. No errors, but no changes to books.
+3. The update method is using a custom Cypher statement, and that statement works outside of the application when I run it in Neo4j Browser (a querying tool).
+4. A few Google searches didn't turn up help. There aren't many examples or help, especially for updating related entities.
+
+After working through an initial solution, I got some feedback from colleagues with some cleaner ways to implement the functionality. Let's step through the process!
+
+== Hacking and testing
+
+I skinnied the full application down to the functionality we want to focus on. You can view the code in the https://github.com/JMHReif/sdn-cypher-update-entity[related Github repository^]. There are a few branches on the project, but my initial solution is on the main branch. We will start there and then work through the other branches in a bit.
+
+I started hacking at my code trying to get something to work, but then I organized my thoughts. What I wanted to accomplish was updating some properties on a Book node without having to add the boilerplate in the application for those properties. But, could I even get an update on the related entity to work with everything in the domain class? That's where I started by formulating some simple tests and removing unrelated code (for now).
+
+== Approach 1: Java POJO
+
+This sample app is narrowed down to only two domain classes - `Review` and `Book`. Code is available on the Github project's https://github.com/JMHReif/sdn-cypher-update-entity/tree/main[main branch^].
+
+[source,java]
+----
+@Data
+@Node
+class Review {
+	@Id
+	@GeneratedValue(UUIDStringGenerator.class)
+	private String review_id;
+
+	private Integer rating;
+
+	@Relationship("WRITTEN_FOR")
+	private Book book;
+}
+----
+
+I'm using the Lombok `@Data` annotation to reduce boilerplate code for getters, setters, and required argument constructor. The Spring `@Node` annotation specifies that this is a database entity for Neo4j. Inside the class's curly braces, I set up an ID field that has a generated value constructed from the UUID class, define a `rating` field, then define a `Book` field that maps the relationship to the other entity.
+
+[source,java]
+----
+@Data
+@Node
+class Book {
+	@Id
+	private String book_id;
+
+	private Integer ratings_count, average_rating;
+}
+----
+
+Similar code exists for the `Book` domain class. The `book_id` field serves as our entity id, and then the `ratings_count` and `average_rating` fields were the ones I was trying to calculate.
+
+We also have a `ReviewRepository` interface that has a https://github.com/JMHReif/sdn-cypher-update-entity/blob/main/src/main/java/com/jmhreif/sdncypherupdateentity/SdnCypherUpdateEntityApplication.java#L85[method to pull some reviews^]. I won't focus on that code here, as I used it to test what functionality was working and what wasn't.
+
+Last, our `ReviewController` class defines our methods and logic for calculating the rating count and average rating values.
+
+[source,java]
+----
+@RestController
+@RequestMapping("/neo")
+@AllArgsConstructor
+class ReviewController {
+	private final ReviewRepository reviewRepo;
+	
+	...<code shortened for brevity>...
+
+	@Transactional
+	@PutMapping("/save")
+	Mono<Review> save(@RequestBody Review review) {
+		System.out.println(review);
+
+		//add code here!
+
+		Mono<Review> savedReview = reviewRepo.save(review);
+		System.out.println(savedReview.block());
+
+		return savedReview;
+	}
+}
+----
+
+The class uses some annotations to define it as a rest controller, set up a mapped endpoint (`/neo`), and let Lombok create a constructor with all arguments. We inject the `ReviewRepository` so that we can access our methods, and then we define a `save()` method. The `@Transactional` annotation lets Spring handle https://javarevisited.blogspot.com/2021/08/spring-transactional-example-how-to.html[transaction management^] for us, and the `@PutMapping` annotation notes this as a https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT[PUT request^] (create or update) with a specific endpoint (`/save`).
+
+Next, I output the incoming data to ensure it looks the way I expect it to. I left a placeholder in the `save()` method above for us to add the calculation logic. The last few lines save the incoming review request to the database, print the object we saved, and return it. Let's fill in that placeholder now!
+
+First, we need a ratings count and starting average value, which are on the `Book` entity in the database. So, we need to retrieve the entity from the database with a query, and that means adding a `BookRepository` because we can't return a `Book` in the `ReviewRepository`.
+
+[source,java]
+----
+interface BookRepository extends ReactiveCrudRepository<Book, String> {
+	@Query("MATCH (b:Book {book_id: $book_id}) RETURN b;")
+	Mono<Book> findBookByBook_id(String book_id);
+}
+----
+
+We create the repository and define a single method `findBookByBook_id()` that passes in an id for the entity we want to update. Normally, Spring should be able to derive the query from that method name, but I think the underscore character in the middle of the id field name caused issues, so I wrote a custom query (denoted with the `@Query` annotation). The query searches for that `Book` entity and returns it. Now we can use this method in our controller class to update those fields.
+
+[source,java]
+----
+Mono<Review> save(@RequestBody Review review) {
+	...<code shortened for brevity>...
+
+	//set updated values for ratings
+	Book dbBook = bookRepo.findBookByBook_id(review.getBook().getBook_id()).block();
+	if (dbBook.getRatings_count() == null) {
+		dbBook.setRatings_count(0);
+	}
+	review.getBook().setRatings_count(dbBook.getRatings_count()+1);
+	if (dbBook.getAverage_rating() == null) {
+		dbBook.setAverage_rating(0);
+	}
+	review.getBook().setAverage_rating(((dbBook.getAverage_rating()*dbBook.getRatings_count())+review.getRating()) / (dbBook.getRatings_count()+1));
+	System.out.println(review);
+
+	Mono<Review> savedReview = reviewRepo.save(review);
+
+	...<code shortened for brevity>...
+}
+----
+
+Because we have those fields on the domain class and don't provide them in a book review, the request object contains `null` values. If we save that object to the database, those fields in the `Book` node will get set to null, which removes them. Therefore, we need to set those values before we save the review to the database.
+
+We start by retrieving the book from the database using our `findBookByBook_id()` method. I had to use `block()` to convert a reactive object to the nonreactive one. Next, I needed to do some validation in case the book didn't have any reviews yet. If the `ratings_count` or `average_rating` fields were null, I set them to `0`. After each of those `if` statements, I set the `review` object's values by incrementing the rating count by one and calculating a new average rating. I had to look up how to calculate a new average based on an old average and found https://math.stackexchange.com/questions/106313/regular-average-calculated-accumulatively#:~:text=i.e.%20to%20calculate%20the%20new,the%20third%20number%20is%2010[this helpful formula^]. Next, I print the review again to ensure the values are there, then send it to the database.
+
+This worked! Now, this seemed quite cumbersome to update a couple of backend properties in the database, and it added some business logic in the code. After some suggestions from a colleague, there are two alternate approaches that don't contain so much logic wrapped into the application. We can look at those now.
+
+=== Approach 2: Update non-mapped fields
+
+This was actually what I tried to get working initially, and when it failed, I turned to the first approach above. But, it turns out this one works with a couple of tweaks. Code is available on the Github project's https://github.com/JMHReif/sdn-cypher-update-entity/tree/update-nonmapped-fields[update-nonmapped-fields branch^].
+
+[source,java]
+----
+@Data
+@Node
+class Review {
+	@Id
+	@GeneratedValue(UUIDStringGenerator.class)
+	private String review_id;
+
+	private Integer rating;
+
+	@Relationship("WRITTEN_FOR")
+	private Book book;
+}
+
+@Data
+@Node
+class Book {
+	@Id
+	private String book_id;
+}
+----
+
+The only change here is that we can remove the `ratings_count` and `average_rating` fields from the `Book` entity because we will update them through a Cypher statement.
+
+Next, our `BookRepository` interface needs to contain the query for updating those fields.
+
+[source,java]
+----
+interface BookRepository extends ReactiveCrudRepository<Book, String> {
+	@Query("""
+   			WITH $review as review
+			MATCH (b:Book {book_id: review.__properties__.WRITTEN_FOR[0].__id__})
+			WITH review, b, b.ratings_count+1 as newRatingsCount
+			SET b.ratings_count = newRatingsCount,
+			b.average_rating = ((b.average_rating*(newRatingsCount-1))+review.__properties__.rating)/newRatingsCount
+			RETURN b""")
+	Mono<Book> updateBookEntity(Review review);
+}
+----
+
+We pass in the review object so that we can pull the `book_id` and use the `rating` to calculate the new average. The next line finds the `Book` entity we need to update, then calculates and sets the new properties, returning the newly-updated `Book` at the end. Where I had problems with this before was in accessing the nested properties on the review getting passed in (second line of the query). The https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/#custom-queries.parameters[custom query parameter syntax^] is documented in the Spring Data Neo4j documentation, but feels a bit obscure.
+
+Lastly, let's look at our controller class again.
+
+[source,java]
+----
+	Mono<Review> save(@RequestBody Review review) {
+		System.out.println(review);
+
+		Mono<Review> savedReview = reviewRepo.save(review);
+		System.out.println(savedReview.block());
+
+		Mono<Book> updatedBook =  bookRepo.updateBookEntity(review);
+		System.out.println(updatedBook.block());
+
+		return savedReview;
+	}
+----
+
+The difference between the code in this method and our previous version is that we have removed all the business logic (`get` and `set` operations) and only called the method containing the custom query because the query does all the logic. This moves the operations from the application to the database.
+
+This second approach is a bit cleaner, and it also abstracts the heavy-lifting to the backend. However, there is one more option we can explore that removes even more business logic. Let's look at that now!
+
+=== Approach 3: On-demand calculation with view
+
+Our final rendition of this code calculates a book recommendation on-demand without updating anything in the database, so it mimics a database "view" where we can create a customized object for display. Code is available on the Github project's https://github.com/JMHReif/sdn-cypher-update-entity/tree/recommendation-view[recommendation-view branch^].
+
+We will do this by calculating the `ratings_count` and `average_rating` in a Cypher query, but not storing the results in the database. We will also utilize the relationships on the entities to calculate the numbers, rather than relying on a count property.
+
+[source,java]
+----
+@Data
+@Node
+class Book {
+	@Id
+	private String book_id;
+
+	@ReadOnlyProperty
+	private Integer ratings_count;
+	@ReadOnlyProperty
+	private Integer average_rating;
+}
+----
+
+Our `Review` class looks the same, so I haven't included it here, but feel free to look at the https://github.com/JMHReif/sdn-cypher-update-entity/blob/recommendation-view/src/main/java/com/jmhreif/sdncypherupdateentity/SdnCypherUpdateEntityApplication.java#LL93C1-L93C1[code in the repository^]. In the `Book` class above, we have added the `ratings_count` and `average_rating` back in, but we have also added a https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/ReadOnlyProperty.html[`@ReadOnlyProperty` annotation^], which will not write them to the database. This means that, even though they are fields on the domain class, those null values that were wiping out those properties in our first approach will not be an issue here.
+
+Next, we need the Cypher query to run the calculations on-demand.
+
+[source,java]
+----
+interface BookRepository extends ReactiveCrudRepository<Book, String> {
+	@Query("MATCH (b:Book)<-[:WRITTEN_FOR]-(r:Review)\n" +
+			"WITH b, r, b.book_id as book_id, COUNT {(r)-[:WRITTEN_FOR]->(b)} as ratings_count\n" +
+			"WITH r, book_id, ratings_count, SUM(r.rating) / ratings_count as average_rating\n" +
+			"RETURN DISTINCT(book_id), ratings_count, average_rating\n" +
+			"ORDER BY average_rating DESC, ratings_count DESC\n" +
+			"LIMIT 10;")
+	Flux<Book> getRecommendations();
+}
+----
+
+Our query pulls the "Review->Book" pattern, counts how many reviews are written for each book (as the `ratings_count`), then uses that value in the next line to calculate the `average_rating`. The `RETURN` statement organizes unique book ids and provides the ratings count and average. The final two lines order the list by average, then by count and limits the results to the first ten.
+
+We could definitely write a more personal recommendation by including the user writing the reviews, adding preferred genres and authors, etc. However, we have scaled back to a generic scope for this article. :)
+
+Last, but not least, we need to implement our method!
+
+[source,java]
+----
+	Mono<Review> save(@RequestBody Review review) {
+		System.out.println(review);
+
+		Mono<Review> savedReview = reviewRepo.save(review);
+		System.out.println(savedReview.block());
+
+		Flux<Book> bookRecommendations = bookRepo.getRecommendations();
+		bookRecommendations.doOnNext(System.out::println).blockLast();
+
+		return savedReview;
+	}
+----
+
+This time, we are creating a `Flux<>` of books for the book recommendations (seventh line). We call the `getRecommendations()` method on the book repository, and then print those recommendations out to the console. Because we are dealing with a reactive type, we iterate through the list and block to close the stream after completion.
+
+This approach produces the cleanest application code because we are pushing the operations to the database to calculate only when it's needed. This seems like an easy win, but I could see this being problematic if we were calculating many recommendations at a time and/or dealing with millions of books having lots of reviews. At that point, it may make performance sense to store the calculations, performing those operations at opportune times for the system.
+
+== Wrap Up!
+
+In this article, we have looked at three different ways we can update books based on new reviews entering the system. The approach you choose will highly depend on your specific project needs and priorities, as well as the data size, model, queries, network, and more. Let's recap each option.
+
+* https://github.com/JMHReif/sdn-cypher-update-entity/tree/main[Approach 1^]: Created fields on the domain class and set them with business logic before sending the object to the database for storage. Required an extra lookup to retrieve the current values to use in the calculations.
+* https://github.com/JMHReif/sdn-cypher-update-entity/tree/update-nonmapped-fields[Approach 2^]: Removed fields on the domain class, and calculated/stored the values in the database using a custom Cypher query. This required understanding to use nested query parameters, but removed business logic from the code.
+* https://github.com/JMHReif/sdn-cypher-update-entity/tree/recommendation-view[Approach 3^]: Fields back on domain class, but annotated them as read-only, creating a "view" of the object where a custom cypher query calculated the values and filled them in for the application object. Removes the most logic from the application side, but might put load on the database, depending on the number of on-demand calculations and the complexity of the data set.
+
+The create and read functionality in typical "CRUD" methods are usually pretty straightforward, but update is one that always seems to trip me up. With this blog post, I hope to take notes for my future self and help someone else along the way. As always, check out the https://github.com/JMHReif/sdn-cypher-update-entity/tree/main[full code repository on Github^]. Happy coding!
+
+== Resources
+
+* Github repository: https://github.com/JMHReif/sdn-cypher-update-entity/tree/main[Accompanying code for this blog post^]
+* Documentation: https://docs.spring.io/spring-data/neo4j/docs/current/reference/html/[Spring Data Neo4j^]
