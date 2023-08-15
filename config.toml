@@ -5,7 +5,7 @@ theme = ["github.com/theNewDynamic/gohugo-theme-ananke"]
 
 [params]
 description = """
-    Developer Relations Engineer at Neo4j, conference speaker, blogger, avid developer and problem-solver.
+    Java Developer Advocate at Neo4j, conference speaker, blogger, avid developer, and problem-solver.
     """
 github = "https://github.com/JMHReif"
 twitter = "https://twitter.com/JMHReif"
