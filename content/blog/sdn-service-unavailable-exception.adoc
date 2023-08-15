@@ -1,0 +1,219 @@
+---
+date: 2023-08-15T09:00:00-06:00
+featured_image: "/img/error-msgs/unsplash-service-unavailable.jpg"
+image_credit: https://unsplash.com/photos/iPsOfXA79U4?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["errors","java","spring-data-neo4j","debugging","spring-boot"]
+title: "ServiceUnavailableException: Connection to the database terminated."
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+I was working on a Spring Data Neo4j example application for a community user's question, and I kept running into the error below when I defined bidirectional relationship in the domain classes.
+
+[source,text]
+----
+2023-08-10T13:00:17.341-05:00 ERROR 98493 --- [nio-8080-exec-1] o.a.c.c.C.[.[.[/].[dispatcherServlet]    : 
+Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed: 
+org.springframework.dao.TransientDataAccessResourceException: 
+Server at 408637a4.databases.neo4j.io:7687 is no longer available; 
+Error code 'N/A'] with root cause
+org.neo4j.driver.exceptions.ServiceUnavailableException: 
+Connection to the database terminated. 
+Please ensure that your database is listening on the correct host and port and that you have compatible encryption settings both on Neo4j server and driver. 
+Note that the default encryption setting has changed in Neo4j 4.0.
+----
+
+It turns out that I had come across this issue before (with different circumstances)...but debugging this took longer than I'd hoped. Therefore, here is this blog post for my future self (and others) to avoid this error again down the road!
+
+== What we know
+
+First, we start debugging at a high level. What do I know about my application and this error?
+
+1. The app runs fine with no relationships defined.
+2. The app runs fine with a relationship defined in one direction.
+3. The app fails with a bidirectional relationship (even if I add a `@JsonIgnoreProperties` annotation on the field to ignore the relationship coming back).
+4. The error says the database connection terminates. If I remove the bidirectional relationship, the app runs fine, so I can connect (at least initially) to the database.
+
+Let's review my project code.
+
+== Project code
+
+I set up this project as I have many other projects in the past - starting with Spring Initializr and a few go-to dependencies.
+
+image::/img/error-msgs/service-unavailable-initializr.png[Spring Initializr SDN project]
+
+After generating the project there, I unzipped it locally and opened it in IntelliJ IDEA. I already had an https://dev.neo4j.com/aura-login[Aura free instance^] running, so I loaded a piece of the Goodreads data to the instance with the Cypher statements in https://github.com/JMHReif/graph-demo-datasets/blob/main/goodreadsUCSD/load-book-author-data.cypher[this script^].
+
+Next, I opened the `application.properties` file and added my database connection details.
+
+[source,text]
+----
+spring.neo4j.uri=<NEO4J_URI>
+spring.neo4j.authentication.username=<NEO4J_USERNAME>
+spring.neo4j.authentication.password=<NEO4J_PASSWORD>
+spring.data.neo4j.database=<NEO4J_DATABASE>
+----
+
+Now let's define our application data model. Since I'm using my Goodreads data set, that means creating `Book` and `Author` classes.
+
+[source,java]
+----
+@Data
+@Node
+class Book {
+	@Id
+	private String title;
+}
+
+@Data
+@Node
+class Author {
+	@Id
+	private String name;
+}
+----
+
+I wanted to keep things short and sweet, so I only retained one field for each domain class. Next, let's define a repository and controller for books.
+
+[source,java]
+----
+interface BookRepository extends Neo4jRepository<Book, String> {
+}
+
+@RestController
+@RequestMapping("/books")
+@AllArgsConstructor
+class BookController {
+	private final BookRepository bookRepository;
+
+	@GetMapping
+	List<Book> findAllBooks() {
+		return bookRepository.findAll();
+	}
+}
+----
+
+The `BookRepository` is a Spring Data Neo4j repository that extends the `Neo4jRepository` interface. We don't need any defined methods here because I want to just use the Spring-derived methods (`findAll()`, `findById()`, etc). The `BookController` is a Spring MVC controller that injects the repository and implements a method that returns a list of books from the repository.
+
+Let's test what we have so far by running the application and hitting the `localhost:8080/books` endpoint.
+
+image::/img/error-msgs/service-unavailable-books1.png[Books endpoint]
+
+So far, so good. Let's add a relationship and test again!
+
+[source,java]
+----
+@Data
+@Node
+class Book {
+	...
+
+	@Relationship(value = "AUTHORED", direction = Relationship.Direction.INCOMING)
+	private List<Author> authors;
+}
+----
+
+image::/img/error-msgs/service-unavailable-books2.png[Books endpoint]
+
+Working still! Let's add the relationship back from `Author` to `Book`.
+
+[source,java]
+----
+@Data
+@Node
+class Book {
+	...
+
+	@JsonIgnoreProperties("books")
+	@Relationship(value = "AUTHORED", direction = Relationship.Direction.INCOMING)
+	private List<Author> authors;
+}
+
+@Data
+@Node
+class Author {
+	...
+
+	@JsonIgnoreProperties("authors")
+	@Relationship(value = "AUTHORED", direction = Relationship.Direction.OUTGOING)
+	private List<Book> books;
+}
+----
+
+I needed to add the `@JsonIgnoreProperties` on each relationship field because, otherwise, a StackOverflow error can surface from endlessly traversing relationships between the domain objects.
+
+Running this again, though, surfaced the error we saw at the beginning of this post. What really stumped me is that I've had countless applications with this same code structure and functionality, so what is different this time?
+
+After struggling with it a few days, I pinged a colleague (pour soul). Two heads are better than one, right? We worked through some things, and he kindly guided me in the right direction. Let's look at fixing it!
+
+== Solving the error
+
+First off, I was convinced the error was due to the wrong syntax for using `@JsonIgnoreProperties` on the relationship field. That caused me to limit the possibilities for fixes to syntax, which ended up not being the issue. I'm pretty sure my colleague knew what ailed my application earlier than I did. Reminder to self: if you find yourself in a hole that doesn't seem to be going anywhere, stop digging! Try something else. I could've saved myself some time.
+
+Anyway, here were some solutions I tried:
+
+* Separate example: colleague created an example with the same code structure, and it worked.
+* Go vanilla Java: removing Lombok (sometimes causes conflicts).
+* Desperation: restarting IntelliJ (sometimes it gets flaky), running app from command line.
+
+Nothing worked. My colleague hinted that it might be a domain issue with tightly connected data, but I missed the hint. After all, my data set was small (only around 20k nodes and 15k relationships), so it couldn't be a domain issue, right? And I was getting a `ServiceUnavailableException`, and not the expected StackOverflow error or cycle error.
+
+After enabling stacktracing for the app, I saw the error message through a different lens and noticed there were some `WARN` messages above it about a deprecated `id` function.
+
+[source,text]
+----
+2023-08-10T13:00:01.996-05:00 DEBUG 98493 --- [nio-8080-exec-1] org.springframework.data.neo4j.cypher    : Executing:
+MATCH (book:`Book`) WITH collect(toString(id(book))) AS __sn__ RETURN __sn__
+2023-08-10T13:00:02.258-05:00  WARN 98493 --- [nio-8080-exec-1] org.springframework.data.neo4j.cypher    : 
+Neo.ClientNotification.Statement.FeatureDeprecationWarning: This feature is deprecated and will be removed in future versions.
+	MATCH (book:`Book`) WITH collect(toString(id(book))) AS __sn__ RETURN __sn__
+	                                          ^
+The query used a deprecated function: `id`.
+----
+
+I'd seen that message before, though it hadn't caused problems. But I thought I'd try a custom query to see if the derived query might be tripping something.
+
+[source,java]
+----
+class BookController {
+	...
+
+	@GetMapping
+	List<Book> findAllBooks() {
+		return bookRepository.findAllBooks();
+	}
+}
+
+interface BookRepository extends Neo4jRepository<Book, String> {
+	@Query("MATCH (b:Book)<-[r:AUTHORED]-(a:Author) RETURN b, collect(r), collect(a);")
+	List<Book> findAllBooks();
+}
+----
+
+I created a custom query in the repository that retrieved books and related authors. I then plugged the new method into our implementation in the controller class. Running the application again, everything ran successfully!
+
+== Why?
+
+While the derived query was surfacing the issue, there isn't actually a problem with the derived query. It's the combination of a highly-connected data set with a voracious `findAll()` method. So, the functionality intent is different.
+
+My colleague termed this perfectly "What's happening is that SDN completely scrapes the whole graph. This is due to the fact that the book requested was written by multiple authors who also have written other books, with other authors (…who have written other books, ...)." SDN blindly "follows those relationships up again and again. It ignores duplicates (that's something) but, in the end, those queries are killing your free instance."
+
+So, the `findAll()` traversed down the spider web of data, and the data set was large and interconnected enough that it was causing the database to crash (terminating the connection). The custom query is only looking for one level deep - a book with its related authors. It doesn't care if the author wrote other books, etc. Since it's only going one hop in the network, it is able to return all that data quickly.
+
+Other ways to solve this error (if I needed the multi-hop query) would be to write a custom query that stops after a certain level or increase the database memory allocation. Enforcing a stopping point to the query would ensure it didn't slurp too much data into memory. An Aura free instance is pretty small, so increasing the memory allocation would allow the database to handle more data without crashing.
+
+== Wrap Up!
+
+In this post, we debugged and worked around the `ServiceUnavailableException` in my Spring Boot application with Spring Data Neo4j. We learned how the derived `findAll()` method works with a highly-connected data set in Neo4j and how to write a custom query to solve the problem by only retrieving a subset of the data, rather than the whole graph.
+
+Hopefully, this post saves us precious time in the future by fixing bugs faster. Happy coding!
+
+P.S. Thank you to https://github.com/meistermeier[Gerrit Meier^] for helping me debug this issue!
+
+== Resources
+
+* Github repository: https://github.com/JMHReif/service-unavailable-exception[Accompanying code for this blog post^]
+* Github: https://github.com/JMHReif/service-unavailable-exception/blob/main/service-unavailable-exception.txt[ServiceUnavailableException full stack trace^]
+* Github: https://github.com/meistermeier/neo4j-issues-examples/tree/master/json-ignore[Gerrit's working sample project^]
