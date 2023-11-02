@@ -1,0 +1,159 @@
+---
+date: 2023-11-02T09:00:00-06:00
+featured_image: "/img/unsplash-home-office-setup.jpg"
+image_credit: https://unsplash.com/photos/0qvBNep1Y04?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["java","scripting","data-import","api","jbang"]
+title: "JBang: How to script with Java for data import from an API"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+It's right in the middle of busy conference season, and I was prepping for an upcoming conference talk.
+
+As I often do, I went to Neo4j Aura to spin up a free database and use Cypher with APOC to import data from an API, but this API requires a header, and the APOC procedure that adds headers to a request is blocked by security in Aura. Hm, I needed a new route.
+
+I decided to try https://www.jbang.dev/[JBang^], which is a tool for scripting with Java. I had heard about it, but hadn't tried it yet. It's pretty cool, so wanted to share my onboarding.
+
+== What is JBang?
+
+Java developers have lamented the lack of a scripting language for Java for years. JBang solves this problem. I found an excellent overview of JBang from a post on InfoQ (https://www.infoq.com/news/2020/10/scripting-java-jbang/[Scripting Java with a jBang^]).
+
+[quote]
+JBang provides a way of running Java code as a script...[It] is a launcher script, written in bash and powershell, that can discover or download a JVM, and then (down)load the Java script given in an argument. The implementation of JBang is a Java JAR archive, which it then launches to execute further commands.
+JBang can run jsh or java files; the latter is a standard Java class with a main() method. However, unlike JShell, comments at the top of JBang allow dependencies to be automatically downloaded and set up on the classpath. JShell allows adding JARs to the classpath at launch, but any (recursive) dependencies have to be added manually.
+
+JBang seems like a nicer alternative to either using a full-fledged Java project or a Linux script. Let's get a bit more detail about the data API we will pull from before we dive into writing the script!
+
+== Setup: Install/Download
+
+First, we need to https://www.jbang.dev/download/[install JBang^] from the download page. I had to find the download for my operating system, and then choose an install type. Since I use https://sdkman.io/[SDKMan^] to manage my Java versions, I installed JBang with SDKMan, too.
+
+[source,shell]
+----
+sdk install jbang
+----
+
+Several IDEs have plugins for JBang, as well, including IntelliJ. The https://www.mastertheboss.com/java/quick-jbang-scripting-with-intellij/?expand_article=1[IntelliJ plugin^] seems to have several nice features, including import suggestions. However, I had trouble utilizing it from an existing project or randomly-created script, but had to create a separate project initialized with JBang. I probably need to play with this a bit more, since it would simplify the import problem (discussed in a bit). Anyway, I decided to mess with the plugin later, and just use the command line for now.
+
+== API Details
+
+I wanted to import data for traveling with pets, and the https://fusion.yelp.com/[Yelp Fusion API^] was one that I knew I wanted to use. This was also the one that requires a header on the request, which lead me down the path toward JBang in the first place.
+
+The Yelp API has a really useful https://docs.developer.yelp.com/reference/v3_business_search[playground^] where I could test a few requests before I started writing the script. I also used the playground to verify syntax and get sample code for an API call in Java.
+
+== Write the Script
+
+In the playground, you can choose the endpoint you want to hit, any parameters, as well as the language you want to use to make the request. I chose Java and the parameters I knew I needed, and it gave me the following code:
+
+[source,java]
+----
+OkHttpClient client = new OkHttpClient();
+
+Request request = new Request.Builder()
+  .url("https://api.yelp.com/v3/businesses/search?location=" + location + "&categories=" + category + "&attributes=dogs_allowed&limit=50&sort_by=distance")
+  .get()
+  .addHeader("accept", "application/json")
+  .addHeader("Authorization", "Bearer " + yelpApiKey)
+  .build();
+
+Response response = client.newCall(request).execute();
+----
+
+Now, I tweaked the code a bit above to use placeholder variables for `location`, `category`, and `yelpApiKey` so that I could pass in arbitrary values later. The code sample from the playground auto-includes your API token, so I copy/pasted the block above into my JBang script, and then I needed to go back and add dependencies.
+
+This was where JBang was a little less convenient and where an IDE plugin might come in handy. I had to go to https://central.sonatype.com/[Maven Central^] and search for the dependencies I needed. There isn't an auto-import, which makes sense, since we don't have a dependency manager like Maven or Spring that could potentially search dependencies for useful import suggestions. Here are the imports for the request part:
+
+[source,java]
+----
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+----
+
+I also wanted to pull pet travel data from several (of the many) https://docs.developer.yelp.com/docs/resources-categories[categories^] Yelp offers. Since there is a high request limit but smaller result limit, I decided to hit the endpoint for each category independently to retrieve maximum results for each category. I also wanted a parameter for the location, so I could pull data for different cities. Finally, I needed a file to output the results so that I wouldn't have to hit the API each time I might want to load the data. I added the following variables to the script:
+
+[source,java]
+----
+filename = "yelpApi.json";
+String[] yelpCategories = {"active","arts","food","hotelstravel","nightlife","pets","restaurants","shopping"};
+String location = "New%20York%20City";
+----
+
+Last, but not least, I needed to create the JSON object to format and hold the results, and then write that to the JSON file.
+
+[source,java]
+----
+try {
+    JSONObject json = new JSONObject();
+    JSONArray jsonArray = new JSONArray();
+    String jsonData = "";
+    OkHttpClient client = new OkHttpClient().newBuilder().connectTimeout(20, TimeUnit.SECONDS).build();
+
+    for (String category : yelpCategories) {
+        <API call>
+
+        jsonData = response.body().string();
+        JSONObject obj = new JSONObject(jsonData);
+        JSONArray array = obj.getJSONArray("businesses");
+        JSONObject place = new JSONObject();
+        int n = array.length();
+        for (int i = 0; i < n; ++i) {
+            place = array.getJSONObject(i);
+
+            if (!place.isEmpty()) {
+                json.append(category, place);
+            }
+        }
+    }
+
+    FileWriter myWriter = new FileWriter(filename);
+    myWriter.write(json.toString(4));
+    myWriter.close();
+    System.out.println("Successfully wrote to Yelp file.");
+} catch (IOException e) {
+    e.printStackTrace();
+}
+----
+
+Following this, I needed a few more import statements.
+
+[source,java]
+----
+import static java.lang.System.*;
+import java.io.IOException;
+import java.io.FileWriter;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONArray;
+import java.util.concurrent.TimeUnit;
+----
+
+You might notice that I added a connect timeout to the request. This is because the servers for one of the APIs was sometimes a bit sluggish, and I decided to wrap the other API calls with the same timeout protection to prevent the script from hanging or erroring out.
+
+The https://github.com/JMHReif/jbang-api-import/blob/main/travelPetDataImport.java[full version of the code^] is available on Github.
+
+== Running the Script
+
+To run, we can use the command `jbang` plus the name of the script file. So our command would look like the following:
+
+[source,shell]
+----
+jbang travelPetDataImport.java
+----
+
+This will run the script and output the results to the file we specified. We can check the file to make sure the data was written as we expected.
+
+== Wrap Up!
+
+I was really impressed and happy with the capabilities and simplicity of JBang! It provided a straightforward way to write a script using the same Java syntax I'm comfortable with, and it was easy to get started. Next time, I'd like to figure out the IDE plugin, so that I can hopefully take advantage of import suggestions and other efficiencies available.
+
+I'm looking forward to using JBang more in the future!
+
+== Resources
+
+* Github repository: https://github.com/JMHReif/jbang-api-import[Accompanying code for this blog post^]
+* Website: https://www.jbang.dev/[JBang^]
+* Documentation: https://www.jbang.dev/documentation/guide/latest/index.html[JBang^]
+* Data: https://fusion.yelp.com/[Yelp Fusion API^]
