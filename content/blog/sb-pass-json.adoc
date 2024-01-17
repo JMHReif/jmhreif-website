@@ -1,0 +1,143 @@
+---
+date: 2024-01-12T09:00:00-06:00
+featured_image: "/img/unsplash-pass-ball.jpg"
+image_credit: https://unsplash.com/photos/two-boys-playing-soccer-near-building-during-daytime-WOP-W1Yg6cg?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["spring-boot","json","pass-data","json-object","code"]
+title: "How to pass a JSON object to a Spring Boot request"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+Just before the holidays, I was working on writing some more lesson content for a Spring Data Neo4j course. To save an entity to the database, I needed to pass a JSON object containing the entity's properties to a Spring Boot controller method. Each time I wanted to test the code, I had to manually create the JSON object and pass it to the controller method on the command line. I thought there had to be a cleaner and simpler way to do this.
+
+This post shows how to use a file to store the JSON object, then pass the contents of that file in the command calling the method.
+
+P.S. Thanks to my go-to knowledge source, https://github.com/mkheck[Mark Heckler^], for whipping up an example repository! :)
+
+== The problem
+
+To save an entity with a relationship and a connected entity, I needed to pass a JSON object to a Spring Boot controller method. The JSON object contained the properties of the entity and the connected entity. Below is an example of the JSON object I had to construct and pass at the command line each time I wanted to test this method:
+
+[source,json]
+----
+curl -X "PUT" "http://localhost:8080/movies/save" \
+  -H 'Content-Type: application/json; charset=utf-8' \
+  -d $'{
+    "movieId": "9876",
+    "title": "MyMovie",
+    "actors": [{ "role": "self", "person": { "imdbId": "12", "name": "Jennifer Reif" } }]
+  }'
+----
+
+While this looks a bit cumbersome, the truth is that there are only two entities and a few properties here, so this is not a complicated example. What happens when the entity you are saving has many more properties and related entities? Complexity multiplies quickly.
+
+One way to solve this is by storing the test data in a JSON file and passing the contents of that file to the controller method. I started working through it, but (as happens frequently to developers) I ended up overengineering the code. After hitting some walls, I reached out to Mark, who whipped up the https://github.com/mkheck/json-in-example[sample code repository^] for me to use as a model for my code. We will walk through that sample code here!
+
+== The solution
+
+Mark's sample code repository contains a bare-bones Spring Boot application with a controller method that takes a JSON object as a parameter and returns the entity.
+
+First, we need a JSON file, which is in the `src/main/resources` folder. The sample app uses Aircraft data, so the file is called `aircraft.json` and contains an object for properties related to an aircraft.
+
+[source,json]
+----
+{"adshex": "102938", "reg": "N12345", "type": "B737"}
+----
+
+_Source code: https://github.com/mkheck/json-in-example/blob/main/src/main/resources/aircraft.json[aircraft.json^]_
+
+There is a Java class (`Aircraft.java`) to map the data to an object. Then, we need to create a controller method that accepts the JSON object as a parameter. In the https://github.com/mkheck/json-in-example/blob/main/src/main/java/com/thehecklers/jsoninexample/AircraftController.java[`AircraftController.java` class^], the `echoAircraft()` method uses the `@RequestBody` annotation to indicate that the method parameter should be bound to the body of the HTTP request. It returns the aircraft object that was passed in for us to verify that the data was passed correctly.
+
+[source,java]
+----
+@RestController
+@RequestMapping("/")
+public class AircraftController {
+
+    @PostMapping("/aircraft")
+    public Aircraft echoAircraft(@RequestBody Aircraft aircraft) {
+        return aircraft;
+    }
+}
+----
+
+Now we can test the application. Instructions are also included in the https://github.com/mkheck/json-in-example/blob/main/README.adoc#how-to-use[`README.adoc` of the repository^]. We start the application (either through IDE or command line) and then use the following command to pass the JSON object to the controller method:
+
+[source,shell]
+----
+# cURL request
+curl localhost:8080/aircraft -H 'Content-Type: application/json; charset=utf-8' -d @src/main/resources/aircraft.json
+
+# HTTPie request
+http :8080/aircraft < src/main/resources/aircraft.json
+----
+
+You should see the JSON object from the file echoed back to you in the response. Hooray! Now let's go back and apply that to my application where I was saving an entity with a relationship and a connected entity to a graph database in Spring Data Neo4j.
+
+== Applying to my application
+
+First, I created a JSON file containing the data I want to save. The file is called `movieRels.json` and contains the following:
+
+[source,json]
+----
+{
+  "movieId": "9876",
+  "title": "MyMovie",
+  "actors": [
+    {
+      "role": "self",
+      "person": {
+        "imdbId": "12",
+        "name": "Jennifer Reif"
+      }
+    }
+  ]
+}
+----
+
+Next, I needed to make sure the controller method is set up to properly accept JSON in the body.
+
+[source,java]
+----
+@RestController
+@RequestMapping("/movies")
+public class MovieController {
+    private final MovieRepository movieRepo;
+
+    public MovieController(MovieRepository movieRepo) {
+        this.movieRepo = movieRepo;
+    }
+
+    @PostMapping("/save")
+    Movie save(@RequestBody Movie movie) {
+        return movieRepo.save(movie);
+    }
+}
+----
+
+Finally, I can test it by running the application and calling the following command:
+
+[source,shell]
+----
+curl localhost:8080/movies/save \
+  -H 'Content-Type: application/json; charset=utf-8' \
+  -d @src/main/resources/movieRels.json
+----
+
+It worked! The movie was saved to Neo4j with the relationship and connected actor entity. I can now use this method to test my code as I continue to write the course material. 
+
+To test more complex entities, I only need to edit the JSON file or create a new JSON file and source that into my command instead.
+
+== Wrap up
+
+In this post, we saw how to pass a JSON object to a Spring Boot controller method. We used a file to store the JSON object, then passed the contents of that file in the command calling the method. This is a much cleaner and simpler way to test code than manually passing JSON at the command line.
+
+I will definitely be utilizing this in future projects! I hope you find it useful as well. Thanks again to https://github.com/mkheck[Mark Heckler^] for the sample code!
+
+== Resources
+
+* Github repository: https://github.com/mkheck/json-in-example[Accompanying code for this blog post^]
+* Documentation: https://dev.neo4j.com/sdn-docs[Spring Data Neo4j^]
+* Learn Neo4j: https://dev.neo4j.com/graphacademy[Neo4j Graphacademy^] (free, online courses)
