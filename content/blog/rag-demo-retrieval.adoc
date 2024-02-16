@@ -4,7 +4,7 @@ featured_image: "/img/rag-demo/unsplash-knowledge-cup.jpg"
 image_credit: https://unsplash.com/photos/red-and-white-nescafe-ceramic-mug-GSLA0FVY9qI?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
 tags: ["genai","rag","query","langchain","llm"]
 title: "Implementing RAG: How to write a graph retrieval query in LangChain"
-draft: true
+draft: false
 omit_header_text: true
 ---
 
