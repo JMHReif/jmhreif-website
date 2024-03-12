@@ -1,0 +1,117 @@
+---
+date: 2024-03-12T09:00:00-06:00
+featured_image: "/img/sleuthing-data-types/unsplash-explain-something.jpg"
+image_credit: https://unsplash.com/photos/person-showing-laptop-computer-on-table-pglEQsNWuWk?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["query","data-types","cypher","neo4j"]
+title: "Cypher Sleuthing: How to Get Data Types of Properties in Neo4j"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+It's been awhile since I wrote a Cypher Sleuthing post, but I'm back with a new one! This time, I'm going to show you how to find the data types of properties in Neo4j.
+
+I frequently want to find out the data type of a property so that I can map it in an application (in Java). I can never remember off the top of my head, and when I Google the question, the results are often outdated (here's the https://community.neo4j.com/t/data-type-of-a-property/1309[answer post^], but the syntax is old). So, I end up doing a mix of searching docs and Slack messages (who has time for that?!) and trial and error. :P
+
+This blog post hopes to shortcut my lookup process for "future me", as well as maybe help you out too!
+
+== Cypher data types
+
+There are many data types available in Neo4j, and most of them match up to types available in other technologies. The full list is available in the https://neo4j.com/docs/cypher-manual/current/values-and-types/property-structural-constructed/[Cypher documentation^].
+
+Standard, simple data types are most often used, including `String`, `Integer`, `Float`, `Boolean`, and `DateTime`. The mapping for https://neo4j.com/docs/java-reference/current/extending-neo4j/values-and-types/[Cypher to Java types^] is pretty straightforward, but every once in awhile, I get an ugly mapping error because I didn't verify the type conversion.
+
+How can we verify whether a number property is an `Integer` or a `Float`? Or discern between some of the temporal/date types? Let's see how we can do that!
+
+== Examples with real data
+
+To test all of these queries, I'm going to use a graph based on the Northwind data set that you can load by creating a https://dev.neo4j.com/aura-java[free Neo4j Aura database^] and copying/pasting and then executing the https://github.com/JMHReif/graph-demo-datasets/blob/main/northwind/load-data.cypher[entire load script available on Github^].
+
+image::/img/sleuthing-data-types/northwind-data-model.png[Northwind graph data model]
+
+== Cypher functions
+
+I've always used and relied upon the APOC utility library for many of my Cypher needs, and this is no exception. However, Cypher adds new functions and features, and some APOC features aren't available in all cases (sad face for Aura), so I often dig through the Cypher functions first to see what's available.
+
+Although Cypher can't help us get our answer this time, there are a few Cypher functions that look deceiving. The https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-type[`type()`^] and https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-valueType[`valueType()`^] functions look like they should return data types of a property, but they do not.
+
+The `type()` function returns a string representation of a relationship type, so instead of a Relationship data type, you get the text name of the relationship. The `valueType()` function evaluates an expression and returns a string representation of its most precise value type. 
+
+Let's look at some examples.
+
+[source,cypher]
+----
+//type() function
+MATCH (p:Product)<-[r:ORDERS]-(o:Order)
+RETURN type(r) LIMIT 1
+----
+
+.type() results
+image::/img/sleuthing-data-types/cypher-type-function.png[Cypher `type()` function returns the text name of the relationship.]
+
+So, this could be helpful if you need to print out the relationship type or use it as a dynamic value for setting other relationships, but it's not what we're looking for.
+
+[source,cypher]
+----
+//valueType() function
+MATCH (p:Product {productName: "Teatime Chocolate Biscuits"})
+RETURN valueType(p.productName)
+----
+
+.valueType() results
+image::/img/sleuthing-data-types/cypher-valueType-function.png[Cypher `valueType()` function returns the most precise value type of the expression.]
+
+This one is even more confusing at first. It evaluates an expression and returns the data type plus null status of the value. So, if you have a property that is a non-null `Integer`, it will return `INTEGER NOT NULL`. This might work (though a little over-engineered) if you want to get a single property's data type, but it doesn't work to get all the properties in a node because passing a whole node returns the complex data type `NODE NOT NULL`.
+
+These Cypher options might be similar, but are more complex than the basic feature we need. APOC to the rescue!
+
+== Options with APOC
+
+The https://neo4j.com/docs/apoc/current/overview/apoc.meta/apoc.meta.cypher.type/[`apoc.meta.cypher.type`^] function is the key to getting the data type of a property. It's sister function https://neo4j.com/docs/apoc/current/overview/apoc.meta/apoc.meta.cypher.types/[`apoc.meta.cypher.types`^] will return data types for all properties. Both functions return the property type(s) in string format. The functions take a single argument, which is the property/node you want to check.
+
+[source,cypher]
+----
+//single property
+MATCH (p:Product {productName: "Teatime Chocolate Biscuits"})
+RETURN apoc.meta.cypher.type(p.productName);
+----
+
+.apoc.meta.cypher.type() results
+image::/img/sleuthing-data-types/apoc-meta-cypher-type-function.png[APOC `apoc.meta.cypher.type` function returns the data type of a single property.]
+
+[source,cypher]
+----
+//multiple properties
+MATCH (p:Product {productName: "Teatime Chocolate Biscuits"})
+RETURN apoc.meta.cypher.types(p);
+----
+
+.apoc.meta.cypher.types() results
+image::/img/sleuthing-data-types/apoc-meta-cypher-types-function.png[APOC `apoc.meta.cypher.types` function returns the data types of all properties.]
+
+Note that both of these functions can also handle a list as input, so we could pass in several Product nodes, and it would return the property types for each of them (example queries below). For this post, I chose to have the functions operate on a single entity just to keep the output cleaner.
+
+[source,cypher]
+----
+//single property, multiple nodes
+MATCH (p:Product)
+RETURN apoc.meta.cypher.type(p.productName);
+
+//multiple properties, multiple nodes
+MATCH (p:Product)
+RETURN apoc.meta.cypher.types(p);
+----
+
+== Wrapping Up!
+
+In today's post, we figured out how to find the data types of properties in Neo4j. We looked at the Cypher functions `type()` and `valueType()`, which are close to what we need, but not quite. We then turned to the APOC library and found the `apoc.meta.cypher.type` and `apoc.meta.cypher.types` functions, which provide exactly what we were looking for.
+
+I hope this post helps you out the next time you need to find the data type of a property in Neo4j. Happy coding!
+
+== Resources
+
+* Documentation: https://neo4j.com/docs/cypher-manual/current/values-and-types/property-structural-constructed/[Cypher Values and Types]
+* Documentation: https://neo4j.com/docs/java-reference/current/extending-neo4j/values-and-types/[Neo4j Java: Values and Types]
+* Documentation: https://neo4j.com/docs/apoc/current/overview/apoc.meta/apoc.meta.cypher.type/[`apoc.meta.cypher.type` function^]
+* Documentation: https://neo4j.com/docs/apoc/current/overview/apoc.meta/apoc.meta.cypher.types/[`apoc.meta.cypher.types` function^]
