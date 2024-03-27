@@ -4,4 +4,4 @@ date: 2021-07-25T12:00:00-06:00
 draft: false
 featured_image: "/img/neo4j-london-2018.jpg"
 ---
-We are all on a journey. I hope you will join me for a peek into mine!
+We are all on a journey. Thanks for taking a peek into mine!

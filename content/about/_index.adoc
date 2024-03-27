@@ -7,3 +7,9 @@ draft: false
 {{<figure src="/img/profile.jpg" title="Jennifer Reif" >}}
 
 Jennifer Reif is a Developer Advocate at Neo4j, speaker, and blogger with an MS in CMIS. An avid developer and problem-solver, she has worked with many businesses and projects to organize and make sense of widespread data assets and leverage them for maximum business value. She has expertise in a variety of commercial and open source tools, and she enjoys learning new technologies, sometimes on a daily basis! Her passion is finding ways to organize chaos and deliver software more effectively.
+
+==== A bit more detail:
+I am a developer and advocate with a passion for data and the stories it can tell. I am currently working on the Developer Relations team at Neo4j to help developers be successful with graphs and graph-related technologies. My specialties are in Java, along with its ecosystem of tools and frameworks, as well as graphs and data. When I'm not solving problems, I frequently speak at technical conferences and events all around the world. Most recently, I manage the GraphStuff.FM podcast, co-hosting with colleagues and interviewing amazing people in various technology communities.
+
+==== Personal life:
+I am a former musician turned developer, with a love of most things creative and/or geeky. I enjoy learning and trying new things, and I am always up for a good challenge. My favorite things are coffee, reading, music, horses, traveling, and spending time with my family.

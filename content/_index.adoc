@@ -4,4 +4,4 @@ featured_image: "/img/neo4j-london-2018.jpg"
 description: "Snippets from a Developer"
 draft: false
 ---
-Welcome to my blog! I am a developer who enjoys writing code and sharing my learnings from all aspects of my technical career.
+Welcome to my blog! I am a developer who enjoys writing code and sharing learnings from my technical career.

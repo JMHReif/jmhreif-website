@@ -3,6 +3,8 @@ languageCode = "en-us"
 title = "Jennifer Reif"
 theme = ["github.com/theNewDynamic/gohugo-theme-ananke"]
 
+Paginate = 9
+
 [params]
 description = """
     Java Developer Advocate at Neo4j, conference speaker, blogger, avid developer, and problem-solver.
