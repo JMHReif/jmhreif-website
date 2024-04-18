@@ -1,0 +1,93 @@
+---
+date: 2024-03-29T09:00:00-06:00
+featured_image: "/img/rag-demo/unsplash-???.jpg"
+image_credit: https://unsplash.com/photos/red-and-white-nescafe-ceramic-mug-GSLA0FVY9qI?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["genai","rag","spring-ai","neo4j","vector"]
+title: "Spring AI: How to Write GenAI Applications with Java"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+Generative AI (GenAI) is currently a hot topic in the tech world. It's a subset of artificial intelligence that focuses on creating new content, such as text, images, or music. One popular type of GenAI component is the Large Language Model (LLM), which can generate human-like text based on a prompt. Retrieval-Augmented Generation (RAG) is a technique that enhances the accuracy and reliability of generative AI models by grounding them in external knowledge sources.
+
+Most of the content and applications in GenAI are written in Python and its ecosystem, but what if you want to write a GenAI application in Java? In this blog post, we'll look at how to write GenAI applications with Java using the Spring AI framework. It provides similar functionality to Python's LangChain framework, which is used to write generative AI applications that interact with LLMs. There are also other options for GenAI in Java, such as Langchain4j, but we'll focus on Spring AI for this post.
+
+== What is Spring AI?
+
+Spring AI is a framework for building generative AI applications in Java. It provides a set of tools and utilities for working with generative AI models and architectures, such as large language models (LLMs) and retrieval augmented generation (RAG). Spring AI is built on top of the Spring Framework, which is a popular Java framework for building enterprise applications, allowing those already familiar with or involved in the Spring ecosystem the ability to incorporate GenAI strategies to their already existing applications and workflow.
+
+== Creating a project
+
+To get started with Spring AI, you'll need to either create a new project or add the appropriate dependencies to an existing project. You can create a new project using the Spring Initializr at https://start.spring.io/, which is a web-based tool for generating Spring Boot projects.
+
+When creating a new project, you'll need to add the following dependencies:
+
+- Spring Web
+- OpenAI (or other LLM model, such as Mistral, Ollama, etc.)
+- Neo4j Vector Database (other vector database options also available)
+- Spring Data Neo4j
+
+If you're adding these dependencies manually to an existing project, you can see the dependency details in https://github.com/JMHReif/springai-goodreads[today's related Github repository^].
+
+The Spring Web dependency allows us to create a REST API for our GenAI application. We need the OpenAI dependency to access the OpenAI model, which is a popular LLM. The Neo4j Vector Database dependency allows us to store and query vectors, which are used for similarity searches. Finally, adding the Spring Data Neo4j dependency provides support for working with Neo4j databases in Spring applications, allowing us to run Cypher queries in Neo4j and map entities to Java objects.
+
+Go ahead and generate the project, and then open it in your favorite IDE. I usually open the `pom.xml` file, just to make sure dependencies are correctly added. Looking at that file, you should also see that the milestone repository is included. Since Spring AI is not a general-availability release yet, we need to include the milestone repository to get the pre-release version of the dependencies.
+
+== A bit of boilerplate
+
+First thing that we need is a Neo4j database. I like to use the https://dev.neo4j.com/aura-java[Neo4j Aura free tier^] because the instance is managed for me, but there are also Docker images and other methods.
+
+Depending on the LLM model you chose, you will also need an API key. For OpenAI, you can get one by signing up at https://platform.openai.com/signup[OpenAI^].
+
+Once you have a Neo4j database and an API key, you can set up the config in the `application.properties` file. Here's an example of what that might look like:
+
+[source,properties]
+----
+spring.ai.openai.api-key=<YOUR API KEY HERE>
+spring.neo4j.uri=<NEO4J URI HERE>
+spring.neo4j.authentication.username=<NEO4J USERNAME HERE>
+spring.neo4j.authentication.password=<NEO4J PASSWORD HERE>
+spring.data.neo4j.database=<NEO4J DATABASE NAME HERE>
+----
+
+Note: It's a good idea to keep sensitive information like API keys and passwords in environment variables or other location external to the application. To create environment variables, you can use the `export` command in the terminal or set them in your IDE. 
+
+We can set up https://www.baeldung.com/spring-bean[Spring Beans^] for the Neo4j driver, OpenAI client, and the Neo4j vector store that will allow us to access necessary components wherever we need them in our application.
+
+We can put these in our `SpringAiApplication` class, which is the entry point of our application, by adding the following code to the class:
+
+[source,java]
+----
+@Bean
+public Driver driver() {
+	return GraphDatabase.driver(System.getenv("SPRING_NEO4J_URI"),
+			AuthTokens.basic(System.getenv("SPRING_NEO4J_AUTHENTICATION_USERNAME"),
+					System.getenv("SPRING_NEO4J_AUTHENTICATION_PASSWORD")));
+}
+
+@Bean
+public EmbeddingClient embeddingClient() {
+	return new OpenAiEmbeddingClient(new OpenAiApi(System.getenv("SPRING_AI_OPENAI_API_KEY")));
+}
+
+@Bean
+public Neo4jVectorStore vectorStore(Driver driver, EmbeddingClient embeddingClient) {
+	return new Neo4jVectorStore(driver, embeddingClient,
+			Neo4jVectorStore.Neo4jVectorStoreConfig.builder().withLabel("Review").build());
+}
+----
+
+The `Driver` bean creates a connection to the Neo4j database by passing in the credentials for our instance (in this case, from environment variables). The `EmbeddingClient` bean creates a client for the OpenAI API and passes in our API key environment variable. Lastly, the `Neo4jVectorStore` bean configures Neo4j as the store for embeddings (vectors). We customize the configuration by specifying the label for the nodes that will store the embeddings, as Spring's default looks for `Document` entities.
+
+== Data set
+
+For this example, we'll use a dataset of books and reviews from Goodreads. You can pull a curated version of the dataset from https://github.com/JMHReif/graph-demo-datasets/blob/main/goodreadsUCSD/README.adoc#2-ai-embeddings-folder[here^]. The dataset contains information about books, as well as related reviews.
+
+//TODO: Export embeddings and add file to S3 so that people don't have to generate embeddings from scratch!
+
+== Domain model
+
+Next, we need to create a domain model for our application. In this example, we'll create a `Book` entity that represents a book in a library. We'll also create a `Review` entity that represents a review of a book. The `Review` entity will have an embedding (vector) associated with it, which we'll use for similarity searches.
+//LEFT OFF HERE!
