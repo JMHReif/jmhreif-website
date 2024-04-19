@@ -12,7 +12,7 @@ omit_header_text: true
 
 Generative AI (GenAI) is currently a hot topic in the tech world. It's a subset of artificial intelligence that focuses on creating new content, such as text, images, or music. One popular type of GenAI component is the Large Language Model (LLM), which can generate human-like text based on a prompt. Retrieval-Augmented Generation (RAG) is a technique that enhances the accuracy and reliability of generative AI models by grounding them in external knowledge sources.
 
-Most of the content and applications in GenAI are written in Python and its ecosystem, but what if you want to write a GenAI application in Java? In this blog post, we'll look at how to write GenAI applications with Java using the Spring AI framework. It provides similar functionality to Python's LangChain framework, which is used to write generative AI applications that interact with LLMs. There are also other options for GenAI in Java, such as Langchain4j, but we'll focus on Spring AI for this post.
+Most of the GenAI applications and related content are centered around Python and its ecosystem, but what if you want to write a GenAI application in Java? In this blog post, we'll look at how to write GenAI applications with Java using the Spring AI framework. It provides similar functionality to Python's LangChain framework, which is used to write generative AI applications that interact with LLMs. There are also other options for GenAI in Java, such as Langchain4j, but we'll focus on Spring AI for this post.
 
 == What is Spring AI?
 
@@ -33,7 +33,7 @@ If you're adding these dependencies manually to an existing project, you can see
 
 The Spring Web dependency allows us to create a REST API for our GenAI application. We need the OpenAI dependency to access the OpenAI model, which is a popular LLM. The Neo4j Vector Database dependency allows us to store and query vectors, which are used for similarity searches. Finally, adding the Spring Data Neo4j dependency provides support for working with Neo4j databases in Spring applications, allowing us to run Cypher queries in Neo4j and map entities to Java objects.
 
-Go ahead and generate the project, and then open it in your favorite IDE. I usually open the `pom.xml` file, just to make sure dependencies are correctly added. Looking at that file, you should also see that the milestone repository is included. Since Spring AI is not a general-availability release yet, we need to include the milestone repository to get the pre-release version of the dependencies.
+Go ahead and generate the project, and then open it in your favorite IDE. Looking at the `pom.xml` file, you should see that the milestone repository is included. Since Spring AI is not a general-availability release yet, we need to include the milestone repository to get the pre-release version of the dependencies.
 
 == A bit of boilerplate
 
@@ -56,15 +56,15 @@ Note: It's a good idea to keep sensitive information like API keys and passwords
 
 We can set up https://www.baeldung.com/spring-bean[Spring Beans^] for the Neo4j driver, OpenAI client, and the Neo4j vector store that will allow us to access necessary components wherever we need them in our application.
 
-We can put these in our `SpringAiApplication` class, which is the entry point of our application, by adding the following code to the class:
+We can put these in our `SpringAiApplication` class by adding the following code to the class:
 
 [source,java]
 ----
 @Bean
 public Driver driver() {
 	return GraphDatabase.driver(System.getenv("SPRING_NEO4J_URI"),
-			AuthTokens.basic(System.getenv("SPRING_NEO4J_AUTHENTICATION_USERNAME"),
-					System.getenv("SPRING_NEO4J_AUTHENTICATION_PASSWORD")));
+		AuthTokens.basic(System.getenv("SPRING_NEO4J_AUTHENTICATION_USERNAME"),
+			System.getenv("SPRING_NEO4J_AUTHENTICATION_PASSWORD")));
 }
 
 @Bean
@@ -75,19 +75,37 @@ public EmbeddingClient embeddingClient() {
 @Bean
 public Neo4jVectorStore vectorStore(Driver driver, EmbeddingClient embeddingClient) {
 	return new Neo4jVectorStore(driver, embeddingClient,
-			Neo4jVectorStore.Neo4jVectorStoreConfig.builder().withLabel("Review").build());
+		Neo4jVectorStore.Neo4jVectorStoreConfig.builder()
+			.withLabel("Review")
+			.withIndexName("review-embedding-index")
+			.build());
 }
 ----
 
-The `Driver` bean creates a connection to the Neo4j database by passing in the credentials for our instance (in this case, from environment variables). The `EmbeddingClient` bean creates a client for the OpenAI API and passes in our API key environment variable. Lastly, the `Neo4jVectorStore` bean configures Neo4j as the store for embeddings (vectors). We customize the configuration by specifying the label for the nodes that will store the embeddings, as Spring's default looks for `Document` entities.
+The `Driver` bean creates a connection to the Neo4j database by passing in the credentials for our instance (in this case, from environment variables). The `EmbeddingClient` bean creates a client for the OpenAI API and passes in our API key environment variable. Lastly, the `Neo4jVectorStore` bean configures Neo4j as the store for embeddings (vectors). We spring-ai-document-index[customize the configuration^] by specifying the label for the nodes that will store the embeddings, as Spring's default looks for `Document` entities. We also specify our index name for the embeddings (default is `spring-ai-document-index`).
 
 == Data set
 
-For this example, we'll use a dataset of books and reviews from Goodreads. You can pull a curated version of the dataset from https://github.com/JMHReif/graph-demo-datasets/blob/main/goodreadsUCSD/README.adoc#2-ai-embeddings-folder[here^]. The dataset contains information about books, as well as related reviews.
+For this example, we'll use a dataset of books and reviews from Goodreads. You can pull a curated version of the dataset from https://github.com/JMHReif/graph-demo-datasets/blob/main/goodreadsUCSD/ai-embeddings/ai-load-data.cypher[here^]. The dataset contains information about books, as well as related reviews.
 
-//TODO: Export embeddings and add file to S3 so that people don't have to generate embeddings from scratch!
+I have already generated embeddings using OpenAI's API, so if you want to generate your own, you will need to comment out the https://github.com/JMHReif/graph-demo-datasets/blob/main/goodreadsUCSD/ai-embeddings/ai-load-data.cypher#L92[final Cypher statement in the script^] and instead run the `generate-embeddings.py` script (or your custom version) to generate and load the review embeddings to Neo4j.
 
-== Domain model
+== Application model
 
-Next, we need to create a domain model for our application. In this example, we'll create a `Book` entity that represents a book in a library. We'll also create a `Review` entity that represents a review of a book. The `Review` entity will have an embedding (vector) associated with it, which we'll use for similarity searches.
+Next, we need to create a domain model in our application to map to our database model. In this example, we'll create a `Book` entity that represents a book node. We'll also create a `Review` entity that represents a review of a book. The `Review` entity will have an embedding (vector) associated with it, which we'll use for similarity searches.
+
+These entities are standard Spring Data Neo4j code, so I won't show the code here. However, full code for each class is available in the Github repository - https://github.com/JMHReif/springai-goodreads/blob/main/src/main/java/com/jmhreif/springaigoodreads/Book.java[Book class^], https://github.com/JMHReif/springai-goodreads/blob/main/src/main/java/com/jmhreif/springaigoodreads/Review.java[Review class^].
+
+We also need a repository interface defined so that we can interact with the database. While we will need to define a custom query, we'll come back and add that in a bit later.
+
+[source,java]
+----
+public interface BookRepository extends Neo4jRepository<Book, String> {
+}
+----
+
+Next, the core of this application where all the magic happens is the controller class. This class will contain the logic for taking a search phrase provided by the user and calling the `Neo4jVectorStore` to calculate and return the most similar ones. We can then pass those similar reviews into a Neo4j query to retrieve connected entities, providing additional context in the prompt for the LLM. It will use all the information provided to respond with some similar book recommendations for the original searched phrase.
+
+== Controller
+
 //LEFT OFF HERE!
