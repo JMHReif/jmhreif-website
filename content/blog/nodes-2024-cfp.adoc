@@ -1,0 +1,99 @@
+---
+date: 2024-05-09T09:00:00-06:00
+featured_image: "/img/unsplash-tell-stories.jpg"
+image_credit: https://unsplash.com/photos/a-brown-leather-couch-sitting-in-front-of-a-white-wall-6nsGg3Iw37c?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["nodes2024","developer","conference","virtual","tech"]
+title: "NODES 2024 CfP - How to Submit a Technical Presentation"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+There is no shortage of technical events such as conferences, meetups, trainings, hackathons, and so on. These events are a great way to learn new things, connect with people, and share knowledge with others. One of the most valuable and exciting ways to share knowledge is by giving a technical presentation.
+
+Today, we will look at how to submit a technical presentation for an event. Though we will specifically gear the information for the NODES 2024 call for proposals, nearly everything covered can be applied to other technical events and speaking engagements. We will dig into doing our research, deciding on a topic, writing a session abstract, and preparing for your presentation.
+
+Let's get started!
+
+== Event Research
+
+No matter what event you are interested in, do your research! Find out about the event, their goals, the audience, and the types of presentations they are looking for. This information will help you decide if the event is a good fit for you and your presentation, as well as helping you tailor your submission to the attendees.
+
+For NODES 2024, the event is devoted to technical presentations related to graph data and technologies to interact with graphs, with special focus on community stories and perspectives. The audience will be looking for content to inspire ideas, learn how to do/build something, gather tips and tricks, and add tools/knowledge to their toolbelt for business or personal projects. Developers, data scientists, and other technical professionals are the core audience.
+
+Now that we have a better understanding of the event, let's move on to deciding whether to speak.
+
+== Speakers Wanted!
+
+Deciding to submit a presentation to an event can be a big decision. It can be intimidating to put yourself out there and share your knowledge with others. But it can also be a rewarding and invigorating experience. I always love to remind myself that my experience and learning is unique and can hopefully inspire or help someone else. Everyone can contribute value to a conversation!
+
+As a speaker, you will have the opportunity to share your expertise, connect with others, and learn from the community. Yes, you can learn from others as a speaker. Perhaps someone asks a question and surfaces a perspective you hadn't thought of or someone asks advice on how to apply your information to their project. Understanding what problems others are solving or where gaps are in knowledge can help you build better content and improve your approach. :)
+
+NODES 2024 will be virtual, so no travel or logistics are required. This means that you can submit a presentation from anywhere in the world. The event will be held over 24 hours, and sessions will be recorded and available for attendees to watch on-demand after the event. So you will have the opportunity to reach a global audience and promote or provide evidence for your content!
+
+So, if you are thinking about submitting a presentation to an event, go for it! You have nothing to lose and everything to gain. If you have decided to submit, congratulate yourself for being courageous and taking the first step! If you're still on the fence, take some time to think about it and reach out to the event organizers or other speakers for advice. And I'm always happy to chat about speaking and help others get started.
+
+== Deciding on a Topic
+
+Choosing a topic for your presentation can be challenging. You want to pick something that you are passionate about, that you have experience with (or want to learn about), and that will be valuable to the audience.
+
+What projects or technologies are you currently working on? What problems have you solved or are trying to solve? What tools or techniques have you found helpful? What do you wish you knew when you started working with a technology? What mistakes do you want to help others avoid or learn from your experience?
+
+For NODES 2024, the event is focused on graph data and technologies to interact with graphs. Here are some topic ideas to get you started:
+
+- How graphs solve a specific problem (could be very broad or lower level)
+- How to build applications that interact with a graph
+- How to navigate and query graph data
+- Tips and tricks for working with tools faster or more efficiently (hidden features, shortcuts, etc.)
+- Mistakes or pitfalls to avoid with graph databases, tools, use cases, and more
+- How to get data into or out of a graph database
+- Improving operations (performance, scalability, debugging, logs, etc.) of graph databases or applications
+- Working with graphs in a larger system or architecture
+
+This list could continue on, but hopefully these give some good starting points. Once you have a topic in mind, it's time to write a session abstract and submit it!
+
+== Session Abstract and Submission
+
+The session abstract is a short description of your presentation that will be used to promote your session to attendees. It should be clear, concise, and compelling. It should give attendees an idea of what to expect from your presentation and why they should attend.
+
+There are a few things I always look for when I'm on a program committee choosing sessions for an event.
+
+- **Title**: Aim for a descriptive phrase. It should give attendees an idea of what your presentation is about. If you have a clever or catchy title, that's always a plus (but not required), and make sure it states your topic.
+- **Abstract**: This is the core of your submission. Take note of any character/word limits. It should clearly describe what you will cover in your presentation. Details such as the problem you are solving, what aspects of a technology are involved, what tools could be used, and what attendees will learn.
+- **Notes for committee**: If you have any additional information for the committee, include it here. This could be anything from special requirements for your presentation to why you/your content is a good fit for the event. I like to include why I felt my topic is important and/or my unique experience that I want to share. Keep this part brief, but it can be a differentiator when there are multiple sessions with similar abstracts.
+- **Bio**: A bio about yourself. Keep this short, but be sure to outline your experience and specialties. If you have a blog, podcast, or other content, highlight 1-2 accounts so that attendees or program committee members can learn a bit about you.
+
+These are the main parts of a submission, but there are a few other things to keep in mind when writing your abstract.
+
+- **Audience**: Who is your presentation for? What level of experience should they have? What will they gain from attending your session?
+- **Format/Length**: Will your presentation be a talk, a demo, a workshop, a panel, or something else? Are you giving a demo of the technology/tool/solution? Sometimes you select a format on the submission form, but you can also include it in your abstract with terms like live demo, hands-on, interactive discussion, etc.
+- **Prerequisites**: What should attendees know or have experience with before attending your session?
+
+I also recommend writing your abstract in a text editor or word processor first. This way, you can easily check for spelling/grammar errors, and you can save your work to reuse or reference later. Editors also typically include work/character counting tools to help alter length. Once you have your abstract written, you can copy and paste it into the submission form.
+
+=== Tips and Tricks
+
+There are a few things that can help make your abstract stand out and increase your chances of being selected. On the flip side, there are a few things to avoid that can hurt your chances.
+
+- **Be clear and concise**: Provide enough details so the program committee and attendees get a clear picture of what you will present. If you use jargon or acronyms, be sure to explain them. Even if attendees to your session are familiar with them, the program committee may not be, and that can make them feel less confident accepting a session.
+- **Be compelling**: You don't need fancy or perfect language, but a genuine passion or interest in your topic can go a long way. If you are excited about your topic, it will show in your abstract and presentation.
+- **Be honest**: Developers (especially) don't like to be misled. Avoid hiding negative aspects and selling/marketing tactics. Honesty and authenticity build respect.
+
+I also have a couple of personal pet peeves when it comes to abstract submissions.
+
+1. Minimal effort - People can tell when you don't care. One-line abstracts and bare minimum details can tell readers that you don't care about the topic or helping others learn. It's okay to be brief, but make sure you provide enough information to be helpful.
+2. Provide value - attendees are giving up their time and focus to attend your session, event organizers are pouring in money and time to produce an event, and companies are spending money to sponsor or send employees. They deserve valuable content in return. This isn't about the speaker, it's about the attendee. If an attendee can't learn something, then they'll spend their time elsewhere. Speakers are only valuable if they have an audience.
+
+For NODES 2024, all of these things apply, but there are a couple of additional things to keep in mind. The event is focused on graph data and technologies to interact with graphs. Be sure to mention how graphs are involved in your topic (I've seen some that don't mention graphs at all!). Also, NODES is meant to showcase community stories and real-world uses, so be sure to include your unique experience or perspective in your abstract. Sessions are geared for technical audiences, so try to include aspects such as architecture, demos, code, tools, solutions, and so on. Even if you don't write live code, you can still show code snippets or technologies/tools to help illustrate your points.
+
+== Preparation
+
+//LEFT OFF HERE!
+//talk data set here
+
+== Eagerly/Anxiously Awaiting Decision
+
+== Wrapping Up!
+
+== Resources
