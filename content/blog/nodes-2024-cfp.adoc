@@ -47,6 +47,7 @@ For NODES 2024, the event is focused on graph data and technologies to interact 
 - How graphs solve a specific problem (broad or narrow)
 - How to build applications that interact with a graph
 - How to navigate and query graph data
+- How graphs integrate with AI/GenAI
 - Tips and tricks for working with tools faster or more efficiently (hidden features, shortcuts, etc.)
 - Mistakes or pitfalls to avoid with graph databases, tools, use cases, and more
 - How to get data into or out of a graph database
