@@ -1,28 +1,26 @@
 ---
-date: 2024-05-01T09:00:00-06:00
-featured_image: "/img/unsplash-ai-chip.jpg"
-image_credit: https://unsplash.com/photos/a-computer-chip-with-the-letter-a-on-top-of-it-eGGFZ5X2LnA?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+date: 2024-05-23T09:00:00-06:00
+featured_image: "/img/unsplash-ai-brain.jpg"
+image_credit: https://unsplash.com/photos/an-abstract-image-of-a-sphere-with-dots-and-lines-nGoCBxiaRO0?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
 tags: ["genai","rag","spring-ai","neo4j","vector"]
-title: "Spring AI: How to Write GenAI Applications with Java"
-draft: false
+title: "GenAI Starter Kit: Everything You Need to Build an Application with Spring AI in Java"
+draft: true
 omit_header_text: true
 ---
 
 {{< image-credit >}}
 
-Generative AI (GenAI) is currently a hot topic in the tech world. It's a subset of artificial intelligence that focuses on creating new content, such as text, images, or music. One popular type of GenAI component is the Large Language Model (LLM), which can generate human-like text based on a prompt. Retrieval-Augmented Generation (RAG) is a technique that enhances the accuracy and reliability of generative AI models by grounding them in external knowledge sources. While most GenAI applications and related content are centered around Python and its ecosystem, what if you want to write a GenAI application in Java? 
-
-In this blog post, we'll look at how to write GenAI applications with Java using the Spring AI framework and utilize RAG for improving answers.
+//Some intro stuff here
 
 == What is Spring AI?
 
 Spring AI is a framework for building generative AI applications in Java. It provides a set of tools and utilities for working with generative AI models and architectures, such as large language models (LLMs) and retrieval augmented generation (RAG). Spring AI is built on top of the Spring Framework, which is a popular Java framework for building enterprise applications, allowing those already familiar with or involved in the Spring ecosystem the ability to incorporate GenAI strategies to their already existing applications and workflow.
 
-There are also other options for GenAI in Java, such as Langchain4j, but we'll focus on Spring AI for this post.
+There are also other options for GenAI in Java, but Spring AI is the initial integration for this community. Others will hopefully follow!
 
-== Creating a project
+== Repository
 
-To get started with Spring AI, you'll need to either create a new project or add the appropriate dependencies to an existing project. You can create a new project using the Spring Initializr at https://start.spring.io/, which is a web-based tool for generating Spring Boot projects.
+//Some background on repo and code and data
 
 When creating a new project, you'll need to add the following dependencies:
 
@@ -77,7 +75,7 @@ public Neo4jVectorStore vectorStore(Driver driver, EmbeddingClient embeddingClie
 }
 ----
 
-The `EmbeddingClient` bean creates a client for the OpenAI API and passes in our API key environment variable. Lastly, the `Neo4jVectorStore` bean configures Neo4j as the store for embeddings (vectors). We customize the configuration by specifying the label for the nodes that will store the embeddings, as Spring's default looks for `Document` entities. We also specify our index name for the embeddings (default is `spring-ai-document-index`).
+The `Driver` bean creates a connection to the Neo4j database by passing in the credentials for our instance (in this case, from environment variables). The `EmbeddingClient` bean creates a client for the OpenAI API and passes in our API key environment variable. Lastly, the `Neo4jVectorStore` bean configures Neo4j as the store for embeddings (vectors). We customize the configuration by specifying the label for the nodes that will store the embeddings, as Spring's default looks for `Document` entities. We also specify our index name for the embeddings (default is `spring-ai-document-index`).
 
 == Data set
 
