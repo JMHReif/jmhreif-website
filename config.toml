@@ -19,6 +19,10 @@ featured_image = "/img/neo4j-london-2018.jpg"
 show_reading_time = true
 custom_css = ["custom.css"]
 
+[[params.ananke_socials]]
+name = "podcast"
+url = "https://jmhreif.podbean.com/"
+
 [menu]
   [[menu.main]]
   name = "Home"
