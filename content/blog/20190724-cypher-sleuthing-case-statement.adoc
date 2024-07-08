@@ -1,0 +1,191 @@
+---
+date: 2019-07-24T12:00:00-06:00
+featured_image: "/img/sleuthing_digital_holmes.jpg"
+tags: ["cypher","query language","case statement","problem solving","coding","programming languages"]
+title: "Cypher Sleuthing: the CASE statement"
+draft: false
+omit_header_text: true
+---
+
+I was recently working on one of our developer guides (the https://neo4j.com/developer/guide-import-csv/[CSV import guide^]) and came across some https://neo4j.com/developer/cypher-query-language/[Cypher^] I needed to fine-tune in the `CASE` statement on that page. I had some trouble finding the correct syntax, so I reached out to some Cypher experts to get some help.
+
+As it turns out, I was looking at the Cypher `CASE` statement the wrong way and misunderstood its structure and design. I want to share what I learned and pass the how and why on to others to hopefully prevent others from running into the same problem. First, we will explain how Cypher `CASE` actually works, and then give some background on the data we are going to evaluate before we launch into syntaxes and options.
+
+== How CASE works
+
+The Cypher `CASE` statement is perfect for many evaluation scenarios, but it is not meant to handle complex conditionals and variable-setting. It can work 2 ways (as stated in the Cypher manual) 1. allowing an expression to be compared against multiple values or 2. allowing multiple conditional statements to be expressed. Let us look at an example of each variant.
+
+[source,cypher]
+```
+//Option 1
+MATCH (p:Person)-[r:IS_MANAGED_BY]->(m:Manager)-[r2:OVERSEES]->(d:Department)
+RETURN p.name, 
+ CASE p.role
+   WHEN 'management' THEN d.departmentPhone
+   WHEN 'business' THEN p.businessPhone
+   WHEN 'technical' THEN p.emailAddress
+   ELSE d.departmentEmail END as personContact;
+```
+
+In this option, we are looking at an organization hierarchy to determine how to contact someone for help or comments. We first look for people in our graph and retrieve their managers and departments. Then, we evaluate the person’s role. When it’s a `management` role, we can use the department phone number to reach them. When the individual has a `business` role, we can call the person’s business phone. If they’re a `technical` person, email is the best way to reach them. If the person does not fall into any of these categories, then we simply return the department email address as the best resource.
+
+[source,cypher]
+```
+//Option 2
+MATCH (p:Person)
+RETURN p.name,
+ CASE
+   WHEN dateHired is null THEN 'candidate'
+   WHEN dateHired > date('2018–07–24') THEN 'newHire'
+   ELSE 'employee' END as personStatus,
+ CASE
+   WHEN dateFired is null THEN dateHired
+   WHEN dateHired is null THEN entryDate
+   ELSE 'n/a' END as leadDate;
+```
+
+For this second option, we are evaluating a person’s status and when they entered our system. The two `CASE` statements check different expressions to determine what values to show. The beginning of the Cypher finds `Person` nodes in our data, then will return their name, as well as a personStatus (1st `CASE`) and a leadDate (2nd `CASE`).
+
+The first `CASE` checks the hire date. If there isn’t a hire date, then they’re not an employee, so we can assign them as a `candidate`. If their hire date is recent (in the last year), we assign a `newHire` status. Otherwise, they are a longer-term `employee`. We can use this to see how many new hires or long-term employees we have or how much training to offer for various segments.
+
+The second `CASE` wants to know when we got their information (how long they’ve been in our system). We first check if the `dateFired` has a value and show their `hireDate` if it doesn’t. If they don’t have a `hireDate`, they’re probably still a candidate, so we can show the date their information entered our system. If the person does not fall into these categories (for instance, if they were fired), then we set the value to `'n/a'`. Perhaps we want to archive any past employees or send out communications to those who are newest to our systems.
+
+The next section will walk through a use case and the proper syntax for constructing and operating a Cypher `CASE` statement.
+
+=== Use case: Company business type
+
+In our use case, we have a CSV file that has company data. The data looks like this.
+
+[source,text]
+```
+CompanyId,CompanyName,BusinessType
+100,XYZ,P
+101,ABC,G
+102,STR,P
+```
+
+There are 3 fields with a company’s `id`, `name`, and business `type`. Based on that 3rd field of business type, we want to put a more descriptive value in our graph property. This is where the `CASE` statement comes in. We have 3 indicator options in our CSV — `'P'`, `'G'`, or `'R'`. Each one of these defines whether the company is a `public`, `private`, or `government` entity.
+
+We want to have code that evaluates the single-letter indicator and sets the property value to the equivalent descriptive value. First, let’s look at the proper statement from that developer guide here, and then discuss some of my pitfalls when constructing the Cypher `CASE` statement.
+
+[source,cypher]
+```
+LOAD CSV WITH HEADERS FROM 'file:///data.csv' AS row
+WITH row,
+ (CASE row.BusinessType
+   WHEN 'P' THEN 'Public'
+   WHEN 'R' THEN 'Private'
+   WHEN 'G' THEN 'Government'
+   ELSE 'Other' END) AS type
+MERGE (c:Company {companyId: row.CompanyId})
+ SET c.businessType = type
+RETURN *;
+```
+
+The first line in that statement reads each row in the flat file into a variable (`row`), and then passes that to `MERGE`, along with the value that comes out of the `CASE` evaluation. Breaking down the `CASE`, we first want to tell it to evaluate the business type column on our the current row (`row.BusinessType`). The next few lines use the `WHEN` keyword to decide which descriptive value matches the indicator for that row’s business type in the CSV. If the indicator does not match any of the values (`'P'`, `'R'`,`'G'`), then we just set the business type to `'Other'`. This is a safety, so that we have a meaningful value in the `businessType` property no matter what. The chosen value is set to the variable `type`, and then the `MERGE` on the next line creates a `Company` node identified by the company id field in the CSV and sets the business type equal to our `type` variable.
+
+In our example data we showed above, the first row should have a `'Public'` business type, the second row should be `'Government'`, and the third row should be `'Public'` again. Just as a note, we could also remove the parentheses around the `CASE` statement, and it will run fine, but I like the separation implying that the `CASE` is a subquery where type is the outcome and is passed to the next line, along with the row variable in the `WITH` clause.
+
+Now that we understand how it works under correct conditions, let’s take a look at some of the syntaxes I tried and why they didn’t work.
+
+== Bad examples with CASE
+
+It turns out that I was trying to think of the Cypher `CASE` statement like how it works in a regular programming language. I now know that Cypher `CASE` does not work in the same way. Let’s look at my incorrect example and then discuss why it doesn’t work.
+
+[source,cypher]
+```
+//Bad syntax
+LOAD CSV WITH HEADERS FROM 'file:///data.csv' AS row
+MERGE (c:Company {companyId: row.Id})
+WITH row, c,
+ CASE row.type
+  WHEN 'P' THEN row.type = 'Public'
+  WHEN 'R' THEN row.type = 'Private'
+  WHEN 'G' THEN row.type = 'Government'
+  ELSE row.type = 'Other' END
+SET c.businessType = row.type
+RETURN *;
+```
+
+In this statement, I’m trying to set the CSV column equal to a new value (`THEN row.type = 'Public'`), and then transfer that value to the graph property in the `SET`. This is how I would use a `CASE` statement in programming like Java, but it’s not how Cypher `CASE` works. Cypher calculates the expression provided at the beginning of the `CASE`, and then compares that result with each `WHEN` clause. If it finds a match, it will accept the related simple expression from the `THEN` clause. Note that it must be a simple expression, as listed in the https://neo4j.com/docs/cypher-manual/3.5/syntax/expressions/#cypher-expressions-general[manual^]. Even a predicate expression (e.g. `c.type = 'Public'`) will evaluate as a true or false statement and not be able to set a variable.
+
+[source,cypher]
+```
+//Bad syntax 2
+LOAD CSV WITH HEADERS FROM 'file:///data.csv' AS row
+WITH row,
+ CASE row.BusinessType
+  WHEN 'P' THEN type = 'Public'
+  WHEN 'R' THEN type = 'Private'
+  WHEN 'G' THEN type = 'Government'
+  ELSE type = 'Other' END
+RETURN row.CompanyId, row.CompanyName, type;
+```
+
+Just as in our first bad example, this second one also tries to set a value to a variable in the `THEN` clause, which will not work. In fact, it errors out because the `type` variable is not defined anywhere. We will need to do the evaluation either just after the `CASE` keyword or in each `WHEN` clause and then set simple expressions in the `THEN`.
+
+Next, we will look at a couple of alternate ways to write the correct syntax, depending on user preference and scenarios.
+
+== Alternate syntax that also works
+
+There is not one way to write most programming syntax, and the same applies to a Cypher `CASE` statement. Certain syntaxes might be more elegant for some uses, but not for others. In the next few paragraphs, we will cover a couple of different ways to write the initial correct statement. Let’s review that bit of Cypher here again.
+
+[source,cypher]
+```
+//Working statement
+LOAD CSV WITH HEADERS FROM 'file:///data.csv' AS row
+WITH row,
+ (CASE row.BusinessType
+  WHEN 'P' THEN 'Public'
+  WHEN 'R' THEN 'Private'
+  WHEN 'G' THEN 'Government'
+  ELSE 'Other' END) AS type
+MERGE (c:Company {companyId: row.CompanyId})
+ SET c.businessType = type
+RETURN *;
+```
+
+Ok, now that we have that in our minds again, we can determine a couple of different ways to write this. First off, we can see that this statement uses the https://neo4j.com/docs/cypher-manual/3.5/syntax/expressions/#syntax-simple-case[simple case^] syntax that evaluates an expression (`row.BusinessType`) against multiple values (in each `WHEN`) and sets a string for `type` when it finds a match.
+
+Instead, we could use the https://neo4j.com/docs/cypher-manual/3.5/syntax/expressions/#syntax-generic-case[generic case^] syntax that evaluates a predicate expression to either true or false (in each `WHEN`) and sets a string for `type` based on the match. Notice that in both of these syntaxes, we are setting the variable `type` after all of the evaluation is complete. In other words, we get a single value as a result of the `CASE` statement and then assign it to a variable (`<resultValue> AS type`).
+
+[source,cypher]
+```
+//Alternate 1
+LOAD CSV WITH HEADERS FROM 'file:///data.csv' AS row
+WITH row,
+ CASE
+  WHEN row.BusinessType = 'P' THEN 'Public'
+  WHEN row.BusinessType = 'R' THEN 'Private'
+  WHEN row.BusinessType = 'G' THEN 'Government'
+  ELSE 'Other' END AS type
+RETURN row.CompanyId, row.CompanyName, type;
+```
+
+Another option for this kind of statement evaluation is to use a map. This is shown in the example below.
+
+[source,cypher]
+```
+//Alternate with Map
+WITH {P:'Public', R:'Private', G:'Government'} as map
+LOAD CSV WITH HEADERS FROM 'file:///data.csv' AS row
+MERGE (c:Company {companyId: row.Id})
+ SET c.businessType = coalesce(map[row.BusinessType], 'Other');
+```
+
+First, the statement gives a map with a `key:'value'` format and assigns it to the variable `map`. It then uses the `LOAD CSV` and `MERGE` commands, just as we have used before. The final line is where it sets the `businessType` property on the node equal to the determined value.
+
+It determines the value by checking `row.Type` against the known map — `map[row.BusinessType]`. If the `row.BusinessType` equals one of the map keys (`P`, `R`, `G`), then it becomes the value for that key (`Public`, `Private`, or `Government`). The https://neo4j.com/docs/cypher-manual/3.5/functions/scalar/#functions-coalesce[`coalesce()` function^] evaluates null and non-null values. If the value in the first argument of coalesce returns `null`, then it uses the second argument. Therefore, when the CSV column is `P`, `R`, or `G`, the first `coalesce()` argument of `map[row.businessType]` return non-null as one of the descriptive strings. When the CSV column value is not `P`, `R`, or `G`, the first argument returns `null` because it doesn’t exist in the map, and therefore, the `coalesce()` function uses the second argument, which returns `'Other'` as the descriptive string.
+
+When I first looked at this syntax, it seemed complex and magical. However, having this explained in pieces, and then layering those pieces showed me how logical and functional these statements really are.
+
+If you are struggling to understand how syntax works, I highly recommend testing it out a few different ways and reaching out to experts so that you understand why something works the way it does. When you understand why something works, you can manipulate it and use it to create beautiful code solutions.
+
+Happy learning and coding!
+
+== Resources
+
+* https://markhneedham.com/blog/2013/06/09/neo4jcypher-2-0-the-case-statement/[Blog post^] by Mark Needham on CASE
+* https://neo4j.com/docs/cypher-manual/current/[Cypher manual^] reference docs
+* https://neo4j.com/developer/cypher-query-language/[Developer guides^] on common Cypher syntax
+* https://community.neo4j.com/[Community Site^] to ask and search questions!

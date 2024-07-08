@@ -1,7 +1,7 @@
 baseURL = "https://jmhreif.com/"
 languageCode = "en-us"
 title = "Jennifer Reif"
-theme = ["github.com/theNewDynamic/gohugo-theme-ananke"]
+theme = ["ananke"]
 
 Paginate = 9
 

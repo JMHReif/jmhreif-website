@@ -1,0 +1,87 @@
+---
+date: 2021-08-02T12:00:00-06:00
+featured_image: "/img/refresh-athlete.jpeg"
+image_credit: https://unsplash.com/photos/mo4UZiHy_KU?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+tags: ["spring","neo4j","applications","development","programming"]
+title: "Create a Data Marvel with Spring Data Neo4j"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+I have had a couple of Github projects demonstrating bits of functionality for Spring Data Neo4j, but they had last been updated in 2020 when the new https://github.com/spring-projects/spring-data-neo4j[Spring Data Neo4j 6^] was still a beta version known as https://neo4j.com/blog/spring-data-neo4j-rx-1-0-now-available/[SDN/RX^]. Since there have been several changes since then, I thought I would give the projects a refresh and make them current.
+
+Project code:
+
+* https://github.com/JMHReif/sdn-marvel-basic[SDN Marvel (imperative)^]
+
+* https://github.com/JMHReif/sdnrx-marvel-basic[SDN(rx) Marvel (reactive)^]
+
+These projects are both able to be recreated with a couple of steps. We will walk through those before jumping into the project code itself!
+
+== Data set
+
+First, let's talk about the data. We are using the https://developer.marvel.com/[Marvel comics data set^] that includes comic books, characters, and more. However, for demo and speed purposes, the data amount has been scoped to characters and comics only. The full data set is available with a few additional steps in a https://github.com/JMHReif/graph-demo-datasets/tree/main/marvel-comics[separate Github repository^].
+
+To get a copy of the data, there are two files and a load script that we can use to import the data into an instance of Neo4j. How should you get an instance of Neo4j? There are a couple of different options outlined below.
+
+1. https://dev.neo4j.com/sandbox[Neo4j Sandbox^] - free, temporary instance (3-10 days), no download or maintenance
+2. https://dev.neo4j.com/aura[Aura free tier^] - forever instance (free), Neo4j-managed cloud service
+3. Local instance - either https://dev.neo4j.com/desktop[download Neo4j Desktop^] or use the https://hub.docker.com/_/neo4j[Neo4j Docker container^]
+
+_Note: Depending on the instance you choose, some of the application properties in the project code might need adjusting. We will point those out when we come to them._
+
+Once you have an instance of Neo4j running, the data can be loaded using the statements from the https://github.com/JMHReif/sdn-marvel-basic/blob/master/src/main/resources/marvel-load-data.cypher[Cypher statements^] in the Github project. You will need to choose _either_ the CSV or JSON file to load, so pick whichever is most comfortable and only run the statements associated with that file. The results are the same, so if you don't have a preference, just run the 2 statements for option 1 with the CSV file.
+
+There are comments after the load statements in the script showing how many nodes and relationships should exist in the database. You can check the results of your queries against those to verify they match.
+
+== Spring Data Neo4j
+
+There are many reasons to use Spring and Spring Data Neo4j, but to ensure I stay on topic, I will briefly list a couple of things I find the most beneficial to me.
+
+1. Spring ecosystem is widely-used and supported. Many developers use it for both business and personal use cases.
+2. Spring Boot reduces boilerplate, making writing application code less wordy and time-consuming.
+3. Spring Data makes interacting with different types of data stores/tools consistent and plug-and-play.
+
+Now on to the project code!
+
+== Github projects
+
+The https://start.spring.io/[Spring Initializr^] was the tool used to generate the scaffolding for both projects. Dependencies chosen were the `Spring Data Neo4j` project and some sort of web support for the REST API (`Spring Web` for the sdn-marvel-basic, `Spring Reactive Web` for the sdnrx-marvel-basic).
+
+This assembles our `pom.xml` file, as well as the `main()` application method. Connecting to our existing Neo4j instance requires opening the `application.properties` file (in src -> main -> resources) and adding your instance's URI, username, password, and database values.
+
+_Note: If using a local instance (like local Docker or Neo4j Desktop) with no customized configuration, the password should be the only one that needs to be modified. If using a remote instance (Sandbox, Aura, or remote Docker), then the URI should be different, as well.
+Database value is only different if you have specifically used Neo4j's multi-database feature to create a separate database._
+
+From there, I created the domain classes (`Character` and `ComicIssue`) and the repository and controller classes for each. This gives us two endpoints to call for each domain object.
+
+== Differences between imperative and reactive
+
+At a high level, imperative code calls an object and the request stays open until all of the results are gathered, returning the entire result set. The connection stays open and is closed when results are sent back to the client. As you might imagine, for large requests, this might take some time and has the possibility to either overload the client or server resources.
+
+Reactive code, on the other hand, allows for incremental results returned, as they become available or as the resource can handle. This means that large result sets can be returned in smaller pieces and/or over a period of time. It grants the opportunity for systems to specify how much they can handle to avoid overload.
+
+For our demo purposes, imperative or reactive does not make a difference in efficiency or performance, but depending on the architecture of a production system or the stability of certain components, the choice between reactive or imperative can make a big difference between a smoothly-running system and IT's version of fire-fighting.
+
+Within the projects, differences between the sdn-marvel-basic and sdnrx-marvel-basic code boil down to the following changes for the reactive version:
+
+1. Repository interfaces - return types for methods are either `Mono<>` or `Flux<>`.
+2. Controller classes - return types for methods are either `Mono<>` or `Flux<>`, media type for `/characters` endpoint results in `TEXT_EVENT_STREAM_VALUE` and a delay of 1 second between returned elements is added.
+3. Application class (SdnrxMarvelBasicApplication) - an additional bean with the `ReactiveNeo4jTransactionManager`.
+
+Outside of those, the code between the two versions operates the same. Nothing changes in the domain classes. Only the way results are gathered and returned between the database and application is adjusted.
+
+== More complex functionality available?
+
+You might ask whether Spring Data Neo4j provides other capabilities outside of basic REST API needs, and the answer is "yes"! Both single and multi-level https://docs.spring.io/spring-data/neo4j/docs/6.1.3/reference/html/#projections[projections^] provide the ability to slice objects and graph patterns into more consumable parts. There are also some customizable mapping situations, including https://docs.spring.io/spring-data/neo4j/docs/6.1.3/reference/html/#mapping.annotations.node[hierarchies^], that can add layers of complexity in the data model and application objects. Sections on https://docs.spring.io/spring-data/neo4j/docs/6.1.3/reference/html/#sdn.testing[testing^] and https://docs.spring.io/spring-data/neo4j/docs/6.1.3/reference/html/#auditing[auditing^] fill you in on some more vital features for production environments.
+
+Don't want to utilize Spring Data Neo4j or mix-and-match pieces of the architecture? That's available, too. Using the https://docs.spring.io/spring-data/neo4j/docs/6.1.3/reference/html/#building-blocks[SDN architecture^] diagram as a guide, we can choose the standalone driver, spring boot starter (includes Spring Boot with Java driver for Neo4j), or the full sdn-spring-boot starter to give us spring transactions and the client, template, and repositories.
+
+Feel free to explore and reach out with questions or issues via the https://community.neo4j.com/[Neo4j Community Site^] or https://discord.gg/neo4j[Neo4j's Discord forum^]!
+
+== Resources
+
+* Project code: https://github.com/JMHReif/sdn-marvel-basic[SDN Marvel (imperative)^] and https://github.com/JMHReif/sdnrx-marvel-basic[SDN(rx) Marvel (reactive)^]
+* Documentation: https://docs.spring.io/spring-data/neo4j/docs/6.1.3/reference/html/#reference[Spring Data Neo4j^]

@@ -6,3 +6,7 @@
 
 #IDE files
 .vscode/
+
+#Hugo files
+public/
+resources/
