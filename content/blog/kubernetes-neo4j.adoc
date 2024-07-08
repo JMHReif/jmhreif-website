@@ -4,7 +4,7 @@ featured_image: "/img/k8s-neo4j/unsplash-orchestra.jpg"
 image_credit: https://unsplash.com/photos/music-group-performing-on-stage-with-empty-audience-seats-NsgsQjHA1mM?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
 tags: ["k8s","kubernetes","containers","orchestration","neo4j"]
 title: "How to Run Neo4j on Kubernetes"
-draft: true
+draft: false
 omit_header_text: true
 ---
 
