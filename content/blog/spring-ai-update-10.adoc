@@ -1,0 +1,127 @@
+---
+date: 2024-07-22T09:00:00-06:00
+featured_image: "/img/spring-ai/unsplash-step-progress.jpg"
+image_credit: https://unsplash.com/photos/6Lf1kzL4AfY?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["genai","rag","spring-ai","neo4j","vector"]
+title: "Spring AI Upgrade: Changes for Applications from 0.8 to 1.0"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+Migrating an application always feels a bit daunting, and that was the way I felt when I looked at the Spring AI 1.0 milestone release.
+
+However, the upgrade didn't make as many major shifts as anticipated. This guide will help you upgrade your Spring AI application from version 0.8 to 1.0 and explain why each change is needed. Changes include some naming shifts, configuration options, and more.
+
+Let's get started!
+
+== Dependency Updates
+
+My preferred first step is to upgrade the dependency versions, so that my IDE will highlight many of the changes. It also allows me to start at the bottom of the application (library level) and move up by layer, which is also my go-to development strategy.
+
+Since there is also a newer Spring Boot version, I upgraded that to the current `3.3.1`, then made the focal change to Spring AI's version property from `0.8.1` to `1.0.0-M1` milestone release.
+
+After that, I refreshed the Maven dependencies through my IDE to sync versions. The updated `pom.xml` is available in https://github.com/JMHReif/springai-goodreads/blob/main/pom.xml#L18[today's Github repository^].
+
+Now we can move on to changes in the application code.
+
+== Key Changes
+
+In my opinion, the changes needed to the application code made sense, especially if you are already familiar with the typical Spring approach.
+
+There is also a newer feature called https://docs.spring.io/spring-ai/reference/api/chatclient.html#_advisors[`advisors`^], which looks like a nice addition to the Spring AI library. While we don't have time to cover advisors today, I'll mention my initial thoughts on it.
+
+=== Spring AI Advisors
+
+First, this feature seems most sensible in a chat application, where you may not have a lot of additional logic or calls outside of a question/answer format. Second, it does offer some RAG capabilities, but looks like it only works with a vector search query and not pulling in additional data on top of the similarity search (i.e. related graph data). Third (and finally), advisors feel like a LangChain-esque functionality where a single call can pass on the user question, run a vector search, filter the results, and include those similar results for the LLM to generate its response. 
+
+In LangChain, the individual call steps are combined and somewhat abstracted away. That could be good if you are familiar with LangChain's style, but it could also be a bit confusing because it's not as clear what is happening in the background when the steps are combined into a single command.
+
+Ok, back to the changes needed for our application!
+
+=== Embedding Client -> Model
+
+The first change I had to make was to the `EmbeddingClient` bean in the main application class. There was a direct replacement for the `EmbeddingClient` type, which was refactored to an `EmbeddingModel` type.
+
+Everything else looks the same. I just needed to update the term from model to client (plus update the import), and this piece was complete.
+
+Here is the updated code snippet:
+[source,java]
+----
+@Bean
+public EmbeddingModel embeddingModel() {
+	return new OpenAiEmbeddingModel(
+    new OpenAiApi(
+      System.getenv("SPRING_AI_OPENAI_API_KEY")));
+}
+----
+
+This next one took me a bit longer to figure out, but it was a simple fix once I put a couple of pieces together.
+
+=== VectorStore Config
+
+After updating the `EmbeddingModel` bean, I also had to update the parameter for the `Neo4jVectorStore` bean. When I got that verbiage updated, I got another red squiggly line under the the whole `Neo4jVectorStore` in the return.
+
+The error showed `Expected 4 arguments but found 3`, but what confused me was that it would disappear when I removed the parameter from the `.withIndexName()` method and ended up being entirely unrelated.
+
+My next step was to look at the source code for the `Neo4jVectorStore` class, but it looked the same. After going through the Neo4j doc page with a fine-toothed comb, I found some text hinting `Neo4jVectorStoreConfig` now expects a specified `initializeSchema` parameter (bottom of https://docs.spring.io/spring-ai/reference/api/vectordbs.html#_schema_initialization[this^] section). This parameter is a boolean and can either be specified in a bean or via a property in the `application.properties` file.
+
+Still, I'd never had to specify that property before, and I couldn't find content specifying why this changed (https://spring.io/blog/2024/05/30/spring-ai-1-0-0-m1-released[1.0 release blog^]). The schema initialization stated some vector stores require a schema to be initialized (mentioned https://docs.spring.io/spring-ai/reference/api/vectordbs.html#_schema_initialization[here^] in the documentation), but the Neo4j Vector Databases page in the documentation show a default of false for the `initializeSchema` property and didn't have a dedicated section to call this out.
+
+Even after I found this section, since the property default shows `false` in the docs, it took me awhile to realize that I still needed to specify the parameter whether I used the default or not.
+
+Now, to actually explain this parameter...
+
+If you're familiar with Spring, this parameter will likely make sense. When dealing with Spring Data libraries, you often have the option to have the application use the database schema or push the app's schema to the database. This parameter is the same concept, but for the vector store.
+
+I nearly always default to using whatever the database provides, because I feel that most applications (especially in business environments) set up or have an existing database and don't use an application-first approach. This would mean specifying the `initializeSchema` value to `false`. However, as explained by a colleague, the Neo4j vector store only sets the vector index with this property, so it's not a full schema initialization. Even better, it only sets the index if it doesn't exist and uses whatever custom index name you provided for the vector store config.
+
+You can see the config code for initializing the schema in the https://github.com/spring-projects/spring-ai/blob/17c44237a51f85a30d128c21a335a7aee269f4c2/vector-stores/spring-ai-neo4j-store/src/main/java/org/springframework/ai/vectorstore/Neo4jVectorStore.java#L364-L378[Spring AI Github repository under the Neo4j vector store^].
+
+*Note:* This syntax is also Cypher-injection-safe because index names and labels cannot be parameterized, plus the config uses Cypher-DSL to sanitize all the names properly.
+
+Finally, here is the updated code snippet for our application's `Neo4jVectorStore` bean:
+
+[source,java]
+----
+@Bean
+public Neo4jVectorStore vectorStore(Driver driver, EmbeddingModel embeddingModel) {
+	return new Neo4jVectorStore(driver, embeddingModel,
+			Neo4jVectorStore.Neo4jVectorStoreConfig.builder()
+					.withLabel("Review")
+					.withIndexName("review-embedding-index")
+					.build(), true);
+}
+----
+
+Let's charge ahead to the controller class.
+
+=== Generic chat client over chat model
+
+The biggest change (breaking) was the `ChatClient` to `ChatModel`. It is clearly stated with some details in https://docs.spring.io/spring-ai/reference/upgrade-notes.html#_chatclient_changes[the upgrade notes^], but I felt this a sensible shift into more Spring-like behavior. It especially makes sense if you are familiar with Spring Data libraries.
+
+For those less familiar, let me give a brief summary. Spring tends to deal in layers, where you have lower layer(s) that allow increasing customization of nuts and bolts as you move down, and higher layer(s) that abstract levels of complexity as you move up.
+
+I liken this to the https://docs.spring.io/spring-data/neo4j/reference/introduction-and-preface/building-blocks.html[building blocks for Spring Data Neo4j^] shown below. You have the driver, then client which adds Spring transactions, then template which adds a Spring Boot starter, then repository which adds extra Neo4j-specific features.
+
+image::/img/spring-ai/sdn-building-blocks.png[Spring Data Neo4j Building Blocks]
+
+In the same way, Spring AI moved the functionality (originally defined in ChatClient) down to the lower-level model layer and abstracted the higher-level client layer. You can use the model instead, if you would prefer, but you can also choose the more abstracted client. The terminology better aligns, and so does the functionality.
+
+For our application, this meant tweaking some syntax and altering imports.
+
+The other shift I made simultaneously was to use the general `ChatClient` implementation, rather than a specific `OpenAiChatClient` (or other model) implementation. This change could allow us to switch to a different LLM in the future without needing to change the controller class.
+
+== Wrapping Up!
+
+After making these changes, I ran the application and it worked as expected. The changes were not as daunting as I initially thought, and I was able to complete the upgrade pretty painlessly.
+
+I hope this guide helps you upgrade your Spring AI application from version 0.8 to 1.0, and I hope your experience upgrading is as simple as this. Happy coding!
+
+== Resources
+
+* Code (Github repository): https://github.com/JMHReif/springai-goodreads[Spring AI Goodreads^]
+* Upgrade Notes: https://docs.spring.io/spring-ai/reference/upgrade-notes.html[Spring AI^]
+* Documentation: https://docs.spring.io/spring-ai/reference/api/vectordbs.html#_schema_initialization[Spring AI - Intialize Schema^]
+* Documentation: https://docs.spring.io/spring-ai/reference/api/vectordbs/neo4j.html#_dependencies[Spring AI - Neo4jVectorStore^]

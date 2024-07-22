@@ -9,11 +9,11 @@ omit_header_text: true
 
 Why is it that some query syntax seems to run faster than another when there is very little difference between the statements? Sometimes, queries will invoke what is called the `eager operator` in order to maintain consistent operations and avoid conflicting data changes.
 
-It still leaves the question, though, of what does this eager operation do differently and why would it be important enough to specifically avoid in certain situations? What are those situations where we would want to choose non-eager and avoid the automatic eager invocation? Let’s take a look!
+It still leaves the question, though, of what does this eager operation do differently and why would it be important enough to specifically avoid in certain situations? What are those situations where we would want to choose non-eager and avoid the automatic eager invocation? Let's take a look!
 
 == Cypher Eager
 
-The Cypher documentation actually explains the concept of the https://neo4j.com/docs/cypher-manual/current/execution-plans/operators/#query-plan-eager[eager operator^] quite well, but I had yet to come across this section until I was doing some research to better understand a user’s question on the topic. Another excellent resource that includes examples is my colleague’s https://markhneedham.com/blog/2014/10/23/neo4j-cypher-avoiding-the-eager/[blog post^] showing how to avoid it in import statements. Using these 2 resources, I constructed some examples to fully understand how this works. We will walk through my test examples in this post to demonstrate.
+The Cypher documentation actually explains the concept of the https://neo4j.com/docs/cypher-manual/current/execution-plans/operators/#query-plan-eager[eager operator^] quite well, but I had yet to come across this section until I was doing some research to better understand a user's question on the topic. Another excellent resource that includes examples is my colleague's https://markhneedham.com/blog/2014/10/23/neo4j-cypher-avoiding-the-eager/[blog post^] showing how to avoid it in import statements. Using these 2 resources, I constructed some examples to fully understand how this works. We will walk through my test examples in this post to demonstrate.
 
 In short, the eager operator ensures that each operation in a query does not conflict with other operations in the same query. It prevents subsequent operations from altering data from previous operations, maintaining data integrity and intended order of operations. Queries with multiple operations chained together have the potential to write some data in one piece and then read data in the next piece that is out of sync. Eager would ensure that each operation is applied to all rows before moving on to the next query piece to avoid read/write conflicts.
 
@@ -21,7 +21,7 @@ In short, the eager operator ensures that each operation in a query does not con
 
 Why does it matter whether Cypher invokes eager or not?
 
-In queries that don’t invoke eager, the executor runs each row to completion before taking in the next row and executing it. It processes the entire query for each row, adds the result to the final output, then takes the next row and executes the entire query on it, adds the result to the final output, and so on. This process is more like a stream and is usually kinder to the heap.
+In queries that don't invoke eager, the executor runs each row to completion before taking in the next row and executing it. It processes the entire query for each row, adds the result to the final output, then takes the next row and executes the entire query on it, adds the result to the final output, and so on. This process is more like a stream and is usually kinder to the heap.
 
 Here it is in logical and visual representations:
 
@@ -42,11 +42,11 @@ image::/img/eager/eager-operations.png[]
 
 As seen above, when eager is invoked, it instead executes on an operation-to-operation basis. This can put more pressure on the heap because it executes a single operation on all rows before passing all those results to the next operation (which runs on all rows), and so on. The result set cannot begin to compile because all the results are dumped at the end after all operations are completed on all rows.
 
-Eager has been appearing less and less, as our teams find better ways for Cypher to determine conflicting statements and optimize query performance. However, you may occasionally come across this in your queries, and it’s probably avoidable by altering your query syntax or breaking up longer statements into shorter, smaller operations. At the very least, understanding when it appears and what it does can tell you a lot about how Cypher works and why the language operates the way it does.
+Eager has been appearing less and less, as our teams find better ways for Cypher to determine conflicting statements and optimize query performance. However, you may occasionally come across this in your queries, and it's probably avoidable by altering your query syntax or breaking up longer statements into shorter, smaller operations. At the very least, understanding when it appears and what it does can tell you a lot about how Cypher works and why the language operates the way it does.
 
 === Simple Example with Eager
 
-Let’s take a silly example to see this in action. We have 5 ids that we want to create as nodes in our graph — `1, 2, 3, 4, 5`. Our query will loop through the array and create each node, then add the expected next node.
+Let's take a silly example to see this in action. We have 5 ids that we want to create as nodes in our graph — `1, 2, 3, 4, 5`. Our query will loop through the array and create each node, then add the expected next node.
 
 
 [source,cypher]
@@ -79,7 +79,7 @@ This is very apparent if you expand each of the `NodeByLabelScan` operations. Th
 
 == Avoiding Eager in our Example
 
-In order to get around the eager operator, we need to ensure Cypher isn’t worried about conflicting operations. The best way to do this is to divide our query into single operations so that Cypher won’t invoke eager as a safeguard. Let’s profile this as two queries to see that.
+In order to get around the eager operator, we need to ensure Cypher isn't worried about conflicting operations. The best way to do this is to divide our query into single operations so that Cypher won't invoke eager as a safeguard. Let's profile this as two queries to see that.
 
 [source,cypher]
 ```
@@ -105,7 +105,7 @@ Great! No eager operation visible for either of these.
 
 == Another example
 
-Let’s try another example to differentiate and further solidify our knowledge of eager. In this one, we are using our same array ids, but this time we are using them as `customer id` values and creating related `Employee` nodes that are assigned to those customers and create the relationship between them.
+Let's try another example to differentiate and further solidify our knowledge of eager. In this one, we are using our same array ids, but this time we are using them as `customer id` values and creating related `Employee` nodes that are assigned to those customers and create the relationship between them.
 
 [source,cypher]
 ```
@@ -118,11 +118,11 @@ MERGE (e)-[r:DEDICATED_TO]->(c);
 Results from query above:
 image:/img/eager/create-customer-employee-example.png[]
 
-Now, if we run this query with the `PROFILE` keyword in front of it, we see that Cypher isn’t invoking eager here.
+Now, if we run this query with the `PROFILE` keyword in front of it, we see that Cypher isn't invoking eager here.
 
 image::/img/eager/profile-customer-employee-example.png[]
 
-Why is that? Doesn’t the relationship depend on the creation of the nodes? Actually, no, it does not. This is because these writes don’t actually conflict with one another. We are not trying to write and then read the same data again. We are writing 3 separate operations — write `Customer` node, write `Employee` node, write `Customer/Employee` relationship.
+Why is that? Doesn't the relationship depend on the creation of the nodes? Actually, no, it does not. This is because these writes don't actually conflict with one another. We are not trying to write and then read the same data again. We are writing 3 separate operations — write `Customer` node, write `Employee` node, write `Customer/Employee` relationship.
 
 We can better see how this works by throwing a read statement in the middle and running `PROFILE` on that.
 
@@ -139,15 +139,15 @@ MERGE (e)-[r:DEDICATED_TO]->(c);
 Results from query above:
 image:/img/eager/profile-customer-with-read.png[]
 
-Eager again appears close to the bottom left in dark blue. The only difference between that query and the one we had before is that we’re writing the `Customer` and `Employee` nodes, then passing those results to the next operation, which reads a `Customer` node (simply checking the database for the node we just created) and then using that node to create the relationship. We simply took a query with 3 write operations and turned it into a query with 2 writes, 1 read, and another write.
+Eager again appears close to the bottom left in dark blue. The only difference between that query and the one we had before is that we're writing the `Customer` and `Employee` nodes, then passing those results to the next operation, which reads a `Customer` node (simply checking the database for the node we just created) and then using that node to create the relationship. We simply took a query with 3 write operations and turned it into a query with 2 writes, 1 read, and another write.
 
-The read is what invokes the `Eager` operation because we’re potentially reading the data we just created. Doing the merge, then read, we could potentially have missing results in our read that haven’t been written yet in the 1st write. This is why Cypher does all of the writes first (merge `Customer`, merge `Employee`), then it moves on to the read and final write.
+The read is what invokes the `Eager` operation because we're potentially reading the data we just created. Doing the merge, then read, we could potentially have missing results in our read that haven't been written yet in the 1st write. This is why Cypher does all of the writes first (merge `Customer`, merge `Employee`), then it moves on to the read and final write.
 
-Removing that read statement in the middle avoids the eager operator and ensures we don’t have conflicting operations, and we’re back to optimized operations!
+Removing that read statement in the middle avoids the eager operator and ensures we don't have conflicting operations, and we're back to optimized operations!
 
 == Wrap-up
 
-You don’t have to worry about this operator if your data set is small or if your query operations are simple. However, for heavy processing and large datasets, this might be something to check, if your queries are running slowly. When in doubt, break down operations into separate queries where possible and run `PROFILE` to see what Cypher is doing behind the scenes.
+You don't have to worry about this operator if your data set is small or if your query operations are simple. However, for heavy processing and large datasets, this might be something to check, if your queries are running slowly. When in doubt, break down operations into separate queries where possible and run `PROFILE` to see what Cypher is doing behind the scenes.
 
 Happy coding!
 
