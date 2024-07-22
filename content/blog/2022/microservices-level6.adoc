@@ -17,7 +17,7 @@ If you are new to graphs, I will leave a couple of resources below for more info
 * https://medium.com/neo4j/how-do-you-know-if-a-graph-database-solves-the-problem-a7da10393f5[Blog post: How do you know if a graph database solves the problem^]
 * https://neo4j.com/developer/graph-database/[Neo4j guide: What is a graph database?^]
 
-Utilizing another database means starting a database instance, and there were a few choices here. Several graph databases exist on the market, but Neo4j is a popular one and offers several deployment options. We could spin up a Docker container (as we did in an https://jmhreif.com/blog/microservices-level3/[earlier section with MongoDB^]) or take advantage of the database-as-a-service option called https://dev.neo4j.com/aura-java[AuraDB^] with their free tier. Neo4j will handle managing the database, and it should have everything we need.
+Utilizing another database means starting a database instance, and there were a few choices here. Several graph databases exist on the market, but Neo4j is a popular one and offers several deployment options. We could spin up a Docker container (as we did in an https://jmhreif.com/blog/2022/microservices-level3/[earlier section with MongoDB^]) or take advantage of the database-as-a-service option called https://dev.neo4j.com/aura-java[AuraDB^] with their free tier. Neo4j will handle managing the database, and it should have everything we need.
 
 In this post, we will create our Neo4j database and get the data loaded, then build our new service that interacts with the database and provides an API for client services.
 
@@ -25,7 +25,7 @@ Let's get into the technical stuff!
 
 == Architecture
 
-We began this microservices project with minimum functionality explained in the https://jmhreif.com/blog/microservices-level1/[level 1 blog post^]. In our last post (https://jmhreif.com/blog/microservices-level5/[level5^]), we used our existing services with book and author data, but set up Docker Compose to manage all the services together using a yaml file and a couple of commands.
+We began this microservices project with minimum functionality explained in the https://jmhreif.com/blog/2021/microservices-level1/[level 1 blog post^]. In our last post (https://jmhreif.com/blog/2022/microservices-level5/[level5^]), we used our existing services with book and author data, but set up Docker Compose to manage all the services together using a yaml file and a couple of commands.
 
 With this iteration, we want to add some new functionality for book review data using a graph database in the cloud and set up a new service that hosts that data from the database.
 

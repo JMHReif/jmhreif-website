@@ -18,7 +18,7 @@ Let's get started!
 
 == Architecture
 
-We began this project with minimum functionality explained in the https://jmhreif.com/blog/microservices-level1/[level 1 blog post^]. Currently, our microservices system consists of three services and a database container. While still pretty small in the microservices world, issues like coordination are already surfacing, so this is a good time to introduce orchestration tools like Docker Compose that attempt to reduce that pain.
+We began this project with minimum functionality explained in the https://jmhreif.com/blog/2021/microservices-level1/[level 1 blog post^]. Currently, our microservices system consists of three services and a database container. While still pretty small in the microservices world, issues like coordination are already surfacing, so this is a good time to introduce orchestration tools like Docker Compose that attempt to reduce that pain.
 
 The services or functionality have not changed from the previous blog post, but the management of them has.
 

@@ -10,7 +10,7 @@ omit_header_text: true
 
 {{< image-credit >}}
 
-Our decided next step for this project takes us in a new direction by adding externalized configuration for our applications. We already saw how to do something similar with https://jmhreif.com/blog/microservices-level5/[MongoDB database credentials in Docker Compose^] to access a local database container, but what do we do when the database is hosted on public cloud or contains sensitive data? We probably don't want to publish our credentials anywhere or even prevent accidental publishing.
+Our decided next step for this project takes us in a new direction by adding externalized configuration for our applications. We already saw how to do something similar with https://jmhreif.com/blog/2022/microservices-level5/[MongoDB database credentials in Docker Compose^] to access a local database container, but what do we do when the database is hosted on public cloud or contains sensitive data? We probably don't want to publish our credentials anywhere or even prevent accidental publishing.
 
 This is where solutions such as https://spring.io/projects/spring-cloud-config[Spring Cloud Config^] come into play. Our https://dev.neo4j.com/aura-java[Neo4j database free instance^] is hosted by Neo4j on a public cloud, so we can set the credentials in an external location (such as a local file or other system) use Spring Cloud Config to access those keys and pass them to the approved application.
 
@@ -20,7 +20,7 @@ Let's dive in!
 
 == Architecture
 
-We began this microservices project with minimum functionality explained in the https://jmhreif.com/blog/microservices-level1/[level 1 blog post^]. In our last post (https://jmhreif.com/blog/microservices-level6/[level6^]), we added a graph database to our microservices system to take advantage of data relationships between books, authors, and reviews.
+We began this microservices project with minimum functionality explained in the https://jmhreif.com/blog/2021/microservices-level1/[level 1 blog post^]. In our last post (https://jmhreif.com/blog/2022/microservices-level6/[level6^]), we added a graph database to our microservices system to take advantage of data relationships between books, authors, and reviews.
 
 With today's next step, we will add a new service to host managing the credentials and incorporate pulling credentials from there into our Neo4j service.
 

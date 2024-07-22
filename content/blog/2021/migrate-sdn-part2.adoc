@@ -10,7 +10,7 @@ omit_header_text: true
 
 {{< image-credit >}}
 
-Our previous post (https://jmhreif.com/blog/migrate-sdn-part1/[Part 1^]) on this topic introduced us to Spring Data Neo4j and showed the architectural differences between version 5 and the latest version 6. This post begins the migration process by taking a Spring Data Neo4j 5 application with OGM and upgrades to the dependencies and syntax changes of Spring Data Neo4j 6.
+Our previous post (https://jmhreif.com/blog/2021/migrate-sdn-part1/[Part 1^]) on this topic introduced us to Spring Data Neo4j and showed the architectural differences between version 5 and the latest version 6. This post begins the migration process by taking a Spring Data Neo4j 5 application with OGM and upgrades to the dependencies and syntax changes of Spring Data Neo4j 6.
 
 Without further ado, let's dive in!
 

@@ -18,7 +18,7 @@ Whether you are a young student choosing a career in an endless array of possibi
 
 Anyone who gets excited about learning something new will continue to be a vibrant presence in the developer community. A career in software development is not for the faint of heart (or mind!).
 
-Just like doctors, developers must stay abreast of the latest breakthroughs and research in the field. Though doctors are put through structured classes and degree programs for longer, both professions require individuals to motivate themselves to continue studying post-graduation. This is great for those who like learning a vast array of topics or are easily bored. It’s never mundane!
+Just like doctors, developers must stay abreast of the latest breakthroughs and research in the field. Though doctors are put through structured classes and degree programs for longer, both professions require individuals to motivate themselves to continue studying post-graduation. This is great for those who like learning a vast array of topics or are easily bored. It's never mundane!
 
 This also heavily develops our researcher skills. After the motivation to learn, we must figure out how to learn. Narrowing down go-to resources (whether the internet or tech-guru friend) will aid in taking the first steps to grasping any technology. Then it is time to spend hours reading, tinkering, and problem-solving until each new concept is understood.
 
@@ -28,13 +28,13 @@ At some point, we look back and realize how many concepts have been accumulated 
 
 The wonderful (and daunting) thing about the technology industry, in general, is that it is very broad. There are so many opportunities in just about any area we could possibly imagine.
 
-Maybe you prefer to be in the limelight showing off the latest software or hardware to hundreds, or maybe you geek out over improving existing processes to be as secure or efficient as possible from an office cube. And when something doesn’t quite fit with the passion or that ideal dream job, the transition to another focus is possible! All of those hours spent learning one thing helps build a springboard to the next one, which brings me to my next point….
+Maybe you prefer to be in the limelight showing off the latest software or hardware to hundreds, or maybe you geek out over improving existing processes to be as secure or efficient as possible from an office cube. And when something doesn't quite fit with the passion or that ideal dream job, the transition to another focus is possible! All of those hours spent learning one thing helps build a springboard to the next one, which brings me to my next point….
 
 == 3. You choose your path
 
-Every individual’s choices tell a different story, and the story you tell in the software industry is not as important as how you tell it.
+Every individual's choices tell a different story, and the story you tell in the software industry is not as important as how you tell it.
 
-For the most part, no one judges your background or choices in getting where you are today. They are only interested in how those experiences shaped you and how you responded to them. Found something that wasn’t really a passion? Perhaps you used any spare time to dabble in other areas to find it. Got stuck in a rut? Maybe you gave yourself some time to decompress and build the energy to kick back in hard a month later. No matter the story, tell it and be unafraid. Reward will follow.
+For the most part, no one judges your background or choices in getting where you are today. They are only interested in how those experiences shaped you and how you responded to them. Found something that wasn't really a passion? Perhaps you used any spare time to dabble in other areas to find it. Got stuck in a rut? Maybe you gave yourself some time to decompress and build the energy to kick back in hard a month later. No matter the story, tell it and be unafraid. Reward will follow.
 
 == 4. Traveling the world (virtually or physically!)
 
@@ -48,15 +48,15 @@ There is something contagious about being around other software developers. Thei
 
 Most software developers are ecstatic to learn and share their knowledge to improve the world around them. Ranging from introverted cube-dwellers to hyper world-travelers, their influence is bound to inspire even the most timid. The best of the bunch are nearly always willing to answer questions and carry on discussions, and the worst of the bunch can still teach you something.
 
-There is a naturally open policy of accepting anyone with any skill level, and it’s far better to ask a dumb question than to be ignorant, right?! Maybe you’re not a super extroverted individual with enough energy to fuel a rocket, or maybe you are. The key is to find your passion and let that show. People respect a passionate individual, no matter the skill level.
+There is a naturally open policy of accepting anyone with any skill level, and it's far better to ask a dumb question than to be ignorant, right?! Maybe you're not a super extroverted individual with enough energy to fuel a rocket, or maybe you are. The key is to find your passion and let that show. People respect a passionate individual, no matter the skill level.
 
 == 6. Fueling the creativity
 
 All of the points listed above can provide the fuel needed to bolster morale and feed positive growth. This, in turn, feeds the creativity meter.
-The times of lowest productivity can probably be attributed to some slump after hitting a wall and searching awhile for a solution. This is when we often pull up the social media or some other distraction. When a low point occurs, we can refer back to points 1–5 to give us what we need to push through the obstacle.
+The times of lowest productivity can probably be attributed to some slump after hitting a wall and searching awhile for a solution. This is when we often pull up the social media or some other distraction. When a low point occurs, we can refer back to points 1-5 to give us what we need to push through the obstacle.
 
-Perhaps talking through the issue with a colleague/friend opens up a perspective or solution we hadn’t tried. Running an errand or taking a walk could give the mind rest while exercising the body. Maybe working on another project exercises the brain differently and guides us to the solution. Often, we just need something to pull focus away from the rock in the path to see the other paths we could try instead.
+Perhaps talking through the issue with a colleague/friend opens up a perspective or solution we hadn't tried. Running an errand or taking a walk could give the mind rest while exercising the body. Maybe working on another project exercises the brain differently and guides us to the solution. Often, we just need something to pull focus away from the rock in the path to see the other paths we could try instead.
 
 Whatever fuels your creativity, fall back on those supports when all seems lost or when there is time to spare. Doing so improves self-esteem and positive energy, which only inspires us to reach for more.
 
-This list is, by no means, exhaustive or static, and each individual will have other factors that drive them in their software development career. Hopefully, reading this sparks recognition of things that inspire you or adds to your list of inspirations. I won’t lie that it is easy to always be motivated, take the next step, etc, but it is definitely always worth it.
+This list is, by no means, exhaustive or static, and each individual will have other factors that drive them in their software development career. Hopefully, reading this sparks recognition of things that inspire you or adds to your list of inspirations. I won't lie that it is easy to always be motivated, take the next step, etc, but it is definitely always worth it.

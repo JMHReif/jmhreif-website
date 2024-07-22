@@ -10,7 +10,7 @@ omit_header_text: true
 
 {{< image-credit >}}
 
-We are still in the beginning stages of building microservices with Java, but we have already seen how to send and receive communications between two Spring Boot applications. In the https://jmhreif.com/blog/microservices-level1/[first blog post^] of this series, our two applications transmitted a message string of `"Hello, World!"`. In the https://jmhreif.com/blog/microservices-level2/[second blog post^], we took it one step further by embedding a MongoDB database into our `service1`, added a data domain (books) with four pre-populated entries, and transmitted the `Book` information between the two applications.
+We are still in the beginning stages of building microservices with Java, but we have already seen how to send and receive communications between two Spring Boot applications. In the https://jmhreif.com/blog/2021/microservices-level1/[first blog post^] of this series, our two applications transmitted a message string of `"Hello, World!"`. In the https://jmhreif.com/blog/2022/microservices-level2/[second blog post^], we took it one step further by embedding a MongoDB database into our `service1`, added a data domain (books) with four pre-populated entries, and transmitted the `Book` information between the two applications.
 
 This post will advance once again by upgrading our embedded MongoDB instance to a full-fledged database running in a Docker container. Under official terms, we probably wouldn't classify the container as a separate microservice. What actually would classify it as a microservice might vary depending on who you talked to. For now, since our database container only connects to the backend API service to provide the data for it, we will simply consider this a backing service, or even a supporting component of the `service1`.
 
@@ -220,5 +220,5 @@ Happy coding!
 
 * Github: https://github.com/JMHReif/microservices-level3[microservices-level3^] repository
 * Documentation: https://spring.io/projects/spring-data-mongodb[Spring Data MongoDB^]
-* Previous blog posts: https://jmhreif.com/blog/microservices-level1/[Microservices Level 1^], https://jmhreif.com/blog/microservices-level2/[Microservices Level 2^]
+* Previous blog posts: https://jmhreif.com/blog/2021/microservices-level1/[Microservices Level 1^], https://jmhreif.com/blog/2022/microservices-level2/[Microservices Level 2^]
 * Containers: https://www.docker.com/[Docker^]

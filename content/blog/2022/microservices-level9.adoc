@@ -12,13 +12,13 @@ omit_header_text: true
 
 Our microservices project contains quite a few pieces now. We have two databases, three API services, a user-view service for books, and a service to host our configuration. With so many pieces to manage, it would be nice to have something that orchestrates the individual services into a system, such as Docker Compose.
 
-Back in our https://jmhreif.com/blog/microservices-level5/[Level 5^] rendition, we did exactly this for our smaller version of the project. Now that we have expanded our services, we need to add those new pieces into the existing Docker Compose management umbrella.
+Back in our https://jmhreif.com/blog/2022/microservices-level5/[Level 5^] rendition, we did exactly this for our smaller version of the project. Now that we have expanded our services, we need to add those new pieces into the existing Docker Compose management umbrella.
 
 I expected this step of the process to be much quicker, especially since I had done it before. However, there were several obstacles I encountered that took much longer to solve than anticipated. I'll do my best to cover those thoroughly here and avoid future problems for both myself and others!
 
 == Architecture
 
-We built this project from scratch with a https://jmhreif.com/blog/microservices-level1/[rudimentary scope and functionality^] and have slowly expanded the complexity. In the https://jmhreif.com/blog/microservices-level8/[most recent step^], we had a few services managed by Docker Compose and a few managed manually. This is because we wanted to avoid adding unnecessary complexity with an orchestration layer until we were certain service communication was working without it.
+We built this project from scratch with a https://jmhreif.com/blog/2021/microservices-level1/[rudimentary scope and functionality^] and have slowly expanded the complexity. In the https://jmhreif.com/blog/2022/microservices-level8/[most recent step^], we had a few services managed by Docker Compose and a few managed manually. This is because we wanted to avoid adding unnecessary complexity with an orchestration layer until we were certain service communication was working without it.
 
 Now that things are operating well independently, we can migrate the working services so that everything is handled by Docker Compose.
 
@@ -258,13 +258,13 @@ networks:
     - goodreads
 ----
 
-We only add the `restart: on-failure` option here. Because we could have network interruptions that cause services to miss requests or other flaky behavior, I wanted to build the same resiliency into my other applications and containers that I did with `service1`. For a refresher on the `BACKEND_HOSTNAME` environment variable, check out the https://jmhreif.com/blog/microservices-level5/[Level 5 blog post^].
+We only add the `restart: on-failure` option here. Because we could have network interruptions that cause services to miss requests or other flaky behavior, I wanted to build the same resiliency into my other applications and containers that I did with `service1`. For a refresher on the `BACKEND_HOSTNAME` environment variable, check out the https://jmhreif.com/blog/2022/microservices-level5/[Level 5 blog post^].
 
 === Service1: Application Changes
 
 First, we want to add the Spring Retry logic to `service2` by adding the three dependencies in the `pom.xml` (https://github.com/JMHReif/microservices-level9/blob/main/service2/pom.xml#L29[lines 29-40^]). Next, we can add the property to the `application.properties` to https://github.com/JMHReif/microservices-level9/blob/main/service2/src/main/resources/application.properties#L3[open all Actuator endpoints^]. *Note:* We only do this in development or local testing - not production! We can comment out that property here for now. Finally, we can add `@EnableRetry` to the https://github.com/JMHReif/microservices-level9/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L18[main application class^] and `@Retryable` to each method we want to use retry logic. In our case, only the https://github.com/JMHReif/microservices-level9/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L43[`getBooks()` method^].
 
-We have already built in flexibility to `service2` for local or remote testing with the https://github.com/JMHReif/microservices-level9/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L20[`hostname` property^]. More detail on how and why we did that is in the https://jmhreif.com/blog/microservices-level5/[Level 5 blog post^].
+We have already built in flexibility to `service2` for local or remote testing with the https://github.com/JMHReif/microservices-level9/blob/main/service2/src/main/java/com/jmhreif/service2/Service2Application.java#L20[`hostname` property^]. More detail on how and why we did that is in the https://jmhreif.com/blog/2022/microservices-level5/[Level 5 blog post^].
 
 While we are here, we can update the Spring Boot project to use the latest versions of everything for https://github.com/JMHReif/microservices-level9/blob/main/service2/pom.xml#L8[Spring Boot^] and https://github.com/JMHReif/microservices-level9/blob/main/service2/pom.xml#L17[Java^]. I also updated the https://github.com/JMHReif/microservices-level9/blob/main/service2/Dockerfile#L3[service's Dockerfile^] to use the Azul JDK 17 as the base image.
 
@@ -313,7 +313,7 @@ Close the system with `docker-compose down`.
 
 == Goodreads-svc4: Backend service for Reviews
 
-Similar to services one and three, `service4` is a backing service for book review data. However, this service interacts with a graph database in the cloud (https://dev.neo4j.com/aura-java[Neo4j^]). More background on this service is in the https://jmhreif.com/blog/microservices-level6/[Level 6 blog post^]. Let's list out our changes to bring `service4` into Docker Compose.
+Similar to services one and three, `service4` is a backing service for book review data. However, this service interacts with a graph database in the cloud (https://dev.neo4j.com/aura-java[Neo4j^]). More background on this service is in the https://jmhreif.com/blog/2022/microservices-level6/[Level 6 blog post^]. Let's list out our changes to bring `service4` into Docker Compose.
 
 * Docker Compose: https://github.com/JMHReif/microservices-level9/blob/main/docker-compose.yml#L75[add configuration for `service4`^].
 * Application `pom.xml`: add three depedencies for retry and monitoring (https://github.com/JMHReif/microservices-level9/blob/main/service4/pom.xml#L38[lines 38-49^]). Upgrade versions for https://github.com/JMHReif/microservices-level9/blob/main/service4/pom.xml#L8[Spring Boot^], https://github.com/JMHReif/microservices-level9/blob/main/service4/pom.xml#L17[Java^], and https://github.com/JMHReif/microservices-level9/blob/main/service4/pom.xml#L18[Spring Cloud^].

@@ -7,15 +7,15 @@ draft: false
 omit_header_text: true
 ---
 
-From https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[part 1^] introducing Cypher dates and formats to https://jmhreif.com/blog/cypher-sleuthing-dates-part4/[part 4^] where we combined duration functions and temporal components to translate amounts in one unit to another unit, we have covered a lot of ground in this series! Filling in the gaps, https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[part 2^] showed us how to truncate dates for searches and use durations for adding/subtracting amounts of time, and https://jmhreif.com/blog/cypher-sleuthing-dates-part3/[part 3^] gave us an intro to temporal components and translations within component groups.
+From https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part1/[part 1^] introducing Cypher dates and formats to https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part4/[part 4^] where we combined duration functions and temporal components to translate amounts in one unit to another unit, we have covered a lot of ground in this series! Filling in the gaps, https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part2/[part 2^] showed us how to truncate dates for searches and use durations for adding/subtracting amounts of time, and https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part3/[part 3^] gave us an intro to temporal components and translations within component groups.
 
 This post will be the final in the series. We will take a brief departure from Cypher temporals to the APOC library, where much of the temporal functionality for Neo4j began (before it was available in Cypher). Many of the original procedures and functions in the APOC library still exist, along with new ones that are not yet implemented in Cypher. This post will cover all the APOC temporal functionality and note which ones have been replaced by Cypher or are still uniquely provided by APOC.
 
 == APOC Temporal Functions
 
-All the way back in our https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[part 1 post^], we covered 4 APOC functions that could format epoch time (to any string and to an ISO8601 string), translate various string formats, and convert a string to a Neo4j (ISO8601) temporal. In the remainder of this post, we will briefly cover the rest of the existing `apoc.date.x` and `apoc.temporal.x` functions to explain their purpose and note which ones are replaced by ones in Cypher.
+All the way back in our https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part1/[part 1 post^], we covered 4 APOC functions that could format epoch time (to any string and to an ISO8601 string), translate various string formats, and convert a string to a Neo4j (ISO8601) temporal. In the remainder of this post, we will briefly cover the rest of the existing `apoc.date.x` and `apoc.temporal.x` functions to explain their purpose and note which ones are replaced by ones in Cypher.
 
-Let's start our list! Ones that are crossed out were covered in the https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[Part 1^] post of this series.
+Let's start our list! Ones that are crossed out were covered in the https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part1/[Part 1^] post of this series.
 
 1. apoc.date.add()
 2. apoc.date.convert()
@@ -224,13 +224,13 @@ Note that the return for the APOC output is a 2-digit string value. This is spec
 
 Throughout this series, we have taken a journey through nearly all aspects of temporal values related to Neo4j - both Cypher and APOC.
 
-In our https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[Part 1^] post, we saw how complex programming for dates and times could actually be and how to create instants using functions like `date()`, `datetime()`, `time()`, etc. Temporal components also got a brief mention before we took a look at how to get to Neo4j-supported formats from epoch time and strings and capped our post with showing how to use multiple conversions in a single line. APOC saw some spotlight, as we relied on it for some of the conversions.
+In our https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part1/[Part 1^] post, we saw how complex programming for dates and times could actually be and how to create instants using functions like `date()`, `datetime()`, `time()`, etc. Temporal components also got a brief mention before we took a look at how to get to Neo4j-supported formats from epoch time and strings and capped our post with showing how to use multiple conversions in a single line. APOC saw some spotlight, as we relied on it for some of the conversions.
 
-In our https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[Part 2^] post, we walked through truncating temporal types in Cypher and scratched the surface of creating basic durations, plus adding and subtracting them from dates. We then covered duration precision, which forms the foundation of most operations with durations. The last section of that post calculated differences between two dates with `duration.between()`.
+In our https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part2/[Part 2^] post, we walked through truncating temporal types in Cypher and scratched the surface of creating basic durations, plus adding and subtracting them from dates. We then covered duration precision, which forms the foundation of most operations with durations. The last section of that post calculated differences between two dates with `duration.between()`.
 
-In our https://jmhreif.com/blog/cypher-sleuthing-dates-part3/[Part 3^] post, we did another quick review of temporal components (begun in Part 1), and then spent some time working through duration conversions using duration functions. Lastly, we talked about components again, showing which ones we could use based on the duration category (months, days, seconds).
+In our https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part3/[Part 3^] post, we did another quick review of temporal components (begun in Part 1), and then spent some time working through duration conversions using duration functions. Lastly, we talked about components again, showing which ones we could use based on the duration category (months, days, seconds).
 
-In our https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[Part 4^] post, we saw how to combine duration functions and components in order to translate durations in one component category to another one. Then, we put our skills to the test with a couple of date puzzles.
+In our https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part1/[Part 4^] post, we saw how to combine duration functions and components in order to translate durations in one component category to another one. Then, we put our skills to the test with a couple of date puzzles.
 
 In this post (Part 5!), we circled back to APOC for a step-by-step review of each date and temporal function in the library, making note of which ones are obsolete with functionality provided in Cypher or which are still valuable.
 
@@ -238,10 +238,10 @@ I hope this series has helped you understand Cypher temporals as much as it has 
 
 == Resources
 
-* Cypher Sleuthing: https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[Part 1^]
-* Cypher Sleuthing: https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[Part 2^]
-* Cypher Sleuthing: https://jmhreif.com/blog/cypher-sleuthing-dates-part3/[Part 3^]
-* Cypher Sleuthing: https://jmhreif.com/blog/cypher-sleuthing-dates-part4/[Part 4^]
+* Cypher Sleuthing: https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part1/[Part 1^]
+* Cypher Sleuthing: https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part2/[Part 2^]
+* Cypher Sleuthing: https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part3/[Part 3^]
+* Cypher Sleuthing: https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part4/[Part 4^]
 * APOC docs: https://neo4j.com/labs/apoc/4.1/temporal/[Temporal overview^]
 * APOC docs: https://neo4j.com/labs/apoc/4.1/overview/apoc.date/[Date functions^]
 * APOC docs: https://neo4j.com/labs/apoc/4.1/overview/apoc.temporal/[Temporal functions^]

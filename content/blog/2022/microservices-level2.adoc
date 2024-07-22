@@ -10,7 +10,7 @@ omit_header_text: true
 
 {{< image-credit >}}
 
-In my https://jmhreif.com/blog/microservices-level1/[last blog post^], we began building microservices in Java with two Spring Boot applications, passing a "Hello, World!" string from one application to the other. We focused on reduced complexity, minimum previous knowledge, and few components. Next, we can slowly add pieces that simulate microservices projects in the real world.
+In my https://jmhreif.com/blog/2021/microservices-level1/[last blog post^], we began building microservices in Java with two Spring Boot applications, passing a "Hello, World!" string from one application to the other. We focused on reduced complexity, minimum previous knowledge, and few components. Next, we can slowly add pieces that simulate microservices projects in the real world.
 
 One way to do this is by adding a data domain. Applications often model some scenario in the real world such as maintaining office building temperatures, finding connected devices on a network, or recommending a tv show. All of these need developers to create models of the environment - buildings and standard conditions; networks and connected devices; show preferences and recommendations. Models of the same domain can differ due to varying requirements.
 
@@ -216,5 +216,5 @@ Happy coding!
 
 * Github: https://github.com/JMHReif/microservices-level2[microservices-level2^] repository
 * Documentation: https://spring.io/projects/spring-data-mongodb[Spring Data MongoDB^]
-* Previous blog post: https://jmhreif.com/blog/microservices-level1/[Microservices Level 1^]
+* Previous blog post: https://jmhreif.com/blog/2021/microservices-level1/[Microservices Level 1^]
 * Document database: https://www.mongodb.com/[MongoDB product page^]

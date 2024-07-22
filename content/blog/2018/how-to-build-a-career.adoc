@@ -9,17 +9,17 @@ omit_header_text: true
 
 Oftentimes, we tend to sell ourselves short when we are talking to interviewers, professionals, or other career authorities.
 
-We don’t want to seem arrogant and inflate our capabilities, right? What if they don’t see the value of our journey that we see from our path, decisions, experiences, etc? There is a very fine balance between being humble and arrogant, and it is a tough one to achieve.
+We don't want to seem arrogant and inflate our capabilities, right? What if they don't see the value of our journey that we see from our path, decisions, experiences, etc? There is a very fine balance between being humble and arrogant, and it is a tough one to achieve.
 
 We all have different backgrounds, achievements, struggles, and experiences. That is what makes us wonderfully unique and allows each person to contribute so amazingly in one aspect or another.
 
-It’s all in how you tell your story and how that story has shaped you.
+It's all in how you tell your story and how that story has shaped you.
 
 == 100% Successful Recipe to Winning at Life? NOT!
 
-There is no one-size-fits-all approach to life or task list to make you 100% successful. This post is just my point of view and the experiences that may have shaped it along the way. Check with me again in 5 or 10 years. Life experiences over time will probably continue to change and shape my perspective, and that’s a good thing. ;)
+There is no one-size-fits-all approach to life or task list to make you 100% successful. This post is just my point of view and the experiences that may have shaped it along the way. Check with me again in 5 or 10 years. Life experiences over time will probably continue to change and shape my perspective, and that's a good thing. ;)
 
-What I can give are some steps to find the positives and growth in your journey and help phrase this to future employers, friends, colleagues, and to yourself. We are often our worst critic, and if you can’t see how your experiences have strengthened, improved, or shaped you, then chances are that no one else will see it either.
+What I can give are some steps to find the positives and growth in your journey and help phrase this to future employers, friends, colleagues, and to yourself. We are often our worst critic, and if you can't see how your experiences have strengthened, improved, or shaped you, then chances are that no one else will see it either.
 
 == Recipe
 
@@ -64,7 +64,7 @@ These may seem trivial, but when you look at how those can affect future employm
 
 ==== Apply this for Yourself
 
-Though you won’t have the same experiences or background as me, you can still review the things that you did as a kid and that defined you today.
+Though you won't have the same experiences or background as me, you can still review the things that you did as a kid and that defined you today.
 
 Maybe you played sports, and it taught you that working together as a team can accomplish team goals or that communication impacts team dynamics and actions. Or maybe you were not involved much in school, but you enjoyed reading in your room or helping someone, defining your ability to learn on your own and willingness to teach or help others.
 
@@ -88,7 +88,7 @@ However, I had grown up in a computer-loving household, too. Both parents were p
 
 I knew business and computer skills were exceedingly important to succeed in any industry, so I took business classes and received a business minor alongside the music major.
 
-During my last two years of my undergraduate, I was convinced that I wanted to explore software development. I decided to finish my Bachelor’s in music with the business minor, but then apply for a Master’s in computer management and information systems.
+During my last two years of my undergraduate, I was convinced that I wanted to explore software development. I decided to finish my Bachelor's in music with the business minor, but then apply for a Master's in computer management and information systems.
 
 While a music degree was a stepping stone to where I would later end up, the learning experiences and connections made were invaluable to my current state.
 
@@ -97,7 +97,7 @@ While a music degree was a stepping stone to where I would later end up, the lea
 Just as with childhood experiences, the decisions I made helped me accomplish the goals I wanted, even if those goals changed. Let me try to show how.
 
 * Structure and Creativity: in deciding to change my major, I realized that programming and music had several things in common. Both combined a logical and scientific structure with creative expression. Within certain bounds (making the program operate correctly and consistently), programming offered people the chance to write something unique, elegant, and simple. Music also allowed for creative interpretation and self-expression through a structure of musical form and music theory.
-* Transition Opportunities: I found a way to combine both my interests and gain a bit of experience, as well. I was the university orchestra’s assistant at the time, and the orchestra was in desperate need to catalog and track all of the musical parts in the library. I took it upon myself to create a local database catalog, as well as a rudimentary tracking system of music loans and missing parts within the department.
+* Transition Opportunities: I found a way to combine both my interests and gain a bit of experience, as well. I was the university orchestra's assistant at the time, and the orchestra was in desperate need to catalog and track all of the musical parts in the library. I took it upon myself to create a local database catalog, as well as a rudimentary tracking system of music loans and missing parts within the department.
 * Non-school Activities: I taught music lessons and played violin for weddings and other events throughout college. I organized music, communicated with event coordinators and fellow musicians, and planned details.
 
 These activities may not seem like they could bridge the two degrees, but they did (surprisingly well).
@@ -118,9 +118,9 @@ Now is the time to review the daily activities and decisions you are making righ
 
 What kind of story do your habits and lifestyle tell and does it match what you want? Are you looking to change positions, but not investing any time in reading current industry news, learning something new, or connecting with people for the desired position type? Or do you want to take on a new project at work, but are not learning the skills you need on your own before someone else tells you you can?
 
-If this is you, know that we all have our moments in life where we coast and let life occur happen to us, rather than exerting effort to change something. If you are happy exactly where you are, that’s ok, too. We should all take moments to enjoy where we are and appreciate what we achieved to reach it.
+If this is you, know that we all have our moments in life where we coast and let life occur happen to us, rather than exerting effort to change something. If you are happy exactly where you are, that's ok, too. We should all take moments to enjoy where we are and appreciate what we achieved to reach it.
 
-However, if you want something to change (whether job, career, relationship, location, etc), then you must take action in the present. No one else has the driver’s seat to your life, which is good news!
+However, if you want something to change (whether job, career, relationship, location, etc), then you must take action in the present. No one else has the driver's seat to your life, which is good news!
 
 Your daily habits affect where you end up, and the decisions you make create the pivot points for future directions. So really evaluate how your present self is writing your story through daily life.
 
@@ -134,13 +134,13 @@ If you want to work remotely, then become good at self-motivation and learning o
 
 If you want to change jobs, then learn the skills you need and look for opportunities that use those new skills. You will gain experience for the job you want and showing people that you go after what you want to achieve (even if present circumstances might limit you).
 
-It doesn’t matter so much what you want to achieve, but what you are doing to achieve it. What do you want your future story to look like?
+It doesn't matter so much what you want to achieve, but what you are doing to achieve it. What do you want your future story to look like?
 
-== What’s in Your Recipe?
+== What's in Your Recipe?
 
 All you may see is scattered and random events throughout your life, but take another look and see how those experiences connect together. Each of these events provides an ingredient that changes the flavor of the final outcome.
 
-Once you have evaluated for yourself, you can tell your story to others. Whether potential employers hire you or not, you can feel confident that you are portraying yourself honestly and completely. If the opportunity doesn’t work out, maybe it couldn’t handle everything you offer. If it does, then use it to shape and define your career recipe.
+Once you have evaluated for yourself, you can tell your story to others. Whether potential employers hire you or not, you can feel confident that you are portraying yourself honestly and completely. If the opportunity doesn't work out, maybe it couldn't handle everything you offer. If it does, then use it to shape and define your career recipe.
 
 One decision leads to and influences another. The joy of being you is deciding what you want in your recipe and what you want to make out of it.
 

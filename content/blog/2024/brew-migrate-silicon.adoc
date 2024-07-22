@@ -10,7 +10,7 @@ omit_header_text: true
 
 {{< image-credit >}}
 
-I have been https://jmhreif.com/blog/docker-intel-to-m1/[using an Apple M1 laptop^] since autumn of 2021, but I just recently came across an issue that surprised me. It seems I hadn't converted Homebrew (a package manager for macOS) for compatibility with Apple Silicon. I mostly use Homebrew to install packages I rarely use (such as Ruby or Python libraries), so perhaps that's why I hadn't noticed. However, this issue surfaced because I tried to install a Python package (Poetry) to work on a generative AI project, and it was looking for Python in the wrong place.
+I have been https://jmhreif.com/blog/2021/docker-intel-to-m1/[using an Apple M1 laptop^] since autumn of 2021, but I just recently came across an issue that surprised me. It seems I hadn't converted Homebrew (a package manager for macOS) for compatibility with Apple Silicon. I mostly use Homebrew to install packages I rarely use (such as Ruby or Python libraries), so perhaps that's why I hadn't noticed. However, this issue surfaced because I tried to install a Python package (Poetry) to work on a generative AI project, and it was looking for Python in the wrong place.
 
 After diving down some rabbit holes to determine the actual root of the problem, I was able to migrate Homebrew for Apple Silicon. Here's how I did it.
 

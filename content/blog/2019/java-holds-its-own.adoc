@@ -1,0 +1,46 @@
+---
+date: 2019-11-18T12:00:00-06:00
+featured_image: "/img/programmingLanguages_popular.jpeg"
+tags: ["java","programming","97 things","programming languages","learning"]
+title: "In the Language Wars, Java Holds Its Own"
+draft: false
+omit_header_text: true
+---
+
+We all pick our favorites and downplay other options (colors, cars, sports team, etc.). Programming language choice is not exempt. Whether it's the one we are most comfortable with or the one that got us a job, we cling to that choice.
+
+Today, we will focus on Java. There are perfectly valid complaints and praises for this language, and we will cover them. As always, these are my experiences, so others may see things differently.
+
+== My history with Java
+
+First, let's see the lens through which I view this language.
+
+My introduction to programming applications was in college using — wait for it — Java. Prior to that I had a couple of intro classes using HTML, Alice, and Visual Basic. None of those were designed to dive into complex code structures.
+
+So, Java was my first exposure to programming for enterprise environments and critical processes. I've since had experience with many other languages, but I still go back to Java.
+
+== Java's design and background
+
+Java was created in 1995 with a C-like syntax and following the WORA principle (write once, run anywhere). Its goal was to simplify complex programming required in C-family languages and achieve platform independence via the JVM.
+
+I think knowing a language's history helps put positives and negatives into context, as understanding the background shows what the creators sacrificed to reach other goals.
+
+== Java's downsides
+
+Most complaints are that deployables are larger and the syntax is verbose. While valid, I think the previous paragraph on Java's history explains why these exist.
+
+First, Java deployables are larger overall. As we saw in Java's history, it was created to “write once, run anywhere”, so the same application could run on any JVM. This means all dependencies have to be included for deployment, whether rolled into a single JAR or across various components (WAR file+app server+JRE+dependencies). This affects the size of the deployment.
+
+Second, Java is verbose. Again, I attribute this to its design. It was created when C and similar languages ruled the space, which required developers to specify low-level details. Java's goal was to be more user-friendly by abstracting some of those details.
+
+== Why I like Java
+
+1. Java tells me what I am building and how. With other languages, I may be able to write something in fewer lines, but I'm less sure what it's doing under the hood, which I don't like as much.
+
+2. It's a widely applicable skill. Dealing with Java in various capacities has given me knowledge in both the business and the technical market. Java is not the only language with this benefit, but it seems the most enduring one with this property.
+
+3. Java allows me to play with technology in all stacks and areas. Java seems to bridge all those. I like to dabble and explore, and Java has enabled that.
+
+== What does it mean for developers?
+
+The market is diverse, with many options fitting business needs. One size does not (and should not) fit all, so each developer needs to decide the best language for the job. Even if you don't favor Java as a primary language, I still think it's a valuable skill to have.

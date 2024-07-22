@@ -12,11 +12,11 @@ omit_header_text: true
 
 _*Updated Dec 15, 2021_
 
-My previous https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[part 1^], https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[part 2^], and https://jmhreif.com/blog/cypher-sleuthing-dates-part3/[part 3^] posts on this topic introduced Cypher dates, translated formats to the Cypher-supported ISO 8601 format, calculated durations, accessed components, and translated durations to certain values.
+My previous https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part1/[part 1^], https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part2/[part 2^], and https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part3/[part 3^] posts on this topic introduced Cypher dates, translated formats to the Cypher-supported ISO 8601 format, calculated durations, accessed components, and translated durations to certain values.
 
 If you read those, then this post is the next post showing how to convert durations across component categories. If you haven't read the previous posts leading up to this one, feel free to catch up (recommend at least Part 3 as this post's prequel) - though it isn't required. 🙂
 
-In our https://jmhreif.com/blog/cypher-sleuthing-dates-part3/[Part 3^] post, we covered three duration categories (and related functions) for converting duration values to whole values - Months, Days, Seconds. We also looked at components and how to use them to access other values outside of those months, days, and seconds. In this post, we will combine the three duration functions along with various components to translate values from a unit in one category to a unit in another category. Then, we will take a look at a couple of fun puzzles having to do with Cypher and dates to close up the post.
+In our https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part3/[Part 3^] post, we covered three duration categories (and related functions) for converting duration values to whole values - Months, Days, Seconds. We also looked at components and how to use them to access other values outside of those months, days, and seconds. In this post, we will combine the three duration functions along with various components to translate values from a unit in one category to a unit in another category. Then, we will take a look at a couple of fun puzzles having to do with Cypher and dates to close up the post.
 
 == Rewind: Quick catchup
 
@@ -226,9 +226,9 @@ Until next time, happy coding!
 
 == Resources
 
-* Cypher Sleuthing: https://jmhreif.com/blog/cypher-sleuthing-dates-part1/[Part 1^]
-* Cypher Sleuthing: https://jmhreif.com/blog/cypher-sleuthing-dates-part2/[Part 2^]
-* Cypher Sleuthing: https://jmhreif.com/blog/cypher-sleuthing-dates-part3/[Part 3^]
+* Cypher Sleuthing: https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part1/[Part 1^]
+* Cypher Sleuthing: https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part2/[Part 2^]
+* Cypher Sleuthing: https://jmhreif.com/blog/2021/cypher-sleuthing-dates-part3/[Part 3^]
 * Cypher Manual: https://neo4j.com/docs/cypher-manual/current/functions/temporal/duration/#functions-duration-computing[Duration functions^]
 * Cypher Manual: https://neo4j.com/docs/cypher-manual/current/syntax/temporal/#cypher-temporal-accessing-components-durations[Duration Components^]
 * Cypher Manual: https://neo4j.com/docs/cypher-manual/current/functions/list/#functions-reduce[Reduce function^]

@@ -18,7 +18,7 @@ Without further ado, let's get started!
 
 == Architecture
 
-The first microservices architecture we started with in the https://jmhreif.com/blog/microservices-level1/[level 1 version^] of this project comprised of two Spring Boot applications trading a single message string between them. In the next two levels, we added an embedded and then a separate MongoDB database with imported book data set for the applications to host and call.
+The first microservices architecture we started with in the https://jmhreif.com/blog/2021/microservices-level1/[level 1 version^] of this project comprised of two Spring Boot applications trading a single message string between them. In the next two levels, we added an embedded and then a separate MongoDB database with imported book data set for the applications to host and call.
 
 Today's level 4 architecture adds a totally new service to host a REST API for interacting with author data. For now, we are only creating the backend service that hosts the API. We can build other services to use it at a later date.
 
@@ -34,7 +34,7 @@ The above-mentioned UCSD Book Graph data set we are using is very thorough and d
 
 I used the load script from the previous level 3 code with an updated data file name to import books, and then created a similar script for loading the author data into a separate database collection. Once the data was in, I ran a couple queries to verify the format looked as I expected it, then turned to the microservices application code!
 
-_*Note:* For more info about trimming the data set for this project, check out my https://jmhreif.com/blog/data-cleaning-goodreads/[blog post on picking data cleaning tools^]. Detailed steps on importing the data to the database are provided in the https://github.com/JMHReif/microservices-level4/tree/main/docker-mongodb[Github project's docker folder^]._
+_*Note:* For more info about trimming the data set for this project, check out my https://jmhreif.com/blog/2022/data-cleaning-goodreads/[blog post on picking data cleaning tools^]. Detailed steps on importing the data to the database are provided in the https://github.com/JMHReif/microservices-level4/tree/main/docker-mongodb[Github project's docker folder^]._
 
 == Applications - Service 1
 
@@ -196,5 +196,5 @@ Happy coding!
 == Resources
 
 * Github: https://github.com/JMHReif/microservices-level4[microservices-level4^] repository
-* Previous blog posts: https://jmhreif.com/blog/microservices-level1/[Microservices Level 1^], https://jmhreif.com/blog/microservices-level2/[Microservices Level 2^], https://jmhreif.com/blog/microservices-level3/[Microservices Level 3^]
-* Data set blog post: https://jmhreif.com/blog/data-cleaning-goodreads/[Goodreads data cleaning^]
+* Previous blog posts: https://jmhreif.com/blog/2021/microservices-level1/[Microservices Level 1^], https://jmhreif.com/blog/2022/microservices-level2/[Microservices Level 2^], https://jmhreif.com/blog/2022/microservices-level3/[Microservices Level 3^]
+* Data set blog post: https://jmhreif.com/blog/2022/data-cleaning-goodreads/[Goodreads data cleaning^]
