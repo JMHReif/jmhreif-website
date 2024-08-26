@@ -63,17 +63,17 @@ We can put these in our `SpringAiApplication` class by adding the following code
 [source,java]
 ----
 @Bean
-public EmbeddingClient embeddingClient() {
-	return new OpenAiEmbeddingClient(new OpenAiApi(System.getenv("SPRING_AI_OPENAI_API_KEY")));
+public EmbeddingModel embeddingModel() {
+	return new OpenAiEmbeddingModel(new OpenAiApi(System.getenv("SPRING_AI_OPENAI_API_KEY")));
 }
 
 @Bean
-public Neo4jVectorStore vectorStore(Driver driver, EmbeddingClient embeddingClient) {
-	return new Neo4jVectorStore(driver, embeddingClient,
-		Neo4jVectorStore.Neo4jVectorStoreConfig.builder()
-			.withLabel("Review")
-			.withIndexName("review-embedding-index")
-			.build());
+public Neo4jVectorStore vectorStore(Driver driver, EmbeddingModel embeddingModel) {
+	return new Neo4jVectorStore(driver, embeddingModel,
+			Neo4jVectorStore.Neo4jVectorStoreConfig.builder()
+					.withLabel("Review")
+					.withIndexName("review-text")
+					.build(), true);
 }
 ----
 
@@ -112,25 +112,23 @@ The next thing is to define a string for our prompt. This is the text that we wi
 @RestController
 @RequestMapping("/")
 public class BookController {
-    private final OpenAiChatClient client;
+    private final ChatClient client;
     private final Neo4jVectorStore vectorStore;
     private final BookRepository repo;
 
     String prompt = """
-            You are a book expert with high-quality book information in the CONTEXT section.
-            Answer with every book title provided in the CONTEXT.
-            Do not add extra information from any outside sources.
-            If you are unsure about a book, list the book and add that you are unsure.
-            
+            You are a book expert providing recommendations from high-quality book information in the CONTEXT section.
+            Please summarize the books provided in the context section.
+                        
             CONTEXT:
             {context}
-            
+                        
             PHRASE:
             {searchPhrase}
             """;
 
-    public BookController(OpenAiChatClient client, Neo4jVectorStore vectorStore, BookRepository repo) {
-        this.client = client;
+    public BookController(ChatClient.Builder builder, Neo4jVectorStore vectorStore, BookRepository repo) {
+        this.client = builder.build();
         this.vectorStore = vectorStore;
         this.repo = repo;
     }
@@ -138,7 +136,7 @@ public class BookController {
     //Retrieval Augmented Generation with Neo4j - vector search + retrieval query for related context
     @GetMapping("/rag")
     public String generateResponseWithContext(@RequestParam String searchPhrase) {
-        List<Document> results = vectorStore.similaritySearch(SearchRequest.query(searchPhrase).withTopK(5).withSimilarityThreshold(0.8));
+        List<Document> results = vectorStore.similaritySearch(SearchRequest.query(searchPhrase).withTopK(10));
 
         //more code shortly!
     }
@@ -151,31 +149,38 @@ The actual implementation of Spring AI's `similaritySearch()` method is below.
 
 [source,java]
 ----
-@Override
 public List<Document> similaritySearch(SearchRequest request) {
-	Assert.isTrue(request.getTopK() > 0, "The number of documents to returned must be greater than zero");
-	Assert.isTrue(request.getSimilarityThreshold() >= 0 && request.getSimilarityThreshold() <= 1,
-			"The similarity score is bounded between 0 and 1; least to most similar respectively.");
+    Assert.isTrue(request.getTopK() > 0, "The number of documents to returned must be greater than zero");
+    Assert.isTrue(request.getSimilarityThreshold() >= 0.0 && request.getSimilarityThreshold() <= 1.0, "The similarity score is bounded between 0 and 1; least to most similar respectively.");
+    Value embedding = Values.value(toFloatArray(this.embeddingModel.embed(request.getQuery())));
+    Session session = this.driver.session(this.config.sessionConfig);
 
-	var embedding = Values.value(toFloatArray(this.embeddingClient.embed(request.getQuery())));
-	try (var session = this.driver.session(this.config.sessionConfig)) {
-		StringBuilder condition = new StringBuilder("score >= $threshold");
-		if (request.hasFilterExpression()) {
-			condition.append(" AND ")
-				.append(this.filterExpressionConverter.convertExpression(request.getFilterExpression()));
-		}
-		String query = """
-				CALL db.index.vector.queryNodes($indexName, $numberOfNearestNeighbours, $embeddingValue)
-				YIELD node, score
-				WHERE %s
-				RETURN node, score""".formatted(condition);
+    List var6;
+    try {
+        StringBuilder condition = new StringBuilder("score >= $threshold");
+        if (request.hasFilterExpression()) {
+            condition.append(" AND ").append(this.filterExpressionConverter.convertExpression(request.getFilterExpression()));
+        }
 
-		return session
-			.run(query,
-					Map.of("indexName", this.config.indexName, "numberOfNearestNeighbours", request.getTopK(),
-							"embeddingValue", embedding, "threshold", request.getSimilarityThreshold()))
-			.list(Neo4jVectorStore::recordToDocument);
-	}
+        String query = "CALL db.index.vector.queryNodes($indexName, $numberOfNearestNeighbours, $embeddingValue)\nYIELD node, score\nWHERE %s\nRETURN node, score".formatted(condition);
+        var6 = session.run(query, Map.of("indexName", this.config.indexNameNotSanitized, "numberOfNearestNeighbours", request.getTopK(), "embeddingValue", embedding, "threshold", request.getSimilarityThreshold())).list(this::recordToDocument);
+    } catch (Throwable var8) {
+        if (session != null) {
+            try {
+                session.close();
+            } catch (Throwable var7) {
+                var8.addSuppressed(var7);
+            }
+        }
+
+        throw var8;
+    }
+
+    if (session != null) {
+        session.close();
+    }
+
+    return var6;
 }
 ----
 
@@ -184,35 +189,32 @@ Then, we map the similar `Review` nodes back to `Document` entities because Spri
 [source,java]
 ----
 private Map<String, Object> documentToRecord(Document document) {
-	var embedding = this.embeddingClient.embed(document);
-	document.setEmbedding(embedding);
-
-	var row = new HashMap<String, Object>();
-
-	row.put("id", document.getId());
-
-	var properties = new HashMap<String, Object>();
-	properties.put("text", document.getContent());
-
-	document.getMetadata().forEach((k, v) -> properties.put("metadata." + k, Values.value(v)));
-	row.put("properties", properties);
-
-	row.put(this.config.embeddingProperty, Values.value(toFloatArray(embedding)));
-	return row;
+    List<Double> embedding = this.embeddingModel.embed(document);
+    document.setEmbedding(embedding);
+    HashMap<String, Object> row = new HashMap();
+    row.put("id", document.getId());
+    HashMap<String, Object> properties = new HashMap();
+    properties.put("text", document.getContent());
+    document.getMetadata().forEach((k, v) -> {
+        properties.put("metadata." + k, Values.value(v));
+    });
+    row.put("properties", properties);
+    row.put(this.config.embeddingProperty, Values.value(toFloatArray(embedding)));
+    return row;
 }
 
-private static Document recordToDocument(org.neo4j.driver.Record neoRecord) {
-	var node = neoRecord.get("node").asNode();
-	var score = neoRecord.get("score").asFloat();
-	var metaData = new HashMap<String, Object>();
-	metaData.put("distance", 1 - score);
-	node.keys().forEach(key -> {
-		if (key.startsWith("metadata.")) {
-			metaData.put(key.substring(key.indexOf(".") + 1), node.get(key).asObject());
-		}
-	});
+private Document recordToDocument(Record neoRecord) {
+    Node node = neoRecord.get("node").asNode();
+    float score = neoRecord.get("score").asFloat();
+    HashMap<String, Object> metaData = new HashMap();
+    metaData.put("distance", 1.0F - score);
+    node.keys().forEach((key) -> {
+        if (key.startsWith("metadata.")) {
+            metaData.put(key.substring(key.indexOf(".") + 1), node.get(key).asObject());
+        }
 
-	return new Document(node.get("id").asString(), node.get("text").asString(), Map.copyOf(metaData));
+    });
+    return new Document(node.get(this.config.idProperty).asString(), node.get("text").asString(), Map.copyOf(metaData));
 }
 ----
 
@@ -240,15 +242,17 @@ Now we need to call that method in our controller and pass the results to a prom
 //Retrieval Augmented Generation with Neo4j - vector search + retrieval query for related context
 @GetMapping("/rag")
 public String generateResponseWithContext(@RequestParam String searchPhrase) {
-    List<Document> results = vectorStore.similaritySearch(SearchRequest.query(searchPhrase).withTopK(5).withSimilarityThreshold(0.8));
+    List<Document> results = vectorStore.similaritySearch(SearchRequest.query(searchPhrase).withTopK(10));
 
     List<Book> bookList = repo.findBooks(results.stream().map(Document::getId).collect(Collectors.toList()));
+    System.out.println("--- Book list ---");
+    System.out.println(bookList);
 
     var template = new PromptTemplate(prompt, Map.of("context", bookList.stream().map(b -> b.toString()).collect(Collectors.joining("\n")), "searchPhrase", searchPhrase));
     System.out.println("----- PROMPT -----");
     System.out.println(template.render());
 
-    return client.call(template.create().getContents());
+    return client.prompt(template.create()).call().content();
 
 }
 ----
@@ -268,6 +272,7 @@ To run our Goodreads AI application, you can use the `./mvnw spring-boot:run` co
 http ":8080/rag?searchPhrase=happy%20ending"
 http ":8080/rag?searchPhrase=encouragement"
 http ":8080/rag?searchPhrase=high%tech"
+http ":8080/rag?searchPhrase=caffeine"
 ----
 
 === Sample call and output + full prompt
@@ -277,28 +282,25 @@ Call and returned book recommendations:
 ----
 jenniferreif@elf-lord springai-goodreads % http ":8080/rag?searchPhrase=encouragement"
 
-The Cross and the Switchblade
-The Art of Recklessness: Poetry as Assertive Force and Contradiction
-I am unsure about 90 Minutes in Heaven: A True Story of Death and Life
-The Greatest Gift: The Original Story That Inspired the Christmas Classic It's a Wonderful Life
-I am unsure about Aligned: Volume 1 (Aligned, #1)
+The books recommended in the context section are all inspirational and encouraging reads. They include "An Autobiography," "The Greatest Gift," "The Cross and the Switchblade," "David and Goliath," "The Art of Recklessness," "90 Minutes in Heaven," "Just Kids," and "The Five People You Meet in Heaven." These books offer great insight, hope, and encouragement to readers looking for uplifting stories and messages.
 ----
 
 Application log output:
 [source,bash]
 ----
 ----- PROMPT -----
-You are a book expert with high-quality book information in the CONTEXT section.
-Answer with every book title provided in the CONTEXT.
-Do not add extra information from any outside sources.
-If you are unsure about a book, list the book and add that you are unsure.
+You are a book expert providing recommendations from high-quality book information in the CONTEXT section.
+Please summarize the books provided in the context section.
 
 CONTEXT:
-Book[book_id=772852, title=The Cross and the Switchblade, isbn=0515090255, isbn13=9780515090253, reviewList=[Review[id=f70c68721a0654462bcc6cd68e3259bd, text=encouraging, rating=4]]]
-Book[book_id=89375, title=90 Minutes in Heaven: A True Story of Death and Life, isbn=0800759494, isbn13=9780800759490, reviewList=[Review[id=85ef80e09c64ebd013aeebdb7292eda9, text=inspiring & hope filled, rating=5]]]
+Book[book_id=125441, title=An Autobiography, isbn=0717806677, isbn13=9780717806676, reviewList=[Review[id=d664f3888ecdfd78ec50606fe5f9b58c, text=Inspiring, rating=5]]]
 Book[book_id=1488663, title=The Greatest Gift: The Original Story That Inspired the Christmas Classic It's a Wonderful Life, isbn=0670862045, isbn13=9780670862047, reviewList=[Review[id=b74851666f2ec1841ca5876d977da872, text=Inspiring, rating=4]]]
+Book[book_id=772852, title=The Cross and the Switchblade, isbn=0515090255, isbn13=9780515090253, reviewList=[Review[id=f70c68721a0654462bcc6cd68e3259bd, text=encouraging, rating=4]]]
+Book[book_id=15751404, title=David and Goliath: Underdogs, Misfits, and the Art of Battling Giants, isbn=0316204366, isbn13=9780316204361, reviewList=[Review[id=8c8bf791101b405c2cd134da193d2701, text=Inspiring, rating=4]]]
 Book[book_id=7517330, title=The Art of Recklessness: Poetry as Assertive Force and Contradiction, isbn=1555975623, isbn13=9781555975623, reviewList=[Review[id=2df3600d488e182a3ef06bff7fc82eb8, text=Great insight, great encouragement, and great company., rating=4]]]
-Book[book_id=27802572, title=Aligned: Volume 1 (Aligned, #1), isbn=1519114796, isbn13=9781519114792, reviewList=[Review[id=60b9aa083733e751ddd471fa1a77535b, text=healing, rating=3]]]
+Book[book_id=89375, title=90 Minutes in Heaven: A True Story of Death and Life, isbn=0800759494, isbn13=9780800759490, reviewList=[Review[id=85ef80e09c64ebd013aeebdb7292eda9, text=inspiring & hope filled, rating=5]]]
+Book[book_id=341879, title=Just Kids, isbn=006621131X, isbn13=9780066211312, reviewList=[Review[id=3eab2a67ac0bde179dd017014cb212bf, text=Inspiring, rating=5], Review[id=d731490fcfefe6547e459bdff204df4a, text=inspiring., rating=5]]]
+Book[book_id=3431, title=The Five People You Meet in Heaven, isbn=1401308589, isbn13=9781401308582, reviewList=[Review[id=3ad8018734f177fd1fe47e6ada1c5df8, text=inspirational, rating=4], Review[id=2b94facb74fe09afd1fd54f0db2251c8, text=Inspiring, rating=5]]]
 
 PHRASE:
 encouragement
