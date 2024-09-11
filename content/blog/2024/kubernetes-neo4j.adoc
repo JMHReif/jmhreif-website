@@ -212,6 +212,6 @@ We barely scratched the surface what you can do with Kubernetes, leaving out top
 
 * Code (today's Github repository): https://github.com/JMHReif/kubernetes-neo4j-java[Neo4j on Kubernetes^]
 * For fun: https://cloud.google.com/kubernetes-engine/kubernetes-comic[Google's Kubernetes Comic^]
-* Diagram:https://neo4j.com/docs/operations-manual/current/kubernetes/quickstart-standalone/server-setup/[Neo4j on Kubernetes Components^]
+* Diagram: https://neo4j.com/docs/operations-manual/current/kubernetes/quickstart-standalone/server-setup/[Neo4j on Kubernetes Components^]
 * Quickstart: https://neo4j.com/docs/operations-manual/current/kubernetes/quickstart-standalone/[Spinning up Neo4j on Kubernetes^]
 * Guide: https://spring.io/guides/gs/spring-boot-kubernetes/[Deploy Spring Boot app on Kubernetes^]
