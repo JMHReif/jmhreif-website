@@ -53,7 +53,7 @@ There are so many sessions to choose from, but here are some highlight sessions 
 * https://neo4j.com/nodes2024/agenda/generating-faculty-specific-course-materials-with-neo4j-and-claude/[Generating Faculty-Specific Course Materials with Neo4j and Claude by Joseph Naccarato and Jevonia Harris^] - I love how the University of Delaware is using Neo4j and AI to help students and faculty learn and creating a more impactful learning environment.
 * https://neo4j.com/nodes2024/agenda/the-github-graph-open-source-collaboration-patterns-and-neo4j/[The GitHub Graph: Open Source Collaboration Patterns and Neo4j by Emilie Ma^] - Github is a tool many of us use daily, so seeing its projects and contributions could help me better understand how it works and how to use it.
 * https://neo4j.com/nodes2024/agenda/just-add-an-llm-creating-a-new-food-recommendation-engine-from-an-old-cypher-query-based-one/[Just Add an LLM: Creating a New Food Recommendation Engine from an Old Cypher Query-Based One by Alicia Powers^] - I can't wait to see how to migrate a Cypher recommendation system to one with LLMs and RAG, and then see how each compares in solving the same problem.
-* https://neo4j.com/nodes2024/agenda/the-personal-knowledge-vault/[The Personal Knowledge Vault by Mike Morley^] - It's hard to capture and organize information for our own productivity, but I want to see how we can use Neo4j and AI to help us manage our knowledge for personal and professional benefit.
+* https://neo4j.com/nodes2024/agenda/the-personal-knowledge-vault/[The Personal Knowledge Vault by Mike Morley^] - It's hard to capture and organize information for our own productivity, but I'm curious to see how we can use Neo4j and AI to help us manage our knowledge for personal and professional benefit.
 
 There are so many more amazing speakers and topics, so peruse the https://neo4j.com/nodes2024/agenda/[NODES 2024 full agenda^] for your own top picks. I will also be presenting a session with https://x.com/mkheck[Mark Heckler^] on https://neo4j.com/nodes2024/agenda/javas-genai-era-getting-spring-ai-and-neo4j-applications-to-production/[Java's GenAI Era: Getting Spring, AI, and Neo4j Applications to Production^].
 
@@ -67,6 +67,6 @@ Happy coding!
 
 == Resources
 
-* https://dev.neo4j.com/nodes24[NODES 2024 event^]
-* https://neo4j.com/video/road-to-nodes-2024/[Road to NODES: Pre-Conference Workshops^]
+* https://dev.neo4j.com/nodes24[NODES 2024 event webpage^]
+* https://neo4j.com/video/road-to-nodes-2024/[Road to NODES: pre-conference workshops^]
 * https://neo4j.com/nodes2024/agenda/[NODES 2024 full agenda^]
