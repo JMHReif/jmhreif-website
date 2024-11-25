@@ -1,0 +1,17 @@
+---
+date: 2024-12-01T09:00:00-06:00
+featured_image: "/img/spring-ai/???.jpg"
+image_credit: https://unsplash.com/photos/6Lf1kzL4AfY?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["neo4j","spring","update","application","development"]
+title: "How to update data with Spring Data Neo4j"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+//LEFT OFF HERE!
+
+== Resources
+
+//Something
