@@ -1,0 +1,56 @@
+---
+date: 2024-01-31T09:00:00-06:00
+featured_image: "/img/git/???.jpg"
+image_credit: https://unsplash.com/photos/grey-concrete-road-win-between-trees-under-night-sky-qy8XDguG9bw?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["git","merge","rebase","prune","reset"]
+title: "Adventures in Git: Resetting repositories when you end up in a mess"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+Just when I'm feeling pretty confident about my git skills, I run into a scenario like this one that backpedals my confidence. I keep learning, though, and small improvements are still progress. :)
+
+//TODO: link GA SDN course here!
+Last week, I was working on an update to the Graphacademy Spring Data Neo4j course, and things got out of sync. Before I knew it, I was stuck in merge conflict hell and wondering how I got there and if/how I could ever get out. Thankfully, with a little assistance from colleagues and internet blog posts, I got everything cleaned up and back on track!
+
+== Project structure
+
+To start off, let me set the stage with the project structure. There is an official code repository in a company Github organization, and then I created a fork of that in my own repositories for updates and features.
+
+The repository contains course, module, and lesson content for all graphacademy courses (which is quite a few). Many contributors make changes to the repository, and maintenance and improvements updates are made frequently.
+
+My intent was to have updates or experiments on my fork and only create pull requests in the official repository when I felt they were ready for production. However, a separate fork also creates added overhead to keep the fork in sync with the remote original. This is where the source of issues started.
+
+== What happened
+
+I received internal feedback on the Spring Data Neo4j course a few weeks ago, and I updated a few things then before the course went live. There were a few things I needed to circle back on, though, and update later. Last week, I had the chance to do that, so I opened my terminal and did a `git pull`, created a branch for my updates, and began making changes.
+
+However, what I failed to remember is that my local branch is tracking my repository fork, and that fork was way behind. I didn't even think to sync with the remote first, especially since I knew that my changes would not impact other courses.
+
+Once I finished the few changes to the text, I pushed my new branch to my fork on Github, and then did a pull request to merge with the official fork. As expected when you have updates based on an older version of the content, the commit log was long and out-of-sync.
+
+Next, I figured I probably needed to rebase my local and then pick my changes in the merge conflicts. This would hopefully allow me to overlay the changes from the official repo and then layer my updates at the same time. 
+
+Since my fork was extremely behind, though, there were multiple rounds of merge conflicts, and therefore, several stages of the rebase. Those took most of an afternoon to sort through, but by the end of it, I had a result that was missing things I'd changed months ago. Things still weren't in sync, and I wasn't sure where I had gone wrong nor how to get back on track.
+
+So I reached out to a couple of colleagues.
+//git diff and didn't work
+//what now?
+
+== Escaping the mess
+
+//changes were in remote branch on personal fork, so could overwrite local
+//reset local to remote
+//cherry-pick 2 commits I needed to add
+//push changes to remote, check PR
+
+== Cleanup
+
+//prune old branches from remote
+//pruned local to ensure mess couldn't be accidentally used later
+
+== Resources
+
+//something

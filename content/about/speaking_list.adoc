@@ -14,12 +14,8 @@ Speaking provides a way to share her learnings and experiences with others and l
 |===
 |*Name*                   |*Location*               |*Dates*
 
-|https://devnexus.com/presentations/connect-the-tables-how-to-graph-relational-databases[Devnexus^]  |Atlanta, GA, USA         |Apr 9-11
-|https://www.wearedevelopers.com/event/security-day-may-2024[WeAreDevelopers Live^]                  |Virtual                  |May 8
-|https://okcjug.org/[OKCJUG^]                                                                        |Oklahoma City, OK, USA   |May 14
-|https://www.kcdc.info/sessions[KCDC^]                                                               |Kansas City, MO, USA     |Jun 24-26
-|https://www.dev2next.com/speaker/2c6938bb43894957afc66c241a6d22d9[Dev2Next^]                        |Denver, CO, USA          |Sept 30-Oct 3
-|https://graphstuff.fm/[GraphStuff.FM podcast^]                                                      |Virtual                  |Every month!
+|https://devnexus.com/presentations/commonly-uncommon-diverse-paths-that-lead-to-winning-outcomes[Devnexus^]  |Atlanta, GA, USA         |Mar 4-6
+|https://www.arcofai.com/speaker/f1246a6e30ba440297f1e0c7052cb1d3[Arc of AI^]                                 |Austin, TX, USA          |Mar 31-Apr 3
 |===
 
 == *Conferences*
@@ -27,9 +23,10 @@ Speaking provides a way to share her learnings and experiences with others and l
 |===
 |*Name*                   |*Location*               |*Years*
 
-|NODES                    |Virtual                  |2019,2021,2023
-|KCDC                     |Kansas City, MO, USA     |2019,2021-2022
-|Devnexus                 |Atlanta, GA, USA         |2019,2022
+|NODES                    |Virtual                  |2019,2021,2023-2024
+|KCDC                     |Kansas City, MO, USA     |2019,2021-2023
+|Devnexus                 |Atlanta, GA, USA         |2019,2022-2024
+|Dev2next                 |Denver, CO, USA          |2024
 |ConFoo                   |Montreal, QC, Canada     |2019-2020,2022
 |===
 
@@ -41,9 +38,7 @@ Speaking provides a way to share her learnings and experiences with others and l
 |WeAreDevelopers Live        |Virtual                |2024
 |SFJUG                       |Virtual                |2024
 |ACM Chicago                 |Virtual                |2024
+|NYJavaSIG                   |New York City, NY, USA |2024
 |Data Science KC             |Kansas City, KS, USA   |2019,2024
-|Neo4j Connections: GenAI    |Virtual                |2023
-|Humanitarian AI             |Virtual                |2023
-|Hackmamba Twitter Space     |Virtual                |2023
-|StarTech Java               |Virtual                |2021,2023
+|OKCJUG                      |Oklahoma City, OK, USA |2024
 |===
