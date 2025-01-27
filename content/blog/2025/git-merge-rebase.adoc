@@ -1,10 +1,10 @@
 ---
-date: 2024-01-31T09:00:00-06:00
-featured_image: "/img/git/???.jpg"
-image_credit: https://unsplash.com/photos/grey-concrete-road-win-between-trees-under-night-sky-qy8XDguG9bw?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+date: 2025-01-27T09:00:00-06:00
+featured_image: "/img/unsplash-git-step-by-step.jpg"
+image_credit: https://unsplash.com/photos/a-close-up-of-a-game-board-e04R6GDZdvY?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
 tags: ["git","merge","rebase","prune","reset"]
 title: "Adventures in Git: Resetting repositories when you end up in a mess"
-draft: true
+draft: false
 omit_header_text: true
 ---
 
@@ -12,20 +12,19 @@ omit_header_text: true
 
 Just when I'm feeling pretty confident about my git skills, I run into a scenario like this one that backpedals my confidence. I keep learning, though, and small improvements are still progress. :)
 
-//TODO: link GA SDN course here!
-Last week, I was working on an update to the Graphacademy Spring Data Neo4j course, and things got out of sync. Before I knew it, I was stuck in merge conflict hell and wondering how I got there and if/how I could ever get out. Thankfully, with a little assistance from colleagues and internet blog posts, I got everything cleaned up and back on track!
+A few weeks ago, I was working on an update to the https://graphacademy.neo4j.com/courses/app-spring-data/[Graphacademy Spring Data Neo4j course^], and things got out of sync. Before I knew it, I was stuck in merge conflict hell and wondering how I got there and if/how I could ever get out. Thankfully, with a little assistance from colleagues and internet blog posts, I got everything cleaned up and back on track!
 
 == Project structure
 
 To start off, let me set the stage with the project structure. There is an official code repository in a company Github organization, and then I created a fork of that in my own repositories for updates and features.
 
-The repository contains course, module, and lesson content for all graphacademy courses (which is quite a few). Many contributors make changes to the repository, and maintenance and improvements updates are made frequently.
+The repository contains content for the courses, modules, and lessons for all graphacademy courses (which is quite a few). Many contributors make changes to the repository, and maintenance and improvements updates are made frequently.
 
 My intent was to have updates or experiments on my fork and only create pull requests in the official repository when I felt they were ready for production. However, a separate fork also creates added overhead to keep the fork in sync with the remote original. This is where the source of issues started.
 
 == What happened
 
-I received internal feedback on the Spring Data Neo4j course a few weeks ago, and I updated a few things then before the course went live. There were a few things I needed to circle back on, though, and update later. Last week, I had the chance to do that, so I opened my terminal and did a `git pull`, created a branch for my updates, and began making changes.
+I received internal feedback on the Spring Data Neo4j course a few weeks ago, and I updated a few things then before the course went live. There were a few things I needed to circle back on, though, and update later. I had the chance to do that, so I opened my terminal and did a `git pull`, created a branch for my updates, and began making changes.
 
 However, what I failed to remember is that my local branch is tracking my repository fork, and that fork was way behind. I didn't even think to sync with the remote first, especially since I knew that my changes would not impact other courses.
 
@@ -35,22 +34,78 @@ Next, I figured I probably needed to rebase my local and then pick my changes in
 
 Since my fork was extremely behind, though, there were multiple rounds of merge conflicts, and therefore, several stages of the rebase. Those took most of an afternoon to sort through, but by the end of it, I had a result that was missing things I'd changed months ago. Things still weren't in sync, and I wasn't sure where I had gone wrong nor how to get back on track.
 
-So I reached out to a couple of colleagues.
-//git diff and didn't work
-//what now?
+So I reached out to a couple of colleagues. The first recommendation was to run a `git diff` command between my folder and the released course's folder and apply it to a new branch from the main one. The command steps would look like below.
+
+[source, shell]
+----
+% git diff main -- asciidoc/courses/app-spring-data/modules/*/lessons/** > diff.txt
+% git checkout main
+% git checkout -b new-branch
+% git apply diff.txt
+----
+
+The results, though, were only a few trailing whitespaces and an error that it couldn't apply the binary patch to some images. Hm, that didn't work.
 
 == Escaping the mess
 
-//changes were in remote branch on personal fork, so could overwrite local
-//reset local to remote
-//cherry-pick 2 commits I needed to add
-//push changes to remote, check PR
+I was having trouble coming up with more options, but I knew my changes were committed to my fork of the repository. Then I should be able to overwrite everything locally without trying to save any of my changes and cherry pick the commits that had my changes, which were only two.
+
+The other option offered was to make a copy of the course folder to another folder, reset the repo to the main, and then copy the folder back. Either way, this would reset the local repository to match the production version, and then I could overlay my latest updates on top.
+
+I started off following the commands in a https://www.freecodecamp.org/news/git-reset-origin-how-to-reset-a-local-branch-to-remote-tracking-branch/[freeCodeCamp article^] to reset a local repository to the remote. Steps were as follows:
+
+1. Save the current state of your local branch (optional).
+2. Fetch the latest version of the code from the remote.
+3. Reset the local branch.
+4. Clean up files (optional).
+
+I skipped the first step because I already have my changes saved in a couple of commits. That means I could execute step 2.
+
+[source,shell]
+----
+% git checkout main
+% git fetch upstream/main
+% git reset --hard upstream/main
+% git clean -xdf
+----
+
+The first two commands check out the main branch, and then fetch the changes from the official fork (`upstream`) on its `main` branch. Next, I reset my local repository to the upstream's main branch with a `--hard` flag to overwrite all changes in the working directory. Wrapping up this part, I cleaned up any untracked files with the `git clean`. The flags remove ignored files (`-x`), remove untracked folders (`-d`), and remove untracked files (`-f`), just to make sure remnants aren't left behind.
+
+Everything looked good at this point, so the next step was to cherry pick the commits with my changes. https://www.git-tower.com/learn/git/faq/cherry-pick[This article^] detailed commands I needed, so I went out to my fork to find the commit hashes and then ran the following commands:
+
+[source,shell]
+----
+% git cherry-pick <hash> --no-commit
+% git status
+% git add .
+% git commit -am "Commit message here."
+% git push origin main
+----
+
+First is the one for adding commits of the changes I want to incorporate. I ran this command for each of the two commits I wanted to overlay. You might notice the `--no-commit` flag, which only adds the changes to my working directory and does not add the commits to my repo. This worked out beautifully because I could add my changes and consolidate the originally two separate commits into a single one! Then the next several commands complete the process to add the overlaid changes to tracked files, commit them, and push everything to my fork.
+
+Once this was complete, I could create/check the PR from my fork to the official one, and found that the only differences were my changes. Hooray, it worked to get everything synced back up!
 
 == Cleanup
 
-//prune old branches from remote
-//pruned local to ensure mess couldn't be accidentally used later
+The last thing I wanted to do was clean up any branches containing the hopelessly out-of-sync versions from before so that I couldn't accidentally reuse them.
+
+As usual, I found an https://www.fizerkhan.com/blog/posts/clean-up-your-local-branches-after-merge-and-delete-in-github[article to reference^] and make sure I didn't miss any steps. :) My favorite part of this article's recommendation is that they have you execute a "dry run" before you actually remove the old branches, just to make sure you don't remove something accidentally. I removed any branches that I didn't want anymore from my fork in Github, and then ran this series of commands:
+
+[source,shell]
+----
+% git remote prune origin --dry-run
+% git remote prune origin
+% git branch -d sdn-updates-round2
+----
+
+The first two commands remove references to remote branches that no longer exist, removing local copies of branches that were deleted in Github - first with a dry run to check what will get removed, and then actually pruning them. The last command removes any local branches that weren't in remote repositories, so anything where I'd created a new local branch to try to resync from Github and then had to abandon because of the conflicts.
+
+With everything synced back up, my changes added, and problem branches cleaned up, I could strike this task from my list (finally) and walk away with some new git knowledge for next time. Happy coding!
 
 == Resources
 
-//something
+* Free, online course: https://graphacademy.neo4j.com/courses/app-spring-data/[Graphacademy Spring Data Neo4j course^]
+* Blog post (FreeCodeCamp): https://www.freecodecamp.org/news/git-reset-origin-how-to-reset-a-local-branch-to-remote-tracking-branch/[Git Reset Origin - How to Reset a Local Branch to Remote Tracking Branch^]
+* Blog post: https://www.git-tower.com/learn/git/faq/cherry-pick[The git cherry-pick command: what it is and how to use it^]
+* Blog post: https://www.fizerkhan.com/blog/posts/clean-up-your-local-branches-after-merge-and-delete-in-github[Clean up your local branches after merge and delete in GitHub^]
