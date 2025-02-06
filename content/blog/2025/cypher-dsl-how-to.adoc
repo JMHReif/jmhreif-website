@@ -1,0 +1,212 @@
+---
+date: 2025-02-06T09:00:00-06:00
+featured_image: "/img/unsplash-cypher-dsl.jpg"
+image_credit: https://unsplash.com/photos/woman-in-gray-top-on-top-of-the-building-vEACHdzvgco?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["cypher","dsl","example","how-to","query language"]
+title: "How-To: Use Cypher DSL for programmatic queries"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+//TODO: Pick consistent POV (1st/2nd/3rd person)
+
+I recently had the opportunity to play with the Cypher DSL (domain-specific language) library, and I found it difficult to figure out syntax for some of the queries I was trying to construct.
+
+This blog post will hopefully help you understand how to construct your own programmatic queries with Cypher DSL by showing you syntax for nodes, relationships, and filtering. Then see how this in action with some examples for assembling those components into full queries translated from common clauses, functions, and result formats in Cypher.
+
+== What is Cypher DSL?
+
+Cypher DSL generates Cypher queries using methods for filtering, pattern-matching, and more. Using a DSL could be an alternative way to assemble query syntax outside of plain text, meaning it is also type-safe (safer against injection) and offers query parsing and other functionality outside of executing queries.
+
+Further detail is available in the readme of the https://github.com/neo4j/cypher-dsl[Cypher DSL Github repository^].
+
+== What was missing?
+
+When I explored the Cypher DSL for another project I was working on, I found the existing examples missing some syntax, requiring me to comb the docs, API, code, and one example repo to cobble together my syntax. (Note: the https://neo4j.github.io/cypher-dsl/2024.4.0/#functions[function section of the docs^] explicitly states that not everything is documented.) Though there are several examples in the repo, they were missing what I needed and are all in test format, which meant I also had to translate from testing syntax (`assertThat`, etc) to actually running a query against the database and retrieving results (interacting with `Result` and `Record` return objects).
+
+This left me feeling bummed and spending way more time than I wanted constructing queries from multiple snippets of source material. In this post, I hope to consolidate this knowledge a bit by providing some starter examples that cover all the basic syntax for you to construct your own queries.
+
+Let's get started!
+
+== Project setup
+
+My https://github.com/JMHReif/cypher-dsl-examples[code repository for these examples^] uses JBang scripts and includes dependencies for the Neo4j Java Driver and the Cypher DSL library.
+
+The examples use a https://dev.neo4j.com/aura-java[Neo4j Aura free tier instance^] with a pre-loaded example data set (instructions for import available in the repository). Each example focuses on a different component of Cypher queries - finding individual nodes, filtering node properties, finding patterns (using relationships), and filtering patterns (with filter expressions and result-ordering).
+
+Each of the example scripts sets database credentials from environment variables and creates a driver instance. Next is Cypher DSL syntax to construct the query, defining the entities up front with variables. Some of the examples define nodes and relationships within the `.match()` method, but I found it easier to read if I defined nodes and relationships to individual variables and then used those variables in the `Cypher.match()` call.
+
+The next code block is the `try-catch` section that creates a driver session and calls the query. In order to run the Cypher, I needed to render the programmatic syntax into text using the `Renderer` and then execute that.
+
+Lastly, the script loops through the records in the result object and prints them to the console, catches any errors, and closes the driver.
+
+== Finding nodes and filtering
+
+The first examples focus on https://github.com/JMHReif/cypher-dsl-examples/blob/main/find_products.java[finding nodes^] and https://github.com/JMHReif/cypher-dsl-examples/blob/main/find_products_filtering.java[filtering them by property value^].
+
+To find product nodes with Cypher, you might use a query like this one:
+
+[source,cypher]
+----
+MATCH (p:Product)
+RETURN p.productId, p.productName;
+----
+
+.Cypher DSL syntax - find product nodes:
+[source,java]
+----
+var products = Cypher.node("Product").named("p"); //(p:Product)
+var query = Cypher.match(products)
+	.returning(products.property("productId"),
+		products.property("productName"))
+	.build();
+----
+
+The code above sets the variable `products` to a Cypher DSL node with label `Product` and creates a node variable `p`. This would be the equivalent to the Cypher syntax `(p:Product)`. Next, the query gets constructed by calling a `.match()` for the `MATCH` clause, passing in the product nodes, and then returning the `productId` and `productName` properties.
+
+.Query results (only top 5 shown):
+[source,shell]
+----
+Found:
+[p.productId: "1", p.productName: "Brazilian - Organic"]
+[p.productId: "2", p.productName: "Our Old Time Diner Blend"]
+[p.productId: "3", p.productName: "Espresso Roast"]
+[p.productId: "4", p.productName: "Primo Espresso Roast"]
+[p.productId: "5", p.productName: "Columbian Medium Roast"]
+...
+----
+
+In the next example, you can start applying filters for node property values and return full objects rather than specific properties. Here is the sample Cypher statement:
+
+[source,cypher]
+----
+MATCH (p:Product {productName: "Columbian Medium Roast Sm"})
+RETURN p{.*};
+----
+
+.Cypher DSL syntax - find filtered product nodes:
+[source,java]
+----
+var coffee = Cypher.node("Product").named("p")
+	.withProperties("productName", Cypher.literalOf("Columbian Medium Roast Sm")); //(p:Product {productName: "Columbian Medium Roast Sm"})
+var query = Cypher.match(coffee)
+	.returning(coffee.project(Cypher.asterisk()))
+	.build();
+----
+
+The first variable finds nodes with label `Product` and sets to a node variable `p`, then looks for a property (`.withProperties()`) called `productName` with a value equal to `"Columbian Medium Roast Sm"`.
+
+The next variable constructs the query by calling the `match()` method for those `coffee` nodes and returns the coffee object projected with all key/value pairs.
+
+.Query results:
+[source,shell]
+----
+Found:
+[p: {promo: "N", taxExempt: "Y", unitOfMeasure: "8 oz", 
+productId: "28", retailPrice: "$2.00 ", wholesalePrice: "0.4", 
+productDescription: "A smooth cup of coffee any time of day. ", 
+productName: "Columbian Medium Roast Sm", newProduct: "N"}]
+----
+
+Now that you can assemble Cypher for nodes with property filters and a couple different return formats, the next examples add relationships to the mix and help construct patterns!
+
+== Finding nodes and filtering
+
+To start, you can pull related entities for a node with something like the Cypher below:
+
+[source,cypher]
+----
+MATCH (c:Category {category: "Coffee"})<-[rel:ORGANIZED_IN]-(t:Type)<-[rel2:SORTED_BY]-(p:Product)
+RETURN p.productId, p.productName;
+----
+
+.Cypher DSL syntax - find products in Coffee category:
+[source,java]
+----
+var category = Cypher.node("Category").named("c")
+	.withProperties("category", Cypher.literalOf("Coffee")); //(c:Category {category: "Coffee"})
+var types = Cypher.node("Type").named("t"); //(t:Type)
+var products = Cypher.node("Product").named("p"); //(p:Product)
+var query = Cypher.match(products
+		.relationshipTo(types, "SORTED_BY")
+		.relationshipTo(category, "ORGANIZED_IN"))
+	.returning(products.property("productId"),
+		products.property("productName"))
+	.build();
+----
+
+The first variable has very similar syntax to retrieving a specific product in the node filtering example above, though this looks for a node with the `Category` label and a `category` property value of `Coffee` and sets those to the node variable `c`. Then the next two variables find related `Type` and `Product` nodes, respectively.
+
+Finally, the query is constructed, and you might notice that relationships are not defined up front into separate variables, but instead within the `match()` method itself. The match looks for products with a relationship to the `Type` nodes, which have a relationship to `Category` nodes. (Note: you could use the reverse `relationshipFrom()` method to define incoming relationships.) Similar to previous examples, this query returns the `productId` and `productName` properties of `Product` nodes.
+
+.Query results (only top 5 shown):
+[source,shell]
+----
+Found:
+[p.productId: "22", p.productName: "Our Old Time Diner Blend Sm"]
+[p.productId: "23", p.productName: "Our Old Time Diner Blend Rg"]
+[p.productId: "24", p.productName: "Our Old Time Diner Blend Lg"]
+[p.productId: "25", p.productName: "Brazilian Sm"]
+[p.productId: "26", p.productName: "Brazilian Rg"]
+...
+----
+
+In the next example, you can filter relationships using the Cypher `WHERE` clause and a `greater than` expression, as well as return ordered and limited results. Here is what that would look like in Cypher:
+
+[source,cypher]
+----
+MATCH (p:Product {productName: "Latte"})<-[rel:CONTAINS]-(o:Order)
+WHERE rel.quantity > 2
+RETURN o.transactionId, p.productName, rel.quantity AS quantity
+ORDER BY quantity DESC
+LIMIT 10;
+----
+
+.Cypher DSL syntax - find orders containing > 2 lattes:
+[source,java]
+----
+var product = Cypher.node("Product").named("p")
+	.withProperties("productName", Cypher.literalOf("Latte")); //(p:Product {productName: "Latte"})
+var orders = Cypher.node("Order").named("o"); //(o:Order)
+var containsRel = product.relationshipFrom(orders, "CONTAINS").named("rel"); //(p)-[rel:CONTAINS]-(o)
+var quantity = containsRel.property("quantity"); //rel.quantity
+var query = Cypher.match(containsRel)
+	.where(quantity.gt(Cypher.literalOf(2)))
+	.returning(orders.property("transactionId"),
+		product.property("productName"),
+		quantity)
+	.orderBy(quantity.descending())
+	.limit(10)
+	.build();
+----
+
+The first variable syntax follows previous examples, but looking for `Product` nodes with a `productName` equal to `Latte` and setting those to node variable `p`. The next three variables looks for `(o:Order)`, the `CONTAINS` relationship between product and orders (set to node variable `rel`), and the relationship's `quantity` property.
+
+Constructing the query matches the relationship (with connected nodes), then filters using the `.where()` method to look for order quantities greater than 2 (`WHERE rel.quantity > 2`). The query returns the order's `transactionId`, product's `productName`, and the relationship's `quantity` properties, as well as orders results by quantity in descending order and limits results to the top 10.
+
+.Query results (only top 5 shown):
+[source,shell]
+----
+Found:
+[o.transactionId: "5695cf16-4957-4082-afda-1adbe0da52f4", p.productName: "Latte", rel.quantity: 3]
+[o.transactionId: "8f67b240-f442-4c02-9030-37023443bbcf", p.productName: "Latte", rel.quantity: 3]
+[o.transactionId: "6fa18355-609f-47f9-b585-e617553bd2b8", p.productName: "Latte", rel.quantity: 3]
+[o.transactionId: "8b523b23-22b2-4154-812c-e79a99202fb2", p.productName: "Latte", rel.quantity: 3]
+[o.transactionId: "20799227-8f4a-424f-ab61-b8586d3b49eb", p.productName: "Latte", rel.quantity: 3]
+...
+----
+
+== Wrapping Up!
+
+In this post, you constructed a few starting examples that cover many of the commonly-used Cypher clauses, patterns, and functions. If there are some examples you would like to see added, please create a pull request or reach out to me, and I'll try to put those together.
+
+As always, happy coding!
+
+== Resources
+
+* Github repository: https://github.com/JMHReif/cypher-dsl-examples[Accompanying code for this blog post^]
+* Github repository: https://github.com/neo4j/cypher-dsl[Cypher DSL library^]
+* Docs: https://neo4j.github.io/cypher-dsl/[Cypher DSL documentation^]
+* Examples: https://github.com/neo4j/cypher-dsl/tree/main/neo4j-cypher-dsl-examples[Cypher DSL official examples (tests)^]
