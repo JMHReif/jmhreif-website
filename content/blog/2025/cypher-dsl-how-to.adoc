@@ -10,8 +10,6 @@ omit_header_text: true
 
 {{< image-credit >}}
 
-//TODO: Pick consistent POV (1st/2nd/3rd person)
-
 I recently had the opportunity to play with the Cypher DSL (domain-specific language) library, and I found it difficult to figure out syntax for some of the queries I was trying to construct.
 
 This blog post will hopefully help you understand how to construct your own programmatic queries with Cypher DSL by showing you syntax for nodes, relationships, and filtering. Then see how this in action with some examples for assembling those components into full queries translated from common clauses, functions, and result formats in Cypher.
