@@ -1,0 +1,29 @@
+---
+date: 2025-05-10T09:00:00-06:00
+featured_image: "/img/???.jpg"
+image_credit: https://unsplash.com/photos/orange-pink-and-teal-illustration-Tk0B3Dfkf_4?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["neo4j","apoc","vector-db","pinecone","genai"]
+title: "Neo4j APOC procedures connecting to Pinecone vector database"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+//blah blah blah
+
+////
+NOTES:
+Create index (working):
+```
+CALL apoc.vectordb.pinecone.createCollection(null, 'test-index', 'cosine', 1536, { headers: {`Api-Key`: "<YOUR KEY HERE>"}, body: { spec: { serverless: { cloud: "aws", region: "us-east-1"}}}});
+```
+
+When I dug into code, realized that there’s not functionality missing…but the config was a bit hidden.
+Just like with `headers` key config, you can add the required fields for Pinecone index spec in the config, as well
+Documentation uses “optional config”, but actually, depending on proc, it isn’t optional….you still have to specify API key (not optional)
+For the create collection, you have to specify an index type (`pod` or `serverless`), then all the subdetails that go with each
+I recommend looking closely at the Pinecone API docs to find out what params are required
+Also took some trial and error to figure out that I haven’t been succesful supplying the HostKey in the 1st param…and how to structure the body part of the index specs.
+Maybe some improvement to documentation and examples are needed…hoping to submit a PR on that soon.
+////
