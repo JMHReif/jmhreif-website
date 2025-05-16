@@ -1,0 +1,69 @@
+---
+date: 2025-05-30T09:00:00-06:00
+featured_image: "/img/???.jpg"
+image_credit: https://unsplash.com/photos/orange-pink-and-teal-illustration-Tk0B3Dfkf_4?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["maven","java","neo4j","object-mapping","ogm"]
+title: "???"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+//blah blah blah
+
+////
+NOTES:
+
+1. Generate a new Maven project (https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html):
+
+[source,shell]
+----
+mvn archetype:generate -DgroupId=com.jmhreif -DartifactId=neo4j-java-object-mapping -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.5 -DinteractiveMode=false
+----
+
+2. Add dependencies to `pom.xml`:
+
+[source,xml]
+----
+<dependency>
+    <groupId>org.neo4j.driver</groupId>
+    <artifactId>neo4j-java-driver</artifactId>
+    <version>5.28.4</version>
+</dependency>
+----
+
+3. Add properties to connect to Neo4j:
+[source,text]
+----
+# Neo4j connection properties
+NEO4J_URI=<NEO4J_URI_HERE>
+NEO4J_USERNAME=<NEO4J_USERNAME_HERE>
+NEO4J_PASSWORD=<NEO4J_PASSWORD_HERE>
+----
+
+4. Load app properties:
+[source,java]
+----
+//see AppProperties.java
+----
+
+5. Add mvn wrapper (mvnw) to project (https://maven.apache.org/wrapper/):
+[source,shell]
+----
+mvn wrapper:wrapper
+----
+
+6. Run the application:
+[source,shell]
+----
+./mvnw compile exec:java -Dexec.mainClass="com.jmhreif.App"
+----
+
+.Application output:
+[source,shell]
+----
+Hello World!
+----
+
+////

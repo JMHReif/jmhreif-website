@@ -1,7 +1,7 @@
 ---
 date: 2021-08-02T12:00:00-06:00
 featured_image: "/img/refresh-athlete.jpeg"
-image_credit: https://unsplash.com/photos/mo4UZiHy_KU?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+image_credit: https://unsplash.com/photos/person-splashing-water-V6If1LurrhU?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
 tags: ["spring","neo4j","applications","development","programming"]
 title: "Create a Data Marvel with Spring Data Neo4j"
 draft: false

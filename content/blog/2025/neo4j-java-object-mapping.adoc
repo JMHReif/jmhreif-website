@@ -1,0 +1,320 @@
+---
+date: 2025-05-16T09:00:00-06:00
+featured_image: "/img/unsplash-chess-opponent-move.jpg"
+image_credit: https://unsplash.com/photos/depth-of-field-photography-of-man-playing-chess-fzOITuS1DIQ?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["java","neo4j","object-mapping","ogm"]
+title: "Basic OGM: Object Mapping in the Neo4j Java Driver"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+As of the Neo4j Java Driver 5.28.5, the driver now includes a basic object mapping feature. This allows you to map Java objects to Neo4j nodes and relationships without needing to do so manually or deal with raw results.
+
+---
+*Note:* The driver's new object mapping is not a full-fledged Object Graph Mapping (OGM) solution. For a more comprehensive option, check out the https://neo4j.com/docs/ogm-manual/current/[Neo4j OGM library^].
+
+---
+
+== Code example
+
+I put together a brief example of how to use the new object mapping feature in a Maven project. The example demonstrates how to create a frameworkless Java application that connects to a Neo4j database and performs a couple of queries, returning the results with the object mapping feature.
+
+The data set used in this example is the https://github.com/neo4j-graph-examples/northwind[Northwind graph^], which is a sample database that contains information about customers, orders, products, and suppliers.
+
+image::/img/northwind-graph-data-model.svg[Northwind graph data model]
+
+We will need to create a Maven project first.
+
+== Project setup
+
+These were the steps that I followed to set up the project. You can find the complete code in the https://github.com/JMHReif/neo4j-java-object-mapping[related Github repository^].
+
+1. https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html[Generate a new Maven project^]:
+
+[source,shell]
+----
+mvn archetype:generate -DgroupId=com.jmhreif -DartifactId=neo4j-java-object-mapping -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.5 -DinteractiveMode=false
+----
+
+[start=2]
+2. Add Neo4j Java driver dependency to the `pom.xml`:
+
+[source,xml]
+----
+<dependency>
+    <groupId>org.neo4j.driver</groupId>
+    <artifactId>neo4j-java-driver</artifactId>
+    <version>5.28.5</version>
+</dependency>
+----
+
+---
+*Note:* You will need version 5.28.5 or later of the Neo4j Java Driver to use the object mapping feature.
+
+---
+
+[start=3]
+3. Create an `application.properties` (src/main/resources) and add properties to connect to Neo4j:
+[source,text]
+----
+# Neo4j connection properties
+NEO4J_URI=<NEO4J_URI_HERE>
+NEO4J_USERNAME=<NEO4J_USERNAME_HERE>
+NEO4J_PASSWORD=<NEO4J_PASSWORD_HERE>
+----
+
+[start=4]
+4. Load application properties (see https://github.com/JMHReif/neo4j-java-object-mapping/blob/main/src/main/java/com/jmhreif/AppProperties.java[AppProperties.java^])
+
+[start=5]
+5. Add mvn wrapper (mvnw) to project (https://maven.apache.org/wrapper/):
+[source,shell]
+----
+mvn wrapper:wrapper
+----
+
+== Domain model
+
+While we could model several domain objects, for simplicity, we will just model an order and the products purchased.
+
+Let's start with the `Order` record (class would work as well).
+
+[source,java]
+----
+public record Order(Integer orderID,
+                    ZonedDateTime orderDate,
+                    ZonedDateTime shippedDate) {
+}
+----
+
+Now we can execute a query in our main application class to retrieve orders and map the results to our `Order` record.
+
+== Querying and mapping results
+
+The main method in the `App.java` class loads the application properties (containing the Neo4j connection details) and creates a Neo4j driver instance.
+
+[source,java]
+----
+public static void main(String[] args) {
+    AppProperties.loadProperties();
+
+    // Create a new Neo4j driver instance
+    try (var driver = GraphDatabase.driver(
+            System.getProperty("NEO4J_URI"),
+            AuthTokens.basic(
+                System.getProperty("NEO4J_USERNAME"),
+                System.getProperty("NEO4J_PASSWORD"))
+            )) {
+                driver.verifyConnectivity();
+
+                // Run query and return results
+    } catch (Exception e) {
+            e.printStackTrace();
+    }
+}
+----
+
+Next, we can add the code to run a Cypher query to retrieve orders and map the results to our `Order` record.
+
+[source,java]
+----
+try (<driver>) {
+    //verify connectivity
+
+    // Return orders mapped to Order domain record
+    var orders = driver.executableQuery("""
+        MATCH (o:Order) 
+        RETURN o AS order
+        LIMIT 3;
+        """)
+        .execute()
+        .records()
+        .stream()
+        .map(record -> record.get("order").as(Order.class))
+        .toList();
+        
+        for (var order : orders) {
+            System.out.println(order);
+        }
+} //catch
+----
+
+The query shown above finds `Order` nodes in the database and returns three of them. The `.as(Order.class)` method maps the raw result map to the `Order` record type. The for loop then prints each order to the console.
+
+Run the application to see the results. If you have the Neo4j database running and the Northwind graph data loaded, you should see output similar to that shown below:
+
+[source,shell]
+----
+./mvnw compile exec:java -Dexec.mainClass="com.jmhreif.App"
+----
+
+[source,text]
+.Output:
+----
+Order[orderID=10248, orderDate=1996-07-04T05:00Z, shippedDate=1996-07-16T05:00Z]
+Order[orderID=10249, orderDate=1996-07-05T05:00Z, shippedDate=1996-07-10T05:00Z]
+Order[orderID=10250, orderDate=1996-07-08T05:00Z, shippedDate=1996-07-12T05:00Z]
+----
+
+== Querying and Mapping Graph Data
+
+The example above shows how to map a single domain object. However, how do we map connected data (graphs)? After all, this is Neo4j. :) We could extend our existing `Order` record to include a list of products, but then each time we return orders, we would also need to fetch the related products or that field would be null.
+
+Instead, we can create a new record to represent the order with its products.
+
+[source,java]
+----
+public record OrderedProducts(
+        Integer orderID,
+        ZonedDateTime orderDate,
+        List<String> products) {
+}
+----
+
+---
+*Note:* I think of these domain classes as views or projections of the data, rather than separate entities like an OGM might see. This also means we have to return node and relationship results to match our domain model. We will see this in better detail in an upcoming example.
+
+---
+
+Now we can add another query to return orders with their products.
+
+[source,java]
+----
+// Return products mapped to Product domain record
+var orderSummaries = driver.executableQuery("""
+    MATCH (o:Order)-[r2:ORDERS]->(p:Product)
+    WITH o, collect(p.productName) as products
+    RETURN o { orderID: o.orderID,
+        orderDate: o.orderDate,
+        products: products,
+        items: size(products)
+    } AS order
+    LIMIT 3;
+    """)
+    .execute()
+    .records()
+    .stream()
+    .map(record -> record.get("order").as(OrderedProducts.class))
+    .toList();
+
+for (var orderInfo : orderSummaries) {
+    System.out.println(orderInfo);
+}
+----
+
+This query matches `Order` nodes and their related `Product` nodes, collecting the product names into a list. It returns an order object in the format that matches the `OrderedProducts` record with the order ID, order date, and the list of products.
+
+Run the application again to see the results. You should see output similar to the following:
+
+[source,text]
+.Output (formatted for readability):
+----
+OrderedProducts[
+    orderID=10285, 
+    orderDate=1996-08-20T05:00Z, 
+    products=[Chai, Boston Crab Meat, Perth Pasties]]
+OrderedProducts[
+    orderID=10294, 
+    orderDate=1996-08-30T05:00Z, 
+    products=[Chai, Alice Mutton, Ipoh Coffee, Camembert Pierrot, Rhönbräu Klosterbier]]
+OrderedProducts[
+    orderID=10317, 
+    orderDate=1996-09-30T05:00Z, 
+    products=[Chai]]
+----
+
+Let's look at one more example that is a bit more complex, where we return a receipt format with general order information, plus line item information of the products purchased.
+
+First, the records to represent the order invoice and its line items:
+
+[source,java]
+----
+public record OrderInvoice(Integer orderID,
+                             String companyName,
+                             ZonedDateTime orderDate,
+                             Double orderTotal,
+                             List<LineItem> lineItems) {
+}
+
+public record LineItem(String productName,
+                       Integer quantity,
+                       Double itemTotal) {
+}
+----
+
+Next, the query to return the order receipt with line items and map it to our object:
+
+[source,java]
+----
+// Return ordered products mapped to OrderInvoice domain record
+var orderedProducts = driver.executableQuery("""
+    MATCH (c:Customer)-[r:PURCHASED]->(o:Order)-[r2:ORDERS]->(p:Product) 
+    WITH c, r, o, sum(r2.quantity*p.unitPrice) as orderTotal
+    RETURN o { orderID: o.orderID,
+        companyName: c.companyName,
+        orderDate: o.orderDate,
+        orderTotal: orderTotal,
+        lineItems: COLLECT {
+            MATCH (o)-[r3:ORDERS]->(p2:Product) 
+            RETURN p2 { productName: p2.productName, 
+                quantity: r3.quantity, 
+                itemTotal: r3.quantity * p2.unitPrice }
+        }
+    }
+    LIMIT 3;
+    """)
+    .execute()
+    .records()
+    .stream()
+    .map(record -> record.get("o").as(OrderInvoice.class))
+    .toList();
+
+for (var invoice : orderedProducts) {
+    System.out.println(invoice);
+}
+----
+
+This query is a bit more complex because it finds the customer who made the purchase and sums up each ordered item's price for the order total. The only piece left is to retrieve the line items for each order, which is done using a subquery in the `COLLECT` clause. It collects the `Order ORDERS Product` pattern and returns the `name`, `quantity`, and calculates the `itemTotal`. The result is mapped to the `OrderInvoice` record.
+
+Run the application one more time to see the results. You should see output similar to the following:
+
+[source,text]
+.Output (formatted for readability):
+----
+OrderInvoice[
+    orderID=10643, companyName=Alfreds Futterkiste, 
+    orderDate=1997-08-25T05:00Z, orderTotal=1086.0, 
+    lineItems=[
+        LineItem[productName=Rössle Sauerkraut, quantity=15, itemTotal=684.0], 
+        LineItem[productName=Chartreuse verte, quantity=21, itemTotal=378.0], 
+        LineItem[productName=Spegesild, quantity=2, itemTotal=24.0]]]
+OrderInvoice[
+    orderID=10692, companyName=Alfreds Futterkiste, 
+    orderDate=1997-10-03T05:00Z, orderTotal=878.0, 
+    lineItems=[
+        LineItem[productName=Vegie-spread, quantity=20, itemTotal=878.0]]]
+OrderInvoice[
+    orderID=10702, companyName=Alfreds Futterkiste, 
+    orderDate=1997-10-13T05:00Z, orderTotal=330.0, 
+    lineItems=[
+        LineItem[productName=Aniseed Syrup, quantity=6, itemTotal=60.0], 
+        LineItem[productName=Lakkalikööri, quantity=15, itemTotal=270.0]]]
+----
+
+This is what was meant earlier about needing to return node and relationship results to match our domain model. The driver cannot automatically infer how to map separate nodes and relationships into a complex connected domain. Therefore, we need to return the data from Neo4j in the nested entity format that matches our domain model.
+
+== Wrapping up!
+
+This blog post explained and demonstrates how to use the new object mapping feature in the Neo4j Java Driver to map domain objects to Neo4j nodes and relationships. The driver provides a simple way to work with graph data without needing a full OGM solution.
+
+If you are interested in exploring more about working with Neo4j in Java, I recommend checking out the free, self-paced GraphAcademy https://neo4j.com/docs/ogm-manual/current/[Using Neo4j with Java course^].
+
+Happy coding!
+
+== Resources
+
+* Code: https://github.com/JMHReif/neo4j-java-object-mapping[Neo4j Java Object Mapping example^]
+* Github discussion: https://github.com/neo4j/neo4j-java-driver/discussions/1640[Neo4j Java Driver object mapping feature^]
+* Documentation: https://neo4j.com/docs/ogm-manual/current/[Neo4j OGM library^]
