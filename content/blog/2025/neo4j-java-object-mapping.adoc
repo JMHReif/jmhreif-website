@@ -1,10 +1,10 @@
 ---
-date: 2025-05-16T09:00:00-06:00
+date: 2025-05-19T09:00:00-06:00
 featured_image: "/img/unsplash-chess-opponent-move.jpg"
 image_credit: https://unsplash.com/photos/depth-of-field-photography-of-man-playing-chess-fzOITuS1DIQ?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
 tags: ["java","neo4j","object-mapping","ogm"]
 title: "Basic OGM: Object Mapping in the Neo4j Java Driver"
-draft: true
+draft: false
 omit_header_text: true
 ---
 
@@ -35,7 +35,12 @@ These were the steps that I followed to set up the project. You can find the com
 
 [source,shell]
 ----
-mvn archetype:generate -DgroupId=com.jmhreif -DartifactId=neo4j-java-object-mapping -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.5 -DinteractiveMode=false
+mvn archetype:generate \
+-DgroupId=com.jmhreif \
+-DartifactId=neo4j-java-object-mapping \
+-DarchetypeArtifactId=maven-archetype-quickstart \
+-DarchetypeVersion=1.5 \
+-DinteractiveMode=false
 ----
 
 [start=2]
@@ -69,7 +74,7 @@ NEO4J_PASSWORD=<NEO4J_PASSWORD_HERE>
 4. Load application properties (see https://github.com/JMHReif/neo4j-java-object-mapping/blob/main/src/main/java/com/jmhreif/AppProperties.java[AppProperties.java^])
 
 [start=5]
-5. Add mvn wrapper (mvnw) to project (https://maven.apache.org/wrapper/):
+5. Add https://maven.apache.org/wrapper/[mvn wrapper^] (mvnw) to project:
 [source,shell]
 ----
 mvn wrapper:wrapper
