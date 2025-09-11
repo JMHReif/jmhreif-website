@@ -1,0 +1,259 @@
+---
+date: 2025-09-10T09:00:00-06:00
+featured_image: "/img/unsplash-connect-wires.jpg"
+image_credit: https://unsplash.com/photos/person-holding-green-ball-on-white-paper--Cm7hnp4WOg?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
+tags: ["spring","ai","mcp","client","genai"]
+title: "Exploring Text-to-Cypher: Integrating Ollama, MCP, and Spring AI"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+When text-to-query approaches (specifically, text2cypher) first entered the scene, I was a bit uncertain how it was useful, especially when existing models were hit-or-miss on result accuracy. It would be hard to justify the benefits over a human expert in the domain and query language.
+
+However, as technologies have evolved over the last couple of years, I've started to see how a text-to-query approach adds flexibility to rigid applications that could previously only answer a set of pre-defined questions with limited parameters.
+
+Options further expanded when the Model Context Protocol (MCP) emerged, provisioning reusable methods for connecting to various technologies and services in a consistent manner.
+
+This blog post will explore how to build an application that supports text-to-cypher through the Neo4j MCP Cypher server, the Ollama local Large Language Model, and Spring AI.
+
+== Neo4j MCP Cypher server
+
+Neo4j offers several MCP servers anyone can use to connect and execute various functionality with Neo4j. The full list is available in a https://neo4j.com/developer/genai-ecosystem/model-context-protocol-mcp/[developer guide^], but the one that especially interested me first was the Cypher server.
+
+https://neo4j.com/developer/genai-ecosystem/model-context-protocol-mcp/#_mcp_neo4j_cypher[This one^] provides 3 tools your application (or an LLM) can utilize to retrieve the database schema (essentially, the graph data model), run read queries in Neo4j, or run write queries in Neo4j.
+
+Connecting to the server and using an LLM means you can send natural-language questions as input, and these tools can generate the appropriate Cypher query, execute it in Neo4j, and return the results.
+
+There are a few steps to get this set up, so let's start there.
+
+== Project setup and MCP config
+
+First, you will need a Spring AI application or you can follow along with https://github.com/JMHReif/spring-ai-mcp-demo[my example code repository^]. If you create your own, ensure you have a dependency for a Large Language Model. Today, I am using Ollama, which is a local model that runs on my machine and does not send data to a public vendor.
+
+You will also need the Spring AI MCP client dependency that will turn the app into a client that can connect to an MCP server.
+
+[source,xml]
+----
+<dependency>
+	<groupId>org.springframework.ai</groupId>
+	<artifactId>spring-ai-starter-mcp-client</artifactId>
+</dependency>
+----
+
+=== A little note about Ollama
+
+I have worked mostly with OpenAI's models for applications, and Anthropic's models for code. However, I hadn't done more than dabble with Ollama (see https://github.com/JMHReif/basic-ai-chat-app[basic chat app repo^]). Several developers have asked me about Ollama, so with this application, I really wanted to explore it a bit more.
+
+As with most LLM vendors now, there are several model families offered, each with different specializations (even if it's for general purpose). Ollama does this, as well, so I started with a quick Google search (is that old-school or what?) on which Ollama models were the best. What came back were some nice lists for various tasks, so then it came down to testing them out. There is also the variable of constructing a good prompt, so testing may require a few trial-and-error iterations.
+
+I started with mistral (7 billion parameters), which is the default for Spring AI, and was met with mediocre results. Next, I tried gemma, but Gemma does not support tool access, so that model would not work to integrate MCP and use the server's tools. Finally, I plugged in qwen3 (30 billion parameters) and results felt solid. 
+
+The only down side with this model is that it recently incorporated a "thinking" mode, which includes the model's chain-of-thought (or the logic processing it does behind the scenes to answer the question). And, currently, Spring AI does not offer a config to disable the "thinking" mode, however, Ollama does provide a way to disable it via an argument that I haven't _yet_ found a way to configure in Spring either. I'll keep playing with that!
+
+For each model I tested, I had to pull (download) it using this command:
+
+[source,shell]
+----
+ollama pull <modelName>
+
+#example:
+ollama pull qwen3:30b
+----
+
+Once installed, I could run my Spring app and test it. Now to configure MCP!
+
+=== MCP configuration
+
+The https://github.com/neo4j-contrib/mcp-neo4j/tree/main/servers/mcp-neo4j-cypher[Neo4j Cypher MCP server's Github repository^] provides a README that explains how to connect using a few different methods (Docker, Claude Desktop, etc), but since Spring MCP supports the Claude Desktop config format, I went with that.
+
+Create a file in the `src/main/resources` folder called `mcp-servers.json` and use the JSON below. Note: if you have a different Neo4j database you want to connect to, update the env portion with your credentials. The database provided here is a public database you are welcome to access, as well!
+
+[source,json]
+----
+{
+  "mcpServers": {
+    "goodreads-neo4j": {
+      "command": "uvx",
+      "args": [ "mcp-neo4j-cypher@0.3.1", "--transport", "stdio"  ],
+      "env": {
+        "NEO4J_URI": "neo4j+s://demo.neo4jlabs.com",
+        "NEO4J_USERNAME": "goodreads",
+        "NEO4J_PASSWORD": "goodreads",
+        "NEO4J_DATABASE": "goodreads"
+      }
+    }
+  }
+}
+----
+
+Next, we need to add a few configuation properties to the `application.properties` file.
+
+[source,properties]
+----
+spring.ai.ollama.chat.model=qwen3:30b
+
+spring.ai.mcp.client.stdio.enabled=true
+spring.ai.mcp.client.stdio.servers-configuration=classpath:mcp-servers.json
+logging.level.org.springframework.ai.mcp=DEBUG
+----
+
+The first property specifies the model (if not using the default, mistral). Then the remaining properties point to the MCP server JSON config file, allow standard IO access, and set the logging level to DEBUG for MCP.
+
+To test this much, I built a quick endpoint in the controller class to fetch the list of tools available from the MCP server.
+
+=== Testing MCP connection
+
+Create a controller class in the `src/main/java...` right next to the main class file (I called mine `AiController.java`) and add two annotations to it.
+
+[source,java]
+----
+@RestController
+@RequestMapping("/")
+public class AiController {
+    //code we will write next
+}
+----
+
+Within the class definition, inject a `ChatClient` that will connect to the Ollama LLM and a `SyncMcpToolCallbackProvider` that will allow access to the MCP server's tools. These both need added to the constructor, as well.
+
+[source,java]
+----
+@RestController
+@RequestMapping("/")
+public class AiController {
+    private final ChatClient chatClient;
+    private final SyncMcpToolCallbackProvider mcpProvider;
+
+    public AiController(ChatClient.Builder builder, SyncMcpToolCallbackProvider provider) {
+        this.chatClient = builder
+                .defaultToolCallbacks(provider.getToolCallbacks())
+                .build();
+        this.mcpProvider = provider;
+    }
+
+    //code we will write next
+}
+----
+
+Finally, we can add an endpoint that calls the MCP provider and lists the tools.
+
+[source,java]
+----
+@RestController
+@RequestMapping("/")
+public class AiController {
+    //injections
+    //constructor
+
+    @GetMapping("/debug/tools")
+    public String debugTools() {
+        var callbacks = mcpProvider.getToolCallbacks();
+        StringBuilder sb = new StringBuilder("Available MCP Tools:\n");
+        for (var callback : callbacks) {
+            sb.append("- ").append(callback.getToolDefinition().name()).append("\n");
+        }
+        return sb.toString();
+    }
+}
+----
+
+Test the application by running it (using `./mvnw spring-boot:run` or in an IDE) and hitting the endpoint, as shown below.
+
+[source,shell]
+----
+% http ":8080/debug/tools"
+
+#Console output:
+Available MCP Tools:
+- spring_ai_mcp_client_goodreads_neo4j_get_neo4j_schema
+- spring_ai_mcp_client_goodreads_neo4j_read_neo4j_cypher
+- spring_ai_mcp_client_goodreads_neo4j_write_neo4j_cypher
+----
+
+Since the connection to the Neo4j Cypher MCP server is working, the next piece is to write the logic for text-to-cypher!
+
+== Building text-to-cypher
+
+Following the test method, we can add a new method to create the text-to-cypher functionality.
+
+[source,java]
+----
+//annotations
+public class AiController {
+    //injections
+    //constructor
+    //debugTools() method
+
+    @GetMapping("/text2cypher")
+    public String text2cypher(@RequestParam String question) {
+        //code we will write next
+    }
+}
+----
+
+We defined the `/text2cypher` endpoint that will take a String question as input and return a String answer as output. The code within the method will require a couple of things.
+
+1. A prompt to direct the LLM's actions - steps and requested output.
+2. A call to the LLM.
+
+Here is the method I constructed, but feel free to adjust or explore alternatives in the `cypherPrompt``:
+
+[source,java]
+----
+    @GetMapping("/text2cypher")
+    public String text2cypher(@RequestParam String question) {
+        String cypherPrompt = """
+            Question: %s
+            
+            Follow these steps to answer the question:
+            1. Call the get_neo4j_schema tool to find nodes and relationships
+            2. Generate a Cypher query to answer the question
+            3. Execute the Cypher query using the read_neo4j_cypher tool
+            4. Return the Cypher query you executed
+            5. Return the results of the query
+            """.formatted(question);
+
+        return chatClient.prompt()
+                .user(cypherPrompt)
+                .call()
+                .content();
+    }
+----
+
+The prompt will outline what steps we want the LLM to follow to complete each text-to-cypher request and what kinds of output we want it to provide. For instance, we want the results of the query it runs against the database, but we also want the Cypher query it will run so that we can cross-check the information.
+
+The return statement calls the `chatClient` we injected earlier, adds a user message for the defined prompt, calls the LLM, and returns the `content` key in the chat response.
+
+== Running the application
+
+Next, we can run the application and test the text-to-cypher endpoint. Here are a few example calls (the https://github.com/JMHReif/spring-ai-mcp-demo/blob/main/README.adoc#running-the-application[repository's README^] offers a few more):
+
+[source,shell]
+----
+http ":8080/text2cypher?question=What entities are in the database?"
+
+http ":8080/text2cypher?question=What books did Emily Dickinson write?"
+
+http ":8080/text2cypher?question=Which books have the most reviews?"
+----
+
+*Note:* Results will be prefaced by a `<think></think>` block that includes all of the chain-of-thought logic the LLM processes to provide the answer.
+
+== Wrapping up!
+
+In this blog post, we stepped through how I built a Spring AI application with Spring AI, MCP, and Ollama. First, we had to set up the project by including the MCP client dependency, pulling an Ollama model, and configuring the application to connect to the server. We tested the connection with a `/debug/tools` method in the controller class.
+
+Then, we defined an endpoint where the application connected to the Neo4j MCP Cypher server and executed text-to-cypher with the Ollama AI model by calling the MCP tools available.
+
+Finally, we tested the application with a few different questions to check its logic. This application allows us to ask natural-language questions that the LLM can convert to a Cypher query, run against the database, and return the query it ran along with the results.
+
+Happy coding!
+
+== Resources
+
+* Code repository (today's code): https://github.com/JMHReif/spring-ai-mcp-demo[Spring AI MCP demo^]
+* Code repsitory: https://github.com/neo4j-contrib/mcp-neo4j/tree/main/servers/mcp-neo4j-cypher[Neo4j MCP Cypher server^]
+* Documentation: https://docs.spring.io/spring-ai/reference/api/mcp/mcp-client-boot-starter-docs.html[Spring AI MCP client^]
+* Documentation: https://docs.spring.io/spring-ai/reference/api/chat/ollama-chat.html[Spring AI - Ollama chat model^]
