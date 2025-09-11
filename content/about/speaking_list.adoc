@@ -14,8 +14,9 @@ Speaking provides a way to share her learnings and experiences with others and l
 |===
 |*Name*                   |*Location*               |*Dates*
 
-|https://devnexus.com/presentations/commonly-uncommon-diverse-paths-that-lead-to-winning-outcomes[Devnexus^]  |Atlanta, GA, USA         |Mar 4-6
-|https://www.arcofai.com/speaker/f1246a6e30ba440297f1e0c7052cb1d3[Arc of AI^]                                 |Austin, TX, USA          |Mar 31-Apr 3
+|https://www.meetup.com/seajug/events/307577627/[Seattle JUG^]                                 |Seattle, WA, USA          |Sep 16
+|https://www.dev2next.com/speaker/2738f08be3d1442e86835d52fbd1c825[Dev2next^]                                 |Colorado Springs, CO, USA          |Sep 29-Oct 2
+|https://learning.oreilly.com/live-events/graphrag-fundamentals/0642572221072/[GraphRAG Fundamentals - online training^]                                 |virtual          |Oct 21
 |===
 
 == *Conferences*
@@ -23,10 +24,13 @@ Speaking provides a way to share her learnings and experiences with others and l
 |===
 |*Name*                   |*Location*               |*Years*
 
-|NODES                    |Virtual                  |2019,2021,2023-2024
-|KCDC                     |Kansas City, MO, USA     |2019,2021-2023
-|Devnexus                 |Atlanta, GA, USA         |2019,2022-2024
+|Neo4j GraphSummit        |various cities, USA      |2025
+|KCDC                     |Kansas City, MO, USA     |2019,2021-2025
+|Devnexus                 |Atlanta, GA, USA         |2019,2022-2025
+|Arc of AI                |Austin, TX, USA          |2025
 |Dev2next                 |Denver, CO, USA          |2024
+|DevUp                    |St. Louis, MO, USA       |2024-2025
+|NODES                    |Virtual                  |2019,2021,2023-2024
 |ConFoo                   |Montreal, QC, Canada     |2019-2020,2022
 |===
 
@@ -35,10 +39,14 @@ Speaking provides a way to share her learnings and experiences with others and l
 |===
 |*Group*                     |*Location*             |*Years*
 
-|WeAreDevelopers Live        |Virtual                |2024
-|SFJUG                       |Virtual                |2024
-|ACM Chicago                 |Virtual                |2024
-|NYJavaSIG                   |New York City, NY, USA |2024
-|Data Science KC             |Kansas City, KS, USA   |2019,2024
-|OKCJUG                      |Oklahoma City, OK, USA |2024
+|Houston JUG                 |Houston, TX, USA       |2025
+|SoftwareMill session        |virtual                |2025
+|AI Collective Chicago       |Chicago, IL, USA       |2025
+|Utah JUG                    |virtual                |2025
+|Intuit meetup               |Atlanta, GA, USA       |2025
+|Atlanta JUG                 |Atlanta, GA, USA       |2025
+|WorldBank GraphRAG sprint   |virtual                |2025
+|Tampa JUG                   |Tampa, FL, USA         |2025
+|CitiBank lunch session      |Tampa, FL, USA         |2025
+|Jacksonville JUG            |Jacksonville, FL, USA  |2025
 |===

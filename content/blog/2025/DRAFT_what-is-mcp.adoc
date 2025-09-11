@@ -2,7 +2,7 @@
 date: 2025-11-30T09:00:00-06:00
 featured_image: "/img/unsplash-????.jpg"
 image_credit: https://unsplash.com/photos/a-man-with-his-hands-covered-with-mud-IdjxBF_StBk?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
-tags: ["spring","ai","ollama","applications","genai"]
+tags: ["mcp","ai","model-context-protocol","applications","genai"]
 title: "????"
 draft: true
 omit_header_text: true
@@ -11,8 +11,9 @@ omit_header_text: true
 {{< image-credit >}}
 
 ////
-Walk through creating the https://github.com/JMHReif/basic-ai-chat-app
+Walk through some metaphors to explain what MCP is and how is works
 
-* include step on pull Ollama model
-* include some sample queries and showcase how LLMs are pattern-matchers and not search engines
+- microservice as MCP server, consistent reusable way for apps to access a service
+- kids' snack options for set of functionality MCP server provides to LLM
+- Docker containers, verified vendor-supported bundle for devs to use
 ////

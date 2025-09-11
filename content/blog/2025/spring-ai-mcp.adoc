@@ -198,7 +198,7 @@ We defined the `/text2cypher` endpoint that will take a String question as input
 1. A prompt to direct the LLM's actions - steps and requested output.
 2. A call to the LLM.
 
-Here is the method I constructed, but feel free to adjust or explore alternatives in the `cypherPrompt``:
+Here is the method I constructed, but feel free to adjust or explore alternatives in the `cypherPrompt`:
 
 [source,java]
 ----
@@ -254,6 +254,6 @@ Happy coding!
 == Resources
 
 * Code repository (today's code): https://github.com/JMHReif/spring-ai-mcp-demo[Spring AI MCP demo^]
-* Code repsitory: https://github.com/neo4j-contrib/mcp-neo4j/tree/main/servers/mcp-neo4j-cypher[Neo4j MCP Cypher server^]
+* Code repository: https://github.com/neo4j-contrib/mcp-neo4j/tree/main/servers/mcp-neo4j-cypher[Neo4j MCP Cypher server^]
 * Documentation: https://docs.spring.io/spring-ai/reference/api/mcp/mcp-client-boot-starter-docs.html[Spring AI MCP client^]
 * Documentation: https://docs.spring.io/spring-ai/reference/api/chat/ollama-chat.html[Spring AI - Ollama chat model^]
