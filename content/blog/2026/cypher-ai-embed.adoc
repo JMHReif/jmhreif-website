@@ -1,7 +1,7 @@
 ---
 date: 2026-03-09T09:00:00-06:00
 featured_image: "/img/unsplash-puzzle-pieces.jpg"
-image_credit: https://unsplash.com/photos/
+image_credit: https://unsplash.com/photos/blue-red-and-white-jigsaw-puzzle-TksUmauJpcA?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
 tags: ["neo4j","cypher","ai","embeddings","ollama","data-loading"]
 title: "Embedding 2.3 Million Books with Neo4j's Cypher AI Procedures and Ollama"
 draft: false
