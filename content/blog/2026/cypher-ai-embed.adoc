@@ -1,0 +1,248 @@
+---
+date: 2026-03-09T09:00:00-06:00
+featured_image: "/img/unsplash-puzzle-pieces.jpg"
+image_credit: https://unsplash.com/photos/
+tags: ["neo4j","cypher","ai","embeddings","ollama","data-loading"]
+title: "Embedding 2.3 Million Books with Neo4j's Cypher AI Procedures and Ollama"
+draft: false
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+I've been working with a https://github.com/JMHReif/graph-demo-datasets/tree/main/goodreadsUCSD[Goodreads book dataset^] for a while now, and my next goal was to generate vector embeddings for 2.3 million book descriptions using Neo4j's new Cypher AI procedures and a local Ollama model. I figured it'd be pretty straightforward - set up the config, write a query, let it run. What could go wrong?
+
+Turns out...quite a bit. What I expected to be a few query tweaks turned into a multi-step adventure through configuration quirks, batching strategies, query optimization, and a crash course in how tokens actually work. But I learned a lot, and I'm sharing all of it here so hopefully you can skip some of the headaches I ran into. :)
+
+== Getting started
+
+The goal was simple enough: take the full version of the Goodreads dataset and generate vector embeddings for book descriptions, enabling similarity search and other vector-based queries down the road.
+
+A few requirements shaped the setup:
+
+* *Local Neo4j Desktop* - The full Goodreads dataset would be too big for Aura free tier, plus I needed to be able to modify database configuration, which isn't possible in Aura. Keeping it on a local database with a local model ensured a completely free, customizable, and reusable experience.
+* *Ollama* - I wanted to use a local embedding model to avoid sending data to a public vendor.
+* *Cypher AI procedures* - Neo4j's 2025.12 contains the recently introduced `ai.*` procedures for generating embeddings directly within Cypher queries with the ability to customize the `baseURL` for local models. This was the perfect opportunity to try them out!
+
+== Issue #1: Configuring Neo4j for Ollama
+
+Getting Ollama to work with Neo4j's Cypher AI procedures required a few configuration pieces. I needed the latest Neo4j 2025.12 version for the `baseURL` customization, and then I had to:
+
+1. Add the `ai.*` procedures to the allowed list in `neo4j.conf`
+2. Set the base URL config in a `genai.conf` file
+3. Prefix every query with `CYPHER 25` to enable the new Cypher AI procedures
+
+Here's where things got interesting. My initial `genai.conf` configuration pointed to Ollama's OpenAI-compatible endpoint:
+
+[source,properties]
+----
+genai.openai.baseurl=http://localhost:11434/v1
+----
+
+This seemed right, but every call to the AI procedures failed with a `404 page not found` error:
+
+[source,cypher]
+----
+CYPHER 25
+WITH ai.text.embed("Hello World", 'openai',
+  { token: "", model: 'mxbai-embed-large:latest',
+    vendorOptions: { dimensions: 1024 } }) as vector
+RETURN vector
+----
+
+After some digging, the fix turned out to be simple - *remove the `/v1` suffix* from the base URL:
+
+[source,properties]
+----
+genai.openai.baseurl=http://localhost:11434
+----
+
+With that small change, the "Hello World" embedding test worked! On to the real data.
+
+== Issue #2: Batching and input length errors
+
+With 2.3 million books to embed, I obviously needed a batching strategy. I wrote a query using `ai.text.embedBatch()` with `CALL IN TRANSACTIONS`:
+
+[source,cypher]
+----
+CYPHER 25
+MATCH (b:Book WHERE b.text IS NOT NULL AND b.embedding IS NULL)
+WITH count(b) as total
+UNWIND range(0, total-1, 100) AS batchStart
+CALL () {
+   MATCH (b:Book WHERE b.text IS NOT NULL AND b.embedding IS NULL)
+   LIMIT 100
+   WITH b, collect(COALESCE(b.title,"") + "\n" + b.text) as batch,
+        collect(b) as bookList
+   CALL ai.text.embedBatch(batch, 'openai',
+      { token: "", model: 'mxbai-embed-large:latest',
+        vendorOptions: { dimensions: 1024 } })
+   YIELD index, vector
+   SET (bookList[index]).embedding = vector
+} IN TRANSACTIONS OF 1 ROW;
+----
+
+This failed with an *input length exceeds context window* error. My first thought was that some book descriptions were just too long for the model's context window. That was plausible, since I ran a test and found a decent number exceeding 10,000, 15,000, and even 20,000 characters. So I tried chunking the descriptions to smaller sizes, but I was met with the same error whether the chunks were 10k or 4k characters long. :(
+
+I then switched from the `mxbai-embed-large` model to `nomic-embed-text`, which has a much longer context window. Same error.
+
+Here's the confusing part: a small subset of just 2 books worked fine:
+
+[source,cypher]
+----
+CYPHER 25
+MATCH (b:Book WHERE b.text IS NOT NULL AND b.embedding IS NULL)
+LIMIT 2
+CALL(b) {
+    WITH b, collect(COALESCE(b.title, "") + "\n" + b.text) as batch,
+         collect(b) as bookList
+    CALL ai.text.embedBatch(batch, 'openai',
+        { token: "", model: 'mxbai-embed-large:latest',
+          vendorOptions: { dimensions: 1024 } })
+        YIELD index, vector
+    SET (bookList[index]).embedding = vector
+} IN TRANSACTIONS OF 1 ROW;
+----
+
+And a direct test with `embedBatch` _outside_ the batching structure also worked. So something about the combination of batching and `CALL IN TRANSACTIONS` was causing trouble. A colleague even tested the CLI/API directly with 1,400 characters against `mxbai-embed-large`, and it worked! So it wasn't a character length issue on the model's side.
+
+I tried increasing the batch to 50, which failed. Decreased to 25 and 10 - still failing. A batch of 3 worked, but that didn't seem practical for 2.3 million books.
+
+== Issue #3: Taming the query
+
+I decided to drop the batching approach entirely and increased memory on the instance to avoid out-of-memory errors. But I _still_ got OOM errors. Then a colleague suggested I check the query plan, which showed an *EAGER* operation! That means all the data for processing gets pulled into memory. If there is a lot of data, then memory can get overloaded.
+
+*NOTE:* For more on EAGER in Cypher, check out my https://jmhreif.com/blog/2019/cypher-sleuthing-eager-operator/[original blog post^] or a https://neo4j.com/blog/developer/eagerness-in-neo4j-query-planning/[more recent one by Christoffer Bergman^].
+
+I used `EXPLAIN` to dig into the plan and refined the query:
+
+* Removed the inline `WHERE` syntax on `MATCH`
+* Removed `collect()` inside `CALL` - it wasn't doing anything useful because `CALL IN TRANSACTIONS` only sees 1 row at a time
+* Switched from `embedBatch` to the single `embed` function (no need for batch without `collect()`)
+* These changes eliminated the EAGER!
+
+The cleaned-up query:
+
+[source,cypher]
+----
+CYPHER 25
+MATCH (b:Book)
+WHERE b.text IS NOT NULL
+AND b.embedding IS NULL
+AND b.title IS NOT NULL
+CALL (b) {
+    WITH b, substring(b.title+"\n"+b.text,0,10000) as bookText
+    WITH ai.text.embed(bookText, 'openai',
+        { token: "", model: 'nomic-embed-text:latest',
+          vendorOptions: { dimensions: 768 } }) as vector
+    SET b.embedding = vector
+} IN TRANSACTIONS OF 500 ROWS;
+----
+
+But even this still produced input length errors on some rows. *sigh*
+
+=== A side quest: integer division in Cypher
+
+While I was working on the chunking logic earlier, I ran into an interesting Cypher quirk worth mentioning. To calculate the number of chunks needed for a text, I tried:
+
+[source,cypher]
+----
+RETURN ceil(textLength / chunkLimit)
+----
+
+This gave wrong results! For example, `1364 / 1000` was producing `1` instead of `1.364`. I tried `ceil()`. I tried `round()` with `'CEILING'` config, but nothing worked because *Cypher performs integer division when both operands are integers*. The decimal was already gone before `ceil()` could do anything with it.
+
+A few solutions were suggested, but some wouldn't have worked for even division (like `1000/1000`). I finally ended up with this:
+
+[source,cypher]
+----
+RETURN toInteger(ceil(1.0 * textLength / chunkLimit))
+----
+
+Multiplying by `1.0` forces float division, preserving the decimal so `ceil()` can round up properly. It works whether the result is a whole number or not.
+
+Alright, back to our embedding generation and input length / memory issues.
+
+== Issue #4: Tokens != characters
+
+The persistent input length errors pointed me down a different path when a colleague pointed out that *tokens do not equal characters*. The common approximation of 1 token ~= 3-4 characters is just that - a rough approximation. Some characters (especially non-Latin-language ones) can consume more tokens than expected, and you can't always rely on character counts to stay within a model's token limit.
+
+I started investigating the Goodreads data and found significant numbers of books in non-English languages. This is amazing for diverse data, but presented challenges in data processing/cleaning that I hadn't anticipated.
+
+[source,cypher]
+----
+MATCH (b:Book)
+WHERE NOT b.language_code IN ["eng","en-GB","en-US"]
+RETURN count(b);
+----
+
+The distributions were pretty broad:
+
+[source,text]
+----
+spa: 54,524    ita: 50,902    ara: 42,978
+fre: 32,046    ger: 30,941    ind: 27,291
+por: 23,452    jpn:  7,209    rus:  6,617
+----
+
+And then the kicker - about *half* the books (~1,060,153) had no `language_code` at all! Arabic, Japanese, Russian, and other non-Latin scripts use varying tokens per character versus English text, so my character-based truncation at 10,000 characters could still easily exceed the model's token limit.
+
+I tried filtering to Latin-based descriptions using a regex:
+
+[source,cypher]
+----
+CYPHER 25
+MATCH (b:Book)
+WHERE b.text IS NOT NULL
+AND b.embedding IS NULL
+AND substring(b.text,0,10) =~ '^[a-zA-Z ]{5}.+'
+RETURN count(b);
+----
+
+But results were all over the place (anywhere from 1.2m to 1.7m) depending on the substring length I checked, probably because of commas and other non-alphabetic characters in the strings. Not a reliable filter.
+
+== Where I landed: ON ERROR CONTINUE
+
+Rather than trying to perfectly filter or tokenize every description, I took a pragmatic approach: use `CALL IN TRANSACTIONS` with `ON ERROR CONTINUE`. This tells Neo4j to skip any rows that error out (e.g., due to token limits) and keep processing the rest. This is a less-than-complete solution, but it some progress is better than no progress.
+
+[source,cypher]
+----
+//Generate embeddings for Book nodes (Ollama)
+CYPHER 25
+MATCH (b:Book)
+WHERE b.text IS NOT NULL
+AND b.embedding IS NULL
+AND b.title IS NOT NULL
+CALL (b) {
+    WITH b, substring(b.title+"\n"+b.text,0,10000) as bookText
+    WITH ai.text.embed(bookText, 'openai',
+        { token: "", model: 'nomic-embed-text:latest',
+          vendorOptions: { dimensions: 768 } }) as vector
+    SET b.embedding = vector
+} IN TRANSACTIONS OF 5 ROWS
+ON ERROR CONTINUE;
+----
+
+This took a while to complete, but it worked! The vast majority of books were embedded successfully, and the ones that failed can be processed manually on an ad hoc basis later.
+
+== Wrapping up!
+
+What started as a "simple" embedding task turned into quite the journey through configuration, query optimization, and data quality challenges. Here's a quick summary of the key takeaways:
+
+1. *Base URL config can be tricky.* When using Ollama with Neo4j's Cypher AI procedures, remove the `/v1` suffix from the base URL in `genai.conf`.
+2. *Watch for EAGER operations.* Use `EXPLAIN` to check your query plan! Look for heavy processing or lots of rows getting passed as opportunities to filter more and earlier.
+3. *Tokens are not characters.* Don't assume a simple character count will keep you under the token limit, especially with multilingual data.
+4. *Integer division in Cypher is sneaky.* When dividing two integers, Cypher truncates the result. Multiply by `1.0` to force float division when you need decimal precision.
+5. *`ON ERROR CONTINUE` is your friend.* For large-scale data processing where some rows might fail, this clause lets you process what you can without losing everything to a single error.
+
+The new Cypher AI procedures are powerful - putting embedding generation right where the data lives. But as with any new feature, there are rough edges to navigate. I hope this walkthrough saves you some debugging time on your own embedding adventures!
+
+Happy coding!
+
+== Resources
+
+* Documentation: https://neo4j.com/docs/genai/plugin/current/embeddings/[Neo4j Cypher AI procedures documentation^]
+* Blog post: https://neo4j.com/blog/developer/new-cypher-ai-procedures/[New Cypher AI Procedures by Christoffer Bergman^]
+* Data: https://github.com/JMHReif/graph-demo-datasets/tree/main/goodreadsUCSD[Goodreads book dataset^]
+* Blog post: https://jmhreif.com/blog/2019/cypher-sleuthing-eager-operator/[The EAGER Operator by Jennifer Reif^]
+* Blog post: https://neo4j.com/blog/developer/eagerness-in-neo4j-query-planning/[EAGER in Cypher by Christoffer Bergman^]

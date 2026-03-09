@@ -1,5 +1,5 @@
 ---
-date: 2025-11-30T09:00:00-06:00
+date: 2026-06-30T09:00:00-06:00
 featured_image: "/img/unsplash-????.jpg"
 image_credit: https://unsplash.com/photos/a-man-with-his-hands-covered-with-mud-IdjxBF_StBk?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash
 tags: ["mcp","ai","model-context-protocol","applications","genai"]
