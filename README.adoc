@@ -11,6 +11,16 @@
 * Photos: mostly https://unsplash.com/[Unsplash^] with some https://www.google.com/imghp?hl=en&authuser=0&ogbl[Google images^] (all Unsplash images include credit to authors)
 * Github Actions: build and publish content
 
+== Creating a new blog post
+
+Use the blog archetype to scaffold a new post with all standard sections pre-filled:
+
+`hugo new blog/YEAR/your-post-name.adoc`
+
+Example: `hugo new blog/2026/my-new-post.adoc`
+
+This creates `content/blog/YEAR/your-post-name.adoc` with front matter, image credit shortcode, section placeholders, `Happy coding!` signoff, and a Resources section. Fill in the `???` placeholders and remove the `////` comment blocks as you write.
+
 == Notes to build
 
 * Testing: run below command to host on local test server

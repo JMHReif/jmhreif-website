@@ -1,0 +1,47 @@
+---
+date: {{ .Date }}
+featured_image: "/img/unsplash-???.jpg"
+image_credit: ???
+tags: []
+title: "{{ replace .Name "-" " " | title }}"
+draft: true
+omit_header_text: true
+---
+
+{{</* image-credit */>}}
+
+////
+Intro: 1-2 paragraphs. What is this post about, and why does it matter?
+Set up the problem or goal, then briefly outline what the post will cover.
+////
+
+== Section 1
+
+////
+Body sections: use == for top-level headings, === for sub-sections.
+Code blocks:
+  [source,java]
+  ----
+  // code here
+  ----
+
+Images:
+  image::/img/folder/filename.png[Alt text]
+////
+
+== Wrapping up!
+
+////
+1-3 sentences or a short numbered list summarizing key takeaways.
+////
+
+Happy coding!
+
+== Resources
+
+////
+Format: * Type: url[Link text^]
+Common types: Code repository, Documentation, Blog post, Course, Data
+////
+
+*

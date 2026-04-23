@@ -10,3 +10,6 @@
 #Hugo files
 public/
 resources/
+
+#AI tools
+.claude/*
