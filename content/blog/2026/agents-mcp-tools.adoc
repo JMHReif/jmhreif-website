@@ -1,0 +1,201 @@
+---
+date: 2026-06-09T09:00:00-06:00
+featured_image: "/img/agents-mcp/unsplash-tools.jpg"
+image_credit: https://unsplash.com/photos/assorted-type-carpentry-tools-on-brown-surface-Rf9eElW3Qxo
+tags: ["neo4j","ai","agents","tools","spring-ai","java"]
+title: "Agents, Tools, and MCP: From an LLM Alone to an Agent with Tools"
+draft: true
+omit_header_text: true
+---
+
+{{< image-credit >}}
+
+//mention somewhere going from an LLM answering questions with sink-or-swim vs asking for help from tools
+In my https://jmhreif.com/blog/2026/agents-mcp-thinking/[last post^], I walked through the mental model behind agents, tools, memory, and MCP - the "why" behind each layer of a modern AI system. I promised a follow-up that digs into the actual code, and that's what this post starts to do.
+
+The demo is a book recommendation service built with Java, Spring AI, and Neo4j, and it's structured as four acts. Each act is its own REST controller, and each one adds exactly one capability the previous act was missing. That structure is intentional, because it lets you see precisely what changes (and what *doesn't*) as the system gains capability. The full https://github.com/JMHReif/agents-mcp-ohmy[code is on GitHub^] if you want to run it alongside this post.
+
+This post covers the setup and the first two acts: an LLM on its own, then an agent with tools. A follow-up will cover the last two - memory and MCP. Let's open the curtain.
+
+== Setting the stage
+
+Before the acts, a quick look at the setup. The project is a standard Spring Boot application with a handful of Spring AI starters in the `pom.xml`. The two that matter for this post:
+
+[source,xml]
+----
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-model-openai</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-neo4j</artifactId>
+</dependency>
+----
+
+One starter brings in OpenAI for the model, and Spring Data Neo4j gives us the graph queries. (The project also pulls in starters for a Neo4j vector store, Neo4j-backed chat memory, and the MCP client - but those come into play in the next post.) The `application.properties` wires up the Neo4j connection, the OpenAI key, and the embedding model.
+
+The data is a https://github.com/JMHReif/graph-demo-datasets/tree/main/goodreadsUCSD[Goodreads dataset^] modeled as a graph - `User`, `Review`, `Book`, and `Author` nodes connected by `PUBLISHED`, `WRITTEN_FOR`, and `AUTHORED` relationships. That model matters, because the most interesting queries in Act 2 traverse those relationships in ways that would be painful in a non-graph store.
+
+With that in place, on to Act 1.
+
+== Act 1: The LLM alone
+
+The first controller is about as simple as it gets - a `ChatClient` with no tools at all.
+
+[source,java]
+----
+@RestController
+@RequestMapping("/act1")
+public class Act1LlmOnlyController {
+
+    private final ChatClient chatClient;
+
+    public Act1LlmOnlyController(ChatClient.Builder chatClientBuilder) {
+        // NO TOOLS — intentionally! The LLM is on its own.
+        this.chatClient = chatClientBuilder
+                .defaultSystem("You are a helpful reading assistant for a book recommendation service.")
+                .build();
+    }
+
+    @GetMapping("/query")
+    public String queryLlmOnly(@RequestParam String userQuery) {
+        return chatClient.prompt()
+                .user(userQuery)
+                .call()
+                .content();
+    }
+}
+----
+
+That's the whole act. Send a question, get a response. Throw it a softball like `What are the highest rated books?` and the model happily answers - but it's answering from training data, not from *my* database, so what comes back is generic and impersonal. Then ask something that actually needs *me*, like `What books should I read next?`, and it does something interesting: it hedges. It'll say something like "I'd be happy to help - could you tell me a bit about your preferences?" It used to just assume and rattle off favorites; now it often admits it doesn't have enough context to personalize.
+
+And that's the honest baseline. Nothing is wrong with the model - it's reasoning just fine. It simply has no way to reach the data, and that gap is what every act after this one is built to close.
+
+== Act 2: Giving the agent hands
+
+Act 2 keeps the same `ChatClient` but adds two things: a set of tools, and a system prompt that tells the model what those tools can do.
+
+[source,java]
+----
+public Act2ToolsController(ChatClient.Builder chatClientBuilder, BookToolService bookToolService) {
+    this.chatClient = chatClientBuilder
+            .defaultSystem("You are a helpful reading assistant. You have access to tools that can query a book database.")
+            .defaultTools(bookToolService)
+            .build();
+}
+----
+
+The `defaultTools(bookToolService)` line is the whole difference. `BookToolService` is a plain Spring `@Component` whose methods are annotated with `@Tool`. Spring AI reads those annotations, builds the schemas, and hands them to the model. Here's one of the simpler tools:
+
+[source,java]
+----
+@Tool(description = "Count the total number of books a user has read. Returns a Long count.")
+public Long countBooksRead(String userId) {
+    log.info(">>> TOOL CALLED: countBooksRead(userId={})", userId);
+    Long count = bookRepository.countBooksReadByUser(userId);
+    log.info("<<< TOOL RESULT: User has read {} books", count);
+    return count;
+}
+----
+
+A couple of things are worth calling out here. First, the `description` on the annotation is not documentation - it *is* the interface the model reasons about. The model picks a tool based on that text, so I think of the description as the new prompt engineering. Second, the method underneath is ordinary, deterministic Java. Once the model decides to call `countBooksRead`, the application runs a real query and returns a real number. There's no room for a hallucinated count to sneak in, and that's exactly the point - you're letting the model pick the tool (still a little non-deterministic), but the tool itself is completely deterministic.
+
+I like to think about it the way *we* handle not knowing something. When we hit the edge of what we know, we don't make it up - we go find a resource: an online course, a book, a colleague who can help. Tools give the model that same option. We didn't make the LLM smarter here; we just gave it a way to ask for help.
+
+The logging (`>>> TOOL CALLED` / `<<< TOOL RESULT`) is there on purpose. When you run the demo, watching the logs is how you *see* the agent reason - it chooses a tool, the application executes it, and the result flows back into the model's answer. That observation/action cycle is the agent reasoning loop made concrete.
+
+image::/img/agents-mcp/agent-reasoning-loop.png[Agent reasoning loop - Observation, Thought, Action cycle,height=300]
+
+The system prompt at request time also gives the model the catalog of what it can do, along with the current `userId` so the personalized tools have something to work with:
+
+[source,java]
+----
+String systemPrompt = """
+        You are a reading assistant. You have access to tools that can:
+        1. Get highly rated (5-star) books
+        2. Find well-rated books a user hasn't read yet
+        3. Count how many books a user has read
+        4. Find other books by the same author (multi-hop graph traversal)
+        5. Get personalized recommendations based on readers with similar taste (collaborative filtering)
+        6. RAG: Find book reviews similar to a description using semantic search
+        7. GraphRAG: Find books using semantic search + graph relationships
+
+        Use these tools to answer the user's question.
+        Base your answer strictly on what the tools return. Deduplicate results and present them cleanly.
+        You may add brief commentary to connect or summarize the results, but do not invent facts
+        or recommendations beyond what the tools provide.
+        The userId is: %s
+        """.formatted(userId);
+----
+
+The tools aren't all simple lookups, either. The graph really earns its place in a couple of them. This is the collaborative-filtering recommendation tool, which the model can invoke when a user wants suggestions based on readers with similar taste:
+
+[source,java]
+----
+@Tool(description = "Get personalized book recommendations based on collaborative filtering. " +
+        "Finds books that readers with similar taste also enjoyed. " +
+        "This uses multi-hop graph traversal for graph-native reasoning.")
+public List<Book> getReaderRecommendations(String userId) {
+    log.info(">>> TOOL CALLED: getReaderRecommendations(userId={})", userId);
+    return bookRepository.findCollaborativeRecommendations(userId);
+}
+----
+
+The interesting part lives in the repository, where the Cypher does the heavy lifting:
+
+[source,cypher]
+----
+MATCH (u:User {user_id: $userId})-[:PUBLISHED]->(r:Review)-[:WRITTEN_FOR]->(b:Book)
+      <-[:WRITTEN_FOR]-(r2:Review)<-[:PUBLISHED]-(other:User)
+WHERE r.rating >= 4 AND r2.rating >= 4 AND other <> u
+WITH u, other, collect(DISTINCT b) as sharedBooks
+WHERE size(sharedBooks) >= 2
+MATCH (other)-[:PUBLISHED]->(or2:Review)-[:WRITTEN_FOR]->(rec:Book)
+WHERE or2.rating >= 4
+AND NOT (u)-[:PUBLISHED]->(:Review)-[:WRITTEN_FOR]->(rec)
+WITH DISTINCT rec
+OPTIONAL MATCH (rec)<-[rel:AUTHORED]-(a:Author)
+RETURN rec, collect(rel), collect(a)
+ORDER BY rec.average_rating DESC
+LIMIT 5
+----
+
+That's a six-hop traversal - yes, six! - from the user, to their reviews, to the books they liked, across to other readers who liked the same books, and out to *those* readers' other favorites. It's the kind of reasoning the LLM cannot do on its own, and honestly, it shouldn't try. The model decides this is the right tool, and the graph answers precisely - each piece doing exactly what it's best at.
+
+There's also a RAG tool that runs a semantic similarity search over review text, and a GraphRAG tool that combines the two - vector search to find seed reviews, then a graph query to enrich them with related books the user hasn't read yet:
+
+[source,java]
+----
+// Step 1: Vector search to find semantically similar reviews
+List<Document> similarDocs = vectorStore.similaritySearch(description);
+
+// Step 2: Use graph relationships to enrich recommendations
+List<Book> graphRecommendations = bookRepository.findGraphRAGRecommendations(
+        similarBooks, userId != null ? userId : "user123");
+----
+
+When I run this live, this is the part that clicks for people. Ask `How many books have I read?` (I do an annual reading challenge, so this is a real question for me) and the logs show `countBooksRead` firing with a real total. Ask `I loved Charlotte's Web - what else did that author write?` and you watch it pass `Charlotte's Web` into the same-author traversal. Ask for `fantasy books with dragons and magic` (lately, that's very much my thing) and it reaches for the GraphRAG tool - vector search first, then a graph hop for related titles. Same agent, different tool each time, and the logs let you *see* it choose.
+
+The tradeoff to notice in Act 2: I've traded some flexibility for a lot of reliability, and honestly, that's the part I love. When we first started out with Gen AI, the LLM held all the control - we'd prompt it and strong-arm it and hope it behaved. Tools put that control back in the developer's hands. The model can only do what my tools allow, each tool is a fixed query I wrote and tested, and I know exactly what the system can do. The same question that came back generic in Act 1 now returns real, graph-traversed data.
+
+== Wrapping up!
+
+Two acts in, the pattern is already clear:
+
+1. *Act 1* - a `ChatClient` with no tools. Reasoning, but no data.
+2. *Act 2* - `@Tool` methods and graph queries. Deterministic, real results.
+
+Notice how little changed between them. The model didn't get smarter - we just gave it tools and put the developer back in control, and the application brought the reliability. That separation - the model decides, the tools execute - is what makes the system something you can design and trust rather than something you *hope* works. (And hope, as I'm fond of saying, is not a strategy.)
+
+In the next post, I'll pick up with Act 3 (giving the agent memory across turns) and Act 4 (decoupling the tools with MCP). Clone the https://github.com/JMHReif/agents-mcp-ohmy[repo^] and run the first two acts in order in the meantime - watching the tool calls fire in the logs is the best way to make this click.
+
+Happy coding!
+
+== Resources
+
+* Code repository: https://github.com/JMHReif/agents-mcp-ohmy[Agents, Tools, and MCP demo (Java, Spring AI, Neo4j)^]
+* Previous post: https://jmhreif.com/blog/2026/agents-mcp-thinking/[Agents, Tools, and MCP: A Mental Model That Actually Helps^]
+* Slide deck: https://speakerdeck.com/jmhreif/agents-tools-and-mcp-oh-my-next-level-ai-concepts-for-developers-d63d9e50-66b6-48a1-81a8-9b098bfb1a47[Agents, Tools, and MCP, oh my!^]
+* Documentation: https://docs.spring.io/spring-ai/reference/api/tools.html[Spring AI Tool Calling^]
+* Data: https://github.com/JMHReif/graph-demo-datasets/tree/main/goodreadsUCSD[Goodreads dataset (graph model)^]
