@@ -14,7 +14,7 @@ Everyone is talking about how magical AI is right now, but if you have spent any
 
 I recently put together a talk called "Agents, Tools, and MCP, oh my!" that tries to cut through some of that noise. As developers, we are being handed a firehose of new tools and technologies, and I wanted to spend my session doing something a little different: break the pieces apart, reduce some of the complexity and overwhelm, and then build them back up so they actually fit together.
 
-This post is the architecture piece. It lays out the mental model and the "why" behind each layer. If you want to skip ahead, the [code is already on GitHub](https://github.com/JMHReif/agents-mcp-ohmy), built with Java, Spring AI, and Neo4j, using a dataset of books, authors, and reviews (because I like to read, and it turns out reading data makes a great demo domain).
+This post is the architecture piece. It lays out the mental model and the "why" behind each layer. If you want to skip ahead, the https://github.com/JMHReif/agents-mcp-ohmy[code is already on GitHub^], built with Java, Spring AI, and Neo4j, using a dataset of books, authors, and reviews (because I like to read, and it turns out reading data makes a great demo domain).
 
 == How we got here
 
