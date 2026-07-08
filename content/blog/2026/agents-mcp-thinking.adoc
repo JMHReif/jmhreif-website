@@ -10,128 +10,61 @@ omit_header_text: true
 
 {{< image-credit >}}
 
-Everyone is talking about how magical AI is right now, but if you have spent any time experimenting with it recently, you have probably realized how difficult it is to get the results you want. None of the hype is particularly useful when you are trying to *build something real*. The magic looks good on paper until it meets real systems.
+Everyone is talking about how magical AI is right now, but if you have spent any time experimenting with it recently, you have probably realized how difficult it is to get the results you want. None of the hype is particularly useful when you are trying to **build something real**. The magic looks good on paper until it meets real systems.
 
-I recently put together a talk for this year called "Agents, Tools, and MCP, oh my!" that tries to cut through some of that noise. The session walks through a four-act progression with working code. It starts with an LLM alone, then adds tools, then memory, then MCP. Each layer adds something concrete, and each step has a specific reason for existing.
+I recently put together a talk called "Agents, Tools, and MCP, oh my!" that tries to cut through some of that noise. As developers, we are being handed a firehose of new tools and technologies, and I wanted to spend my session doing something a little different: break the pieces apart, reduce some of the complexity and overwhelm, and then build them back up so they actually fit together.
 
-This post covers the mental model and the "why" behind each piece. A follow-up will dig into the implementation. If you want to get ahead, the https://github.com/JMHReif/agents-mcp-ohmy[code is already on GitHub^], built with Java, Spring AI, and Neo4j.
+This post is the architecture piece. It lays out the mental model and the "why" behind each layer. If you want to skip ahead, the [code is already on GitHub](https://github.com/JMHReif/agents-mcp-ohmy), built with Java, Spring AI, and Neo4j, using a dataset of books, authors, and reviews (because I like to read, and it turns out reading data makes a great demo domain).
 
-== What is the state of AI in 2026?
+== How we got here
 
-Before getting to agents specifically, I think it helps to zoom out a bit. The AI stack has grown fast. It started with LLMs at the foundation and layered up through vector search, RAG, GraphRAG, agentic workflows, memory, state management, evals, guardrails, and security. And those layers keep accumulating.
+None of this complexity showed up all at once. A couple of years ago, the foundation of the AI stack was just the large language model, on its own. That was pretty good, until it wasn't: ask it anything that required knowledge of your users or your data, and it had nothing to work with. So we stacked on vector search and did retrieval augmented generation, also known as naive or easy RAG. That improved things, and then it hit its own wall: retrieval that was too shallow, too literal, missing the relationships between things that actually mattered. So we added filtering and traversals (advanced RAG, GraphRAG) to pull in more precisely related content.
 
-Instead of introducing another framework on top of all that, I want to break it into parts and look at what each layer actually does. When you understand the pieces involved, it helps you plug into their power without getting buried. 
+That solved the retrieval problem well enough that a new one became visible: now there were too many pieces to coordinate by hand, so we brought in an agent to sit in the middle and decide what to call and when. Then it turned out the agent had no memory of anything it had already done, so state and history got added on top of that. And once you point any of this at production, you inherit a whole new set of concerns: evals, guardrails, security, all the checks and balances that scale demands.
 
-Stacking complexity has a cost, though. You end up with slower development, harder debugging, and more to maintain. I have found that it is important to ask "does this layer add enough value for *my* problem?" before reaching for something, rather than defaulting to whatever is new or popular.
+image::/img/agents-mcp/ai-stack-2026.png[AI Stack in 2026 - layers from LLMs up through evals and guardrails]
 
-Each of the four acts that follow exists because it solves something the previous act couldn't, but does add some level of complexity overhead.
+Every one of those layers was added because the one below it hit a wall. None of this was designed top-down as a system, it was built one patch at a time, in response to the gaps. This means you should evaluate for your own system which layers make the overall solution better and skip those that don't.
 
-image::/img/agents-mcp/ai-stack-2026.png[The AI Stack in 2026 - layers from LLMs up through evals and guardrails]
+== More layers does not mean better
 
-== Act 1: The LLM alone
+The evaluation of each layer matters because more does not equal better. At some point, your complexity outweighs the value you are getting back from it.
 
-We almost always start here, and for good reason. It is a great first step for plugging AI into your applications and opens up new functionality. Send an input, get a creative response.
+I think about this the same way I think about desserts (I like food). A layered dessert with more textures and flavors is more fun to eat, up to a point. A croissant with more layers of butter and dough is flakier and more interesting, up to a point. But stack too many layers on a dessert and it turns to mush. Stack too many layers of dough on a croissant and the weight collapses the whole thing in the oven before it ever gets to rise. 
 
-The limitation shows up quickly in real-world scenarios. When a question requires specific knowledge the model hasn't seen (your users, your products, your data, recent events) the model has two options, 1. hallucinate something plausible or 2. admit it doesn't know. I have been frustrated by both more times than I can count, and neither is acceptable in production.
+Tech stacks behave the same way. Somewhere past a certain point, adding another layer stops buying you anything and starts costing you: slower development, harder debugging, more surface area to maintain.
 
-This isn't the model failing. It is doing exactly what it is designed to do, reasoning over patterns from its vast training data. The issue is that it doesn't *have* or cannot pinpoint the information it needs. The reasoning capability is there, but the data or filter isn't.
+There is no one-size-fits-all stack that solves this for you. What I want to hand you instead is a set of building blocks, so you can decide for yourself, layer by layer, whether your problem actually needs it, rather than reaching for whatever is newest or most talked about.
 
-In my session, Act 1 is a simple endpoint that takes a question about book recommendations and sends it directly to the model. If you ask for recommendations based on a specific user's reading history, the model assembles authors and titles that are broad and impersonal. That's great for generic use cases, but not great for personalized recommendations.
+== Four acts, built like a piece of music
 
-At this step, it has decent reasoning, but no access to personal, private, or curated data. Everything beyond this point is about closing the gap between what the model can reason about and what it actually needs to know.
+I am a musician by background, so I built the talk like a piece of music: four movements, each one earning its place by doing something the last one genuinely could not. That structure turned out to map cleanly onto code, and it is the structure I am using for this whole series.
 
-== Act 2: Agents + Tools
+Act one is a plain LLM, on its own, and it is worth spending real time here because most of us already live in this act without noticing it. Send it a question, get a fluent answer back, right up until the question requires knowing something specific about your users or your data, at which point it either guesses or admits defeat. That gap, between confident reasoning and zero access to anything real, is the entire reason the next three acts exist.
 
-The natural next step is to give the model a way to *get* real data rather than invent it. The goal here is to direct some determinism into a non-deterministic system. This is where agents start to become concrete.
-
-I tend to think of an agent as a top-notch assistant wrapped around the model. But it is not a sentient system. Instead, it is a reasoning loop with concrete steps - receive input, reason about what needs to happen, take action, observe the result, respond. The LLM handles reasoning, and the agent handles coordination.
+Act two hands the model a way to *ask for* real data instead of inventing it: structured, typed tool calls instead of a prompt hoping to be obeyed. This is where an agent stops being a buzzword and starts being a reasoning loop you can actually debug: receive input, decide what tool to call, execute it, look at the result, and either answer or loop again.
 
 image::/img/agents-mcp/agent-reasoning-loop.png[Agent reasoning loop - Observation, Thought, Action cycle,height=300]
 
-Early on, there was a common shortcut we used to use: describe what you want the model to do in the prompt. As an example, `if the user asks for recommendations, call this API by returning JSON in the following format: {...}`.
-
-I built some of my earliest apps this way, and it worked well...until it didn't. In practice, this approach falls apart with hallucinated parameters, no schema enforcement, and inconsistent output format. This method tries to manipulate our way into the LLM, but it is extremely fragile. I think of the mantra "hope is not a strategy," and that's exactly what it feels like once you're debugging it in a real app.
-
-The better approach is structured tool calling where you define tools explicitly with typed parameters and schemas. The model selects which tool to call based on the user's request, and the application executes it with consistent results. In Spring AI, this is done through `@Tool`-annotated methods.
-
-The key shift is conceptual, not just technical. What I love about this approach is that the separation puts real control back in the hands of developers because we can design the processes, pipelines, and rules in the application. We can validate inputs, test tools independently, and trust that execution is deterministic (because it uses traditional functions/methods). The model brings output, and the application brings reliability.
-
-The model didn't get smarter. Instead, we gave it a way to ask for help. Act 2 in the demo shows this directly. The same question that produced hallucinations in Act 1 now returns real, graph-traversed results from Neo4j. You get recommendations based on actual reading history, semantic review search, and graph-enriched queries.
-
-== Act 3: Context is key
-
-At this point, we have solved one important problem: the model can retrieve real information instead of inventing it. But it is not just context, but *smarter* context, that makes a difference. That's the real superpower, and it's the part that still needs work after Act 2. We have data access, but no memory over time.
-
-LLMs are stateless. Every request starts fresh. If a user follows up with "what about something similar to that last recommendation?", the model has no idea what that last recommendation was. From its perspective, that exchange didn't happen.
-
-Early on, we tried to solve this in the prompt by appending conversation history that passed it in with each request and let the model use it. That works until the context window fills up, and then things get expensive and slow. The issue is that even with tools, context still accumulates.
-
-We don't need *more* context. We need the *right* information. More context doesn't always mean better answers, and sometimes it means worse ones because the model has to attend to everything even when most of it isn't relevant.
-
-There is a more useful framing here: *memory is a system responsibility, not a model responsibility*.
-
-Because LLMs are stateless, the application layer must decide what context to provide, when to retrieve it, and how to store it. Instead of asking "how do I make the model remember things", we can start asking "how do I build a retrieval layer that surfaces the right information at the right time?"
-
-Practically, that means conversation history is stored externally and retrieved at the start of each turn, not appended indefinitely. Domain knowledge lives in a data/file/etc and gets fetched when it is relevant to the current query, not preloaded every time.
-
-Instead of storing knowledge as disconnected chunks that the model is supposed to stitch together, we can give the system structure. There are several approaches to this problem, but graph databases fit well. Memory has two distinct forms:
-
-* *Short-term*: the current conversation (what was asked, what was returned, how the user responded)
-* *Long-term*: persistent domain knowledge (user preferences, reading history, relationships between authors and books)
-
-A graph makes both explicit. Relationships are not implied or buried in unstructured text. They're first-class data you can traverse and query. When the agent retrieves context, it's not just "relevant documents". It is connected data that carries meaning through its structure.
+Act three deals with the fact that an LLM forgets everything the moment a request ends. Rather than re-explaining the whole conversation on every turn, memory becomes something the *system* is responsible for, not the model, and a graph turns out to be a natural place to hold both the short-term thread of a conversation and the long-term knowledge that should persist across many of them.
 
 image::/img/agents-mcp/graph-application-memory.png[Graph as application memory - short-term conversation state and long-term user preferences as a graph]
 
-In Act 3, a `conversationId` parameter links requests together in Neo4j. Pass the same ID across multiple turns, and the agent can answer follow-up questions that reference earlier results, because the conversation state is stored in and retrieved from the graph. The model itself has not changed at all. What changed is the context it receives.
-
-== Act 4: Decoupling with MCP
-
-Acts 2 and 3 produce a genuinely useful system. But as you add capability, you start digging some holes...the current application has great context, but it is tightly integrated. It can be hard to switch gears and make changes.
-
-Every tool is manually wired. The integration is specific to this application and this model. Swapping to a different LLM provider means rewriting your tool definitions. Building a second application that needs the same Neo4j queries means duplicating the integration. Different teams can't share tools without copying code.
-
-Tight coupling that feels fine for one app, but creates a maintenance headache as things grow.
-
-=== What MCP changes
-
-MCP (Model Context Protocol) is an open protocol that addresses this at the architecture level. Instead of hard-wiring tool definitions into each application, a server exposes capabilities. It defines what tools exist, what they do, and what parameters they take. Then clients (agents, applications, whatever speaks the protocol) discover and invoke those tools dynamically.
-
-Different models, different applications, different data sources are all fine. As long as both sides speak the protocol, they can work together without custom integration code between every pair.
-
-In Act 4, the underlying queries do not change at all compared to Acts 2 and 3, but the agent discovers the available tools at runtime. They are not hard-coded. The architecture changes, not the business logic. Tools are exposed through an MCP server instead of being wired directly into the application. Same logic, less coupling. I didn't rewrite the application code. I changed where the tools live.
-
-And now that MCP server is reusable. Any application that speaks MCP can use it. Any model that supports MCP can benefit from it. You build the integration once.
+Act four takes the tools built in act two and pulls them out from underneath the application entirely, using MCP so that a tool definition is not welded to one model, one app, or one team. Swap providers, build a second application, share tools across a team, none of it should require rewriting the integration from scratch, and MCP helps make that happen.
 
 image::/img/agents-mcp/architecture-mcp-neo4j.png[Architecture with MCP and Neo4j - user to agent to MCP server to Neo4j graph database]
 
-== The four layers
-
-Stepping back, the four acts map to four distinct layers of a modern AI system:
-
-* *LLM* → reasoning, planning, response generation
-* *Tools* → deterministic execution (fetching data, calling APIs, running queries)
-* *Graph-powered context* → memory and connected knowledge (conversation state, domain relationships)
-* *MCP* → standardization (dynamic tool discovery, provider-agnostic integration)
-
-image::/img/agents-mcp/four-layers.png[Four layers of modern AI systems - LLM reasoning, tool execution, graph-powered context, MCP standardization]
-
-Agents are not magic. They are layered, composable systems. This is good news because it means we can design them. Each layer has one job, and none of them is doing another's work. That separation is what makes the system composable. You can evolve each layer independently, swap implementations without touching everything else, and actually reason about what is happening when something breaks.
+Stepping back, those four acts are really four layers doing four distinct jobs: the LLM reasons, the tools execute, the graph holds context, and MCP standardizes how everything connects. None of that is magic. It is composable architecture, which is genuinely good news, because composable things can be designed, tested, and swapped out independently, and you can actually reason about what broke when something does.
 
 == A better question to start with
 
-Instead of "How do we build an AI agent?", we can ask, "How do we design a system that delivers the right context at the right time?".
+That reframes the whole problem. "How do we build an AI agent" makes it sound like the agent is the hard part, the thing you optimize. It's not. The large language model, honestly, is not the most interesting piece of any of this. What matters is everything you build around it: an agent that decides, tools that act, a graph that remembers, a protocol that keeps it all from being welded together.
 
-From that framing, the pieces fall into place:
+image::/img/agents-mcp/four-layers.png[Four layers of modern AI systems - LLM reasoning, tool execution, graph-powered context, MCP standardization]
 
-* the agent decides
-* tools take action
-* graph structures and retrieves context
-* MCP standardizes how everything connects
+These are not mysterious, unbuildable things. They are composable layers, and composable layers are something developers already know how to design, test, and put back together differently when the situation calls for it. None of this is magic happening to your application. You are still the one designing the system. The model is just one component inside it.
 
-None of these is magic on its own. What makes them valuable is the separation of responsibility between them and building that separation intentionally rather than discovering it while debugging production issues.
-
-In the next post, I will walk through the actual code across all four acts, including what it looks like in practice, what changes between each act, and where the interesting tradeoffs show up.
+The next task to build your solution one act at a time and watch where it actually holds up versus where it needs a second look. Act 1 starts with the plain LLM, the same one most of us are already living in without noticing, and shows exactly where it runs out of road.
 
 Happy coding!
 
